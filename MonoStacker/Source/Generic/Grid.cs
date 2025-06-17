@@ -1,0 +1,184 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Net.Http.Headers;
+using System.Text;
+using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Graphics;
+using MonoStacker.Source.Global;
+
+namespace MonoStacker.Source.Generic
+{
+    public class Grid
+    {
+        private Microsoft.Xna.Framework.Vector2 _offset;
+        
+        public List<Rectangle> imageTiles = new();
+        private const int TILESIZE = 8;
+
+        private const int ROWS = 40; // y
+        // Higher than needed to account for pieces not covering death zone but above accesible field (guideline compliant)
+        private const int COLUMNS = 10; // x
+        private int[,] matrix;
+
+        private Texture2D grid = GetContent.Load<Texture2D>("Image/Board/grid");
+        public Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/0");
+
+        public Grid(Microsoft.Xna.Framework.Vector2 Position) 
+        {
+            _offset = Position;
+            matrix = new int[ROWS, COLUMNS];
+
+            GetImageCuts();
+        }
+
+        private void GetImageCuts() 
+        {
+            imageTiles.Add(new Rectangle(0, 0, TILESIZE, TILESIZE)); // I
+            imageTiles.Add(new Rectangle(TILESIZE, 0, TILESIZE, TILESIZE)); // J
+            imageTiles.Add(new Rectangle(TILESIZE * 2, 0, TILESIZE, TILESIZE)); // L
+            imageTiles.Add(new Rectangle(TILESIZE * 3, 0, TILESIZE, TILESIZE)); // O
+            imageTiles.Add(new Rectangle(TILESIZE * 4, 0, TILESIZE, TILESIZE)); // S
+            imageTiles.Add(new Rectangle(TILESIZE * 5, 0, TILESIZE,  TILESIZE)); // T
+            imageTiles.Add(new Rectangle(TILESIZE * 6, 0, TILESIZE, TILESIZE)); // Z
+        }
+
+        public void LockPiece(Piece piece, int rowOffset, int columnOffset) 
+        {
+            if (rowOffset > 0) 
+            {
+                for (int y = 0; y < piece.currentRotation.GetLength(0); y++) // row
+                {
+                    for (int x = 0; x < piece.currentRotation.GetLength(1); x++) // column
+                    {
+                        if (piece.currentRotation[y, x] != 0) 
+                        {
+                            matrix[y + rowOffset, x + columnOffset] = piece.currentRotation[y, x];
+                        }
+                    }
+                }
+            }
+        }
+
+        public bool IsPlacementValid(Piece piece, int rowOffset, int columnOffset) 
+        {
+            for (int y = 0; y < piece.currentRotation.GetLength(0); y++) // row
+            {
+                for (int x = 0; x < piece.currentRotation.GetLength(1); x++) // column
+                {
+                    if (piece.currentRotation[y, x] > 0)
+                    {
+                        /*
+                        if (rowOffset + y < 0 || rowOffset + y > ROWS)
+                            return false;
+                        if (columnOffset + x < 0 || columnOffset + x > COLUMNS)
+                            return false;
+                        if (matrix[y + rowOffset, x + columnOffset] != 0)
+                            return false;
+                        */
+
+                        if (rowOffset + y>= ROWS)
+                            return false;
+                        if (columnOffset + x < 0)
+                            return false;
+                        if (columnOffset + x >= COLUMNS)
+                            return false;
+                        //if (rowOffset + y < 20)
+                        //continue;
+
+                        if (matrix[rowOffset + y, columnOffset + x] != 0)
+                            return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public void Draw(SpriteBatch spriteBatch) 
+        {
+            spriteBatch.Begin();
+
+            spriteBatch.Draw(grid, new Vector2(_offset.X, _offset.Y), Color.White);
+
+            for (int y = 0; y < ROWS; y++) 
+            {
+                for (int x = 0; x < COLUMNS; x++) 
+                {
+                    Color color = Color.LightGray;
+                    if (y < 20)
+                        color = Color.DarkGray;
+                    switch (matrix[y, x]) 
+                    {
+                        case 1:
+                            spriteBatch.Draw
+                                (
+                                blocks, 
+                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[0], 
+                                color
+                                );
+                            break;
+                        case 2:
+                            spriteBatch.Draw
+                                (
+                                blocks,
+                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[1],
+                                color
+                                );
+                            break;
+                        case 3:
+                            spriteBatch.Draw
+                                (
+                                blocks,
+                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[2],
+                                color
+                                );
+                            break;
+                        case 4:
+                            spriteBatch.Draw
+                                (
+                                blocks,
+                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[3],
+                                color
+                                );
+                            break;
+                        case 5:
+                            spriteBatch.Draw
+                                (
+                                blocks,
+                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[4],
+                                color
+                                );
+                            break;
+                        case 6:
+                            spriteBatch.Draw
+                                (
+                                blocks,
+                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[5],
+                                color
+                                );
+                            break;
+                        case 7:
+                            spriteBatch.Draw
+                                (
+                                blocks,
+                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[6],
+                                color
+                                );
+                            break;
+                           
+                    }
+                }
+            }
+            spriteBatch.End();
+        }
+    }
+}
