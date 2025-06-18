@@ -21,28 +21,43 @@ namespace MonoStacker.Source.Generic
         private const int ROWS = 40; // y
         // Higher than needed to account for pieces not covering death zone but above accesible field (guideline compliant)
         private const int COLUMNS = 10; // x
-        private int[,] matrix;
+        //private int[,] _matrix;
+        private int[][] _matrix;
 
-        private List<int[]> _rowsToClear;
+        public List<int> rowsToClear { get; private set; }
 
         private Texture2D grid = GetContent.Load<Texture2D>("Image/Board/grid");
         public Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/0");
 
         public Grid(Microsoft.Xna.Framework.Vector2 Position) 
         {
+            rowsToClear = new();
             _offset = Position;
-            matrix = new int[ROWS, COLUMNS];
+            //_matrix = new int[ROWS, COLUMNS];
 
             GetImageCuts();
-            
+
+            /*
             for (int y = 0; y < ROWS; y++) // row
             {
                 for (int x = 0; x < COLUMNS; x++) // column
                 {
-                    matrix[y, x] = 0;
+                    _matrix[y, x] = 0;
                 }
             }
-            
+            */
+
+            _matrix = new int[ROWS][];
+
+            for (int y = 0; y < ROWS; y++) 
+            {
+                _matrix[y] = new int[COLUMNS];
+
+                for (int x = 0; x < COLUMNS; x++) 
+                {
+                    _matrix[y][x] = 0;
+                }
+            }
         }
 
         private void GetImageCuts() 
@@ -66,7 +81,7 @@ namespace MonoStacker.Source.Generic
                     {
                         if (piece.currentRotation[y, x] != 0) 
                         {
-                            matrix[y + rowOffset, x + columnOffset] = piece.currentRotation[y, x];
+                            _matrix[y + rowOffset][ x + columnOffset] = piece.currentRotation[y, x];
                         }
                     }
                 }
@@ -98,7 +113,7 @@ namespace MonoStacker.Source.Generic
                             return false;
                         //if (rowOffset + y < ROWS)
                             //continue;
-                        if (matrix[rowOffset + y, columnOffset + x] != 0)
+                        if (_matrix[rowOffset + y][columnOffset + x] != 0)
                             return false;
                     }
                 }
@@ -106,34 +121,60 @@ namespace MonoStacker.Source.Generic
 
             return true;
         }
-
-        int filledLines;
         
         public int CheckForLines() 
         {
-            filledLines = 0;
+            rowsToClear.Clear();
             bool clearedLines = false;
             for (int y = 0; y < ROWS; y++) // row
             {
                 clearedLines = true;
                 for (int x = 0; x < COLUMNS; x++) // column
                 {
-                    if (matrix[y, x] == 0) 
+                    if (_matrix[y][x] == 0) 
                     {
                         clearedLines = false;
                         break;
                     }
                 }
-                if (clearedLines == true)
-                    filledLines++;
+                if (clearedLines == true) 
+                {
+                    rowsToClear.Add(y);
+                }
+                    
             }
-            return filledLines;
+            return rowsToClear.Count;
         }
-        
 
-        public void ClearFilledRows() 
+        public void ClearLines() 
         {
+            foreach (var item in rowsToClear) 
+            {
+                ClearLine(item);
+            }
+                
+        }
 
+        public bool IsLineEmpty(int rowIndex) 
+        {
+            bool isEmpty = true;
+            foreach (var item in _matrix[rowIndex]) 
+            {
+                if (item != 0) 
+                {
+                    isEmpty = false;
+                    break;
+                }
+            }
+            return isEmpty;
+        }
+
+        public void ClearLine(int rowIndex) // fuck
+        {
+            for (int i = 0; i < COLUMNS; i++) 
+            {
+                _matrix[rowIndex][i] = 0;
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch) 
@@ -147,7 +188,9 @@ namespace MonoStacker.Source.Generic
                     Color color = Color.LightGray;
                     if (y < 20)
                         color = Color.DarkGray;
-                    switch (matrix[y, x]) 
+                    if (y == 0)
+                        color = Color.Black;
+                    switch (_matrix[y][x]) 
                     {
                         case 1:
                             spriteBatch.Draw

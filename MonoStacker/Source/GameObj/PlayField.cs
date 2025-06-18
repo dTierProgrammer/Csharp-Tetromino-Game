@@ -103,6 +103,9 @@ namespace MonoStacker.Source.GameObj
                     activePiece.offsetX += 1;
             }
 
+            if (Keyboard.GetState().IsKeyDown(Keys.R) && !prevKBState.IsKeyDown(Keys.R))
+                activePiece = _GenerateTetromino.RandomTetromino();
+
             if (Keyboard.GetState().IsKeyDown(Keys.Down)) 
             {
                 SoftDrop();
@@ -113,8 +116,14 @@ namespace MonoStacker.Source.GameObj
                 HardDrop();
             }
 
-
             prevKBState = Keyboard.GetState();
+
+            if (grid.CheckForLines() > 0) 
+            {
+                
+                grid.ClearLines();
+            }
+            
         }
 
         public void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
