@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Net.Http.Headers;
 using System.Text;
@@ -10,7 +11,7 @@ using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
 {
-    public class Grid
+    public class Grid // TODO: Refactor to jagged int array
     {
         private Microsoft.Xna.Framework.Vector2 _offset;
         
@@ -22,6 +23,8 @@ namespace MonoStacker.Source.Generic
         private const int COLUMNS = 10; // x
         private int[,] matrix;
 
+        private List<int[]> _rowsToClear;
+
         private Texture2D grid = GetContent.Load<Texture2D>("Image/Board/grid");
         public Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/0");
 
@@ -31,6 +34,15 @@ namespace MonoStacker.Source.Generic
             matrix = new int[ROWS, COLUMNS];
 
             GetImageCuts();
+            
+            for (int y = 0; y < ROWS; y++) // row
+            {
+                for (int x = 0; x < COLUMNS; x++) // column
+                {
+                    matrix[y, x] = 0;
+                }
+            }
+            
         }
 
         private void GetImageCuts() 
@@ -46,7 +58,7 @@ namespace MonoStacker.Source.Generic
 
         public void LockPiece(Piece piece, int rowOffset, int columnOffset) 
         {
-            if (rowOffset > 0) 
+            if (rowOffset > -2) 
             {
                 for (int y = 0; y < piece.currentRotation.GetLength(0); y++) // row
                 {
@@ -84,9 +96,8 @@ namespace MonoStacker.Source.Generic
                             return false;
                         if (columnOffset + x >= COLUMNS)
                             return false;
-                        //if (rowOffset + y < 20)
-                        //continue;
-
+                        //if (rowOffset + y < ROWS)
+                            //continue;
                         if (matrix[rowOffset + y, columnOffset + x] != 0)
                             return false;
                     }
@@ -96,10 +107,37 @@ namespace MonoStacker.Source.Generic
             return true;
         }
 
+        int filledLines;
+        
+        public int CheckForLines() 
+        {
+            filledLines = 0;
+            bool clearedLines = false;
+            for (int y = 0; y < ROWS; y++) // row
+            {
+                clearedLines = true;
+                for (int x = 0; x < COLUMNS; x++) // column
+                {
+                    if (matrix[y, x] == 0) 
+                    {
+                        clearedLines = false;
+                        break;
+                    }
+                }
+                if (clearedLines == true)
+                    filledLines++;
+            }
+            return filledLines;
+        }
+        
+
+        public void ClearFilledRows() 
+        {
+
+        }
+
         public void Draw(SpriteBatch spriteBatch) 
         {
-            spriteBatch.Begin();
-
             spriteBatch.Draw(grid, new Vector2(_offset.X, _offset.Y), Color.White);
 
             for (int y = 0; y < ROWS; y++) 
@@ -178,7 +216,6 @@ namespace MonoStacker.Source.Generic
                     }
                 }
             }
-            spriteBatch.End();
         }
     }
 }
