@@ -47,7 +47,7 @@ namespace MonoStacker.Source.GameObj.Tetromino
                     break;
                 case TetrominoType.O:
                     tetromino = new O();
-                    tetromino.offsetX = 3;
+                    tetromino.offsetX = 4;
                     tetromino.offsetY = yOff;
                     break;
                 case TetrominoType.S:

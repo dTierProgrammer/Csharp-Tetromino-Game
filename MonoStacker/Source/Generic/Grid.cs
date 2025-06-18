@@ -122,6 +122,7 @@ namespace MonoStacker.Source.Generic
             return true;
         }
         
+        
         public int CheckForLines() 
         {
             rowsToClear.Clear();
@@ -146,27 +147,34 @@ namespace MonoStacker.Source.Generic
             return rowsToClear.Count;
         }
 
-        public void ClearLines() 
-        {
-            foreach (var item in rowsToClear) 
-            {
-                ClearLine(item);
-            }
-                
-        }
-
         public bool IsLineEmpty(int rowIndex) 
         {
             bool isEmpty = true;
-            foreach (var item in _matrix[rowIndex]) 
+            Console.WriteLine(rowIndex);
+
+            for (int i = 0; i < COLUMNS; i++) 
             {
-                if (item != 0) 
+                if (_matrix[rowIndex][i] != 0)
                 {
                     isEmpty = false;
                     break;
                 }
             }
             return isEmpty;
+        }
+
+        public bool IsLineFull(int rowIndex)
+        {
+            bool isFull = true;
+            for (int i = 0; i < COLUMNS; i++)
+            {
+                if (_matrix[rowIndex][i] == 0)
+                {
+                    isFull = false;
+                    break;
+                }
+            }
+            return isFull;
         }
 
         public void ClearLine(int rowIndex) // fuck
@@ -177,9 +185,36 @@ namespace MonoStacker.Source.Generic
             }
         }
 
+        public void MoveRow(int rowIndex, int offset) 
+        {
+            for (int i = 0; i < COLUMNS; i++) 
+            {
+                _matrix[rowIndex + offset][i] = _matrix[rowIndex][i];
+                _matrix[rowIndex][i] = 0;
+            }
+        }
+
+        public void ClearLines() 
+        {
+            int clearedLines = 0;
+            for (int y = ROWS - 1; y >= 0; y--) 
+            {
+                if (IsLineFull(y))
+                {
+                    ClearLine(y);
+                    clearedLines++;
+                }
+                else if (clearedLines > 0) 
+                {
+                    MoveRow(y, clearedLines);
+                }
+            }
+        }
+
         public void Draw(SpriteBatch spriteBatch) 
         {
             spriteBatch.Draw(grid, new Vector2(_offset.X, _offset.Y), Color.White);
+            Rectangle sourceRect = imageTiles[0];
 
             for (int y = 0; y < ROWS; y++) 
             {
@@ -190,72 +225,42 @@ namespace MonoStacker.Source.Generic
                         color = Color.DarkGray;
                     if (y == 0)
                         color = Color.Black;
+
                     switch (_matrix[y][x]) 
                     {
                         case 1:
-                            spriteBatch.Draw
-                                (
-                                blocks, 
-                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                imageTiles[0], 
-                                color
-                                );
+                            sourceRect = imageTiles[0];
                             break;
                         case 2:
-                            spriteBatch.Draw
-                                (
-                                blocks,
-                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                imageTiles[1],
-                                color
-                                );
+                            sourceRect = imageTiles[1];
                             break;
                         case 3:
-                            spriteBatch.Draw
-                                (
-                                blocks,
-                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                imageTiles[2],
-                                color
-                                );
+                            sourceRect = imageTiles[2];
                             break;
                         case 4:
-                            spriteBatch.Draw
-                                (
-                                blocks,
-                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                imageTiles[3],
-                                color
-                                );
+                            sourceRect = imageTiles[3];
                             break;
                         case 5:
-                            spriteBatch.Draw
-                                (
-                                blocks,
-                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                imageTiles[4],
-                                color
-                                );
+                            sourceRect = imageTiles[4];
                             break;
                         case 6:
-                            spriteBatch.Draw
-                                (
-                                blocks,
-                                new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                imageTiles[5],
-                                color
-                                );
+                            sourceRect = imageTiles[5];
                             break;
                         case 7:
-                            spriteBatch.Draw
+                            sourceRect = imageTiles[6];
+                            break;
+                           
+                    }
+
+                    if (_matrix[y][x] != 0 && !rowsToClear.Contains(y)) 
+                    {
+                        spriteBatch.Draw
                                 (
                                 blocks,
                                 new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                imageTiles[6],
+                                sourceRect,
                                 color
                                 );
-                            break;
-                           
                     }
                 }
             }

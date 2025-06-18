@@ -24,11 +24,11 @@ namespace MonoStacker
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
-            _graphics.PreferredBackBufferWidth = 1280;
-            _graphics.PreferredBackBufferHeight = 720;
+            _graphics.PreferredBackBufferWidth = 1536;
+            _graphics.PreferredBackBufferHeight = 864;
             _graphics.ApplyChanges();
 
-            scaledDisp = new RenderTarget2D(GraphicsDevice, GraphicsDevice.DisplayMode.Width / 3, GraphicsDevice.DisplayMode.Height / 3);
+            scaledDisp = new RenderTarget2D(GraphicsDevice, GraphicsDevice.DisplayMode.Width / 4, GraphicsDevice.DisplayMode.Height / 4);
 
             IsMouseVisible = true;
         }
@@ -47,7 +47,7 @@ namespace MonoStacker
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             // TODO: use this.Content to load your game content here
 
-            playField = new PlayField(new Vector2(100, 50));
+            playField = new PlayField(new Vector2(150, 35));
         }
 
         protected override void Update(GameTime gameTime)
@@ -56,14 +56,14 @@ namespace MonoStacker
                 Exit();
 
             // TODO: Add your update logic here
-            playField.Update();
+            playField.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             base.Update(gameTime);
         }
 
         protected override void Draw(GameTime gameTime)
         {
             GraphicsDevice.SetRenderTarget(scaledDisp);
-            GraphicsDevice.Clear(Color.CornflowerBlue);
+            GraphicsDevice.Clear(Color.Black);
             playField.Draw(_spriteBatch);
 
             // TODO: Add your drawing code here

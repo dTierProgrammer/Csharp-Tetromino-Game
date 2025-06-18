@@ -23,6 +23,10 @@ namespace MonoStacker.Source.GameObj
         Piece activePiece;
         Piece ghostPiece;
         Texture2D border = GetContent.Load<Texture2D>("Image/Board/generic_border_0");
+        float timer = .3f;
+        float dasTimerL = .1f;
+        float dasTimerR = .1f;
+        bool showActivePiece = true;
 
         
         public PlayField(Vector2 position)
@@ -41,7 +45,12 @@ namespace MonoStacker.Source.GameObj
                 return true;
             }
             grid.LockPiece(activePiece, activePiece.offsetY, activePiece.offsetX);
-            activePiece = _GenerateTetromino.RandomTetromino();
+            showActivePiece = false;
+            if (grid.CheckForLines() == 0)
+            {
+                activePiece = _GenerateTetromino.RandomTetromino();
+                showActivePiece = true;
+            }
             ghostPiece = activePiece;
             return false;
         }
@@ -50,7 +59,13 @@ namespace MonoStacker.Source.GameObj
         {
             activePiece.offsetY = CalculateGhostPiece();
             grid.LockPiece(activePiece, activePiece.offsetY, activePiece.offsetX);
-            activePiece = _GenerateTetromino.RandomTetromino();
+            showActivePiece = false;
+            if (grid.CheckForLines() == 0) 
+            {
+                activePiece = _GenerateTetromino.RandomTetromino();
+                showActivePiece = true;
+            }
+                
             ghostPiece = activePiece;
         }
 
@@ -65,7 +80,7 @@ namespace MonoStacker.Source.GameObj
             return yOff;
         }
 
-        public void Update() 
+        public void Update(float deltaTime) 
         {
             
             if (Keyboard.GetState().IsKeyDown(Keys.Up) && !prevKBState.IsKeyDown(Keys.Up)) 
@@ -92,19 +107,51 @@ namespace MonoStacker.Source.GameObj
                 }
                 
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.Left) && !prevKBState.IsKeyDown(Keys.Left)) 
+
+
+
+            if (Keyboard.GetState().IsKeyDown(Keys.Left))
             {
-                if (grid.IsPlacementValid(activePiece, activePiece.offsetY, activePiece.offsetX - 1))
-                    activePiece.offsetX -= 1;
+                if (!prevKBState.IsKeyDown(Keys.Left))
+                {
+                    if (grid.IsPlacementValid(activePiece, activePiece.offsetY, activePiece.offsetX - 1))
+                        activePiece.offsetX -= 1;
+                }
+                dasTimerL -= deltaTime;
+                if (dasTimerL <= 0)
+                {
+                    if (grid.IsPlacementValid(activePiece, activePiece.offsetY, activePiece.offsetX - 1))
+                        activePiece.offsetX -= 1;
+                }
             }
-            if (Keyboard.GetState().IsKeyDown(Keys.Right) && !prevKBState.IsKeyDown(Keys.Right))
+            else if (Keyboard.GetState().IsKeyDown(Keys.Right))
             {
-                if (grid.IsPlacementValid(activePiece, activePiece.offsetY, activePiece.offsetX + 1))
-                    activePiece.offsetX += 1;
+                if (!prevKBState.IsKeyDown(Keys.Right))
+                {
+                    if (grid.IsPlacementValid(activePiece, activePiece.offsetY, activePiece.offsetX + 1))
+                        activePiece.offsetX += 1;
+                }
+                dasTimerR -= deltaTime;
+                if (dasTimerR <= 0)
+                {
+                    if (grid.IsPlacementValid(activePiece, activePiece.offsetY, activePiece.offsetX + 1))
+                        activePiece.offsetX += 1;
+                }
             }
+            else 
+            {
+                dasTimerR = .2f;
+                dasTimerL = .2f;
+            }
+
+
+
 
             if (Keyboard.GetState().IsKeyDown(Keys.R) && !prevKBState.IsKeyDown(Keys.R))
                 activePiece = _GenerateTetromino.RandomTetromino();
+
+
+
 
             if (Keyboard.GetState().IsKeyDown(Keys.Down)) 
             {
@@ -118,12 +165,19 @@ namespace MonoStacker.Source.GameObj
 
             prevKBState = Keyboard.GetState();
 
+            
             if (grid.CheckForLines() > 0) 
             {
-                
-                grid.ClearLines();
+                timer -= deltaTime;
+                if (timer <= 0) 
+                {
+                    grid.ClearLines();
+                    timer = .3f;
+                    activePiece = _GenerateTetromino.RandomTetromino();
+                    showActivePiece = true;
+                }
+                    
             }
-            
         }
 
         public void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -200,7 +254,8 @@ namespace MonoStacker.Source.GameObj
             spriteBatch.Begin();
             grid.Draw(spriteBatch);
             spriteBatch.Draw(border, new Vector2(_offset.X - 6, _offset.Y - 3), Color.DarkGray);
-            DrawPiece(spriteBatch, activePiece);
+            if(showActivePiece)
+                DrawPiece(spriteBatch, activePiece);
             spriteBatch.End();
             
         }
