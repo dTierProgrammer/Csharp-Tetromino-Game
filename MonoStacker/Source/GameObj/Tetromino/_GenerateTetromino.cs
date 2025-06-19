@@ -104,36 +104,51 @@ namespace MonoStacker.Source.GameObj.Tetromino
                     tetromino = new I();
                     tetromino.offsetX = 3;
                     tetromino.offsetY = yOff - 1;
+                    tetromino.initOffsetX = tetromino.offsetX;
+                    tetromino.initOffsetY = tetromino.offsetY;
                     break;
                 case TetrominoType.J:
                     tetromino = new J();
                     tetromino.offsetX = 3;
                     tetromino.offsetY = yOff;
+                    tetromino.initOffsetX = tetromino.offsetX;
+                    tetromino.initOffsetY = tetromino.offsetY;
                     break;
                 case TetrominoType.L:
                     tetromino = new L();
                     tetromino.offsetX = 3;
                     tetromino.offsetY = yOff;
+                    tetromino.initOffsetX = tetromino.offsetX;
+                    tetromino.initOffsetY = tetromino.offsetY;
                     break;
                 case TetrominoType.O:
                     tetromino = new O();
                     tetromino.offsetX = 4;
                     tetromino.offsetY = yOff;
+                    tetromino.initOffsetX = tetromino.offsetX;
+                    tetromino.initOffsetY = tetromino.offsetY;
                     break;
                 case TetrominoType.S:
                     tetromino = new S();
                     tetromino.offsetX = 3;
                     tetromino.offsetY = yOff;
+                    tetromino.initOffsetX = 3;
+                    tetromino.initOffsetX = tetromino.offsetX;
+                    tetromino.initOffsetY = tetromino.offsetY;
                     break;
                 case TetrominoType.T:
                     tetromino = new T();
                     tetromino.offsetX = 3;
                     tetromino.offsetY = yOff;
+                    tetromino.initOffsetX = tetromino.offsetX;
+                    tetromino.initOffsetY = tetromino.offsetY;
                     break;
                 case TetrominoType.Z:
                     tetromino = new Z();
                     tetromino.offsetX = 3;
                     tetromino.offsetY = yOff;
+                    tetromino.initOffsetX = tetromino.offsetX;
+                    tetromino.initOffsetY = tetromino.offsetY;
                     break;
             }
 

@@ -97,6 +97,18 @@
 /processorParam:TextureFormat=Color
 /build:Image/Board/grid.png
 
+#begin Image/Board/queue.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/queue.png
+
 #begin Test/images.jpg
 /importer:TextureImporter
 /processor:TextureProcessor

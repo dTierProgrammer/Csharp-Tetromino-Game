@@ -20,6 +20,7 @@ namespace MonoStacker
         private PlayField playField;
 
         private Texture2D bg;
+        private NextPreview testPV;
 
         public Game1()
         {
@@ -50,6 +51,8 @@ namespace MonoStacker
             // TODO: use this.Content to load your game content here
 
             playField = new PlayField(new Vector2(150, 35));
+            playField.Initialize();
+            testPV = new NextPreview(new Vector2(10, 10), 6);
             bg = GetContent.Load<Texture2D>("Image/Background/bg");
         }
 
@@ -69,6 +72,7 @@ namespace MonoStacker
             GraphicsDevice.Clear(Color.Black);
             _spriteBatch.Begin();
             _spriteBatch.Draw(bg, Vector2.Zero, Color.White);
+            //testPV.Draw(_spriteBatch);
             _spriteBatch.End();
             playField.Draw(_spriteBatch);
 

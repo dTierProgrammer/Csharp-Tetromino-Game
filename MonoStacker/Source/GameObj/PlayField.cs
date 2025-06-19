@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.GameObj.Tetromino;
@@ -20,25 +21,36 @@ namespace MonoStacker.Source.GameObj
         Grid grid;
 
         KeyboardState prevKBState;
-        Piece activePiece;
+        public Piece activePiece { get; set; }
         Piece ghostPiece;
         Texture2D border = GetContent.Load<Texture2D>("Image/Board/generic_border_0");
+        bool showGhostPiece = true;
         float lineClearDelay = .3f;
-        float lockDelay = .3f;
+        float lockDelayMax = .3f;
+        float lockDelay;
         float dasTimerL = .1f;
         float dasTimerR = .1f;
         bool showActivePiece = true;
         bool softDrop;
         float dropSpeed;
+        public NextPreview nextPreview { get; private set; }
+        public HoldPreview holdPreview { get; private set; }
 
         private Texture2D bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
 
-        
+
         public PlayField(Vector2 position)
         {
             _offset = position;
             grid = new Grid(_offset);
-            activePiece = _GenerateTetromino.RandomTetromino7Bag();
+            lockDelay = lockDelayMax;
+            nextPreview = new(new Vector2((border.Width) + _offset.X, _offset.Y), 6);
+            activePiece = nextPreview.GetNextPiece();
+        }
+
+        public void Initialize() 
+        {
+            holdPreview = new(new Vector2(_offset.X - 28, _offset.Y), this);
         }
 
         private void HardDrop()
@@ -46,6 +58,8 @@ namespace MonoStacker.Source.GameObj
             activePiece.offsetY = CalculateGhostPiece();
             LockPiece();
         }
+
+        private void ResetPiece() { }
 
         private int CalculateGhostPiece() 
         {
@@ -64,10 +78,16 @@ namespace MonoStacker.Source.GameObj
             showActivePiece = false;
             if (grid.CheckForLines() == 0)
             {
-                activePiece = _GenerateTetromino.RandomTetromino7Bag();
+                activePiece = nextPreview.GetNextPiece();
                 showActivePiece = true;
             }
-            lockDelay = .3f;
+            ResetLockDelay();
+            holdPreview.canHold = true;
+        }
+
+        public void ResetLockDelay() 
+        {
+            lockDelay = lockDelayMax;
         }
 
         public void Update(float deltaTime) 
@@ -75,8 +95,8 @@ namespace MonoStacker.Source.GameObj
             if (softDrop)
                 dropSpeed = .5f;
             else
-                dropSpeed = .08f;
-
+                dropSpeed = .02f;
+            nextPreview.Update();
             if (Keyboard.GetState().IsKeyDown(Keys.Up) && !prevKBState.IsKeyDown(Keys.Up) && showActivePiece)
             {
                 activePiece.RotateCW();
@@ -140,8 +160,8 @@ namespace MonoStacker.Source.GameObj
 
 
 
-            if (Keyboard.GetState().IsKeyDown(Keys.R) && !prevKBState.IsKeyDown(Keys.R))
-                activePiece = _GenerateTetromino.RandomTetromino7Bag();
+            if (Keyboard.GetState().IsKeyDown(Keys.LeftShift) && !prevKBState.IsKeyDown(Keys.LeftShift) && showActivePiece)
+                holdPreview.SwapPiece();
 
 
 
@@ -167,10 +187,11 @@ namespace MonoStacker.Source.GameObj
             {
                 lockDelay -= deltaTime;
 
+                /*
                 if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX - 1) ||
                     grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX - 1)) // makes lock delay inconsisteny when no directional inputs are made...
                     lockDelay += deltaTime / 1.2f;
-
+                */
                     if (lockDelay <= 0) 
                 {
                     LockPiece();
@@ -185,7 +206,7 @@ namespace MonoStacker.Source.GameObj
                 {
                     grid.ClearLines();
                     lineClearDelay = .3f;
-                    activePiece = _GenerateTetromino.RandomTetromino7Bag();
+                    activePiece = nextPreview.GetNextPiece();
                     showActivePiece = true;
                 }
 
@@ -225,6 +246,16 @@ namespace MonoStacker.Source.GameObj
                     }
                     if (piece.currentRotation[y, x] != 0) 
                     {
+                        if (showGhostPiece)
+                        {
+                            spriteBatch.Draw(
+                                    grid.ghostBlocks,
+                                    new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (CalculateGhostPiece() * 8) + (int)_offset.Y - 160, 8, 8),
+                                    sourceRect,
+                                    Color.White * .5f
+                                    );
+                        }
+
                         spriteBatch.Draw(
                                 grid.blocks,
                                 new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8),
@@ -232,51 +263,7 @@ namespace MonoStacker.Source.GameObj
                                 Color.White
                                 );
                     }
-                    
-                }
-            }
-        }
-
-        public void DrawGhostPiece(SpriteBatch spriteBatch, Piece piece)
-        {
-            Rectangle sourceRect = grid.imageTiles[0];
-            for (int y = 0; y < piece.currentRotation.GetLength(0); y++)
-            {
-                for (int x = 0; x < piece.currentRotation.GetLength(1); x++)
-                {
-                    switch (piece.currentRotation[y, x])
-                    {
-                        case 1:
-                            sourceRect = grid.imageTiles[0];
-                            break;
-                        case 2:
-                            sourceRect = grid.imageTiles[1];
-                            break;
-                        case 3:
-                            sourceRect = grid.imageTiles[2];
-                            break;
-                        case 4:
-                            sourceRect = grid.imageTiles[3];
-                            break;
-                        case 5:
-                            sourceRect = grid.imageTiles[4];
-                            break;
-                        case 6:
-                            sourceRect = grid.imageTiles[5];
-                            break;
-                        case 7:
-                            sourceRect = grid.imageTiles[6];
-                            break;
-                    }
-                    if (piece.currentRotation[y, x] != 0) 
-                    {
-                        spriteBatch.Draw(
-                                grid.ghostBlocks,
-                                new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (CalculateGhostPiece() * 8) + (int)_offset.Y - 160, 8, 8),
-                                sourceRect,
-                                Color.DarkGray
-                                );
-                    }
+                   
                 }
             }
         }
@@ -284,15 +271,13 @@ namespace MonoStacker.Source.GameObj
         public void Draw(SpriteBatch spriteBatch) 
         {
             spriteBatch.Begin();
-            spriteBatch.Draw(bgTest, _offset, Color.White);
+            //spriteBatch.Draw(bgTest, _offset, Color.White);
             grid.Draw(spriteBatch);
-            spriteBatch.Draw(border, new Vector2(_offset.X - 6, _offset.Y - 3), Color.DarkGray);
-            if (showActivePiece) 
-            {
-                DrawGhostPiece(spriteBatch, activePiece);
+            spriteBatch.Draw(border, new Vector2(_offset.X - 6, _offset.Y - 3), Color.White);
+            if (showActivePiece)
                 DrawPiece(spriteBatch, activePiece);
-            }
-                
+            nextPreview.Draw(spriteBatch);
+            holdPreview.Draw(spriteBatch);
             spriteBatch.End();
             
         }

@@ -223,7 +223,7 @@ namespace MonoStacker.Source.Generic
                 {
                     Color color = Color.LightGray;
                     if (y < 20)
-                        color = Color.DarkGray;
+                        color = Color.PaleVioletRed;
                     if (y == 0)
                         color = Color.Black;
 
