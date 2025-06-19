@@ -28,6 +28,7 @@ namespace MonoStacker.Source.Generic
 
         private Texture2D grid = GetContent.Load<Texture2D>("Image/Board/grid");
         public Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/0");
+        public Texture2D ghostBlocks = GetContent.Load<Texture2D>("Image/Block/0gp");
 
         public Grid(Microsoft.Xna.Framework.Vector2 Position) 
         {

@@ -19,6 +19,8 @@ namespace MonoStacker
         private Grid testGrid;
         private PlayField playField;
 
+        private Texture2D bg;
+
         public Game1()
         {
             _graphics = new GraphicsDeviceManager(this);
@@ -48,6 +50,7 @@ namespace MonoStacker
             // TODO: use this.Content to load your game content here
 
             playField = new PlayField(new Vector2(150, 35));
+            bg = GetContent.Load<Texture2D>("Image/Background/bg");
         }
 
         protected override void Update(GameTime gameTime)
@@ -64,6 +67,9 @@ namespace MonoStacker
         {
             GraphicsDevice.SetRenderTarget(scaledDisp);
             GraphicsDevice.Clear(Color.Black);
+            _spriteBatch.Begin();
+            _spriteBatch.Draw(bg, Vector2.Zero, Color.White);
+            _spriteBatch.End();
             playField.Draw(_spriteBatch);
 
             // TODO: Add your drawing code here

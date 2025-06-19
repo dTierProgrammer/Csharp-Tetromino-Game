@@ -14,8 +14,8 @@ namespace MonoStacker.Source.Generic
         public Piece() { rotationId = 0;  }
         public static int offset { get; set; }
 
-        public int offsetX = 2;
-        public int offsetY = 2;
+        public float offsetX { get; set; }
+        public float offsetY { get; set; }
 
         public void RotateCW() 
         {
