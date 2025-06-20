@@ -21,7 +21,6 @@ namespace MonoStacker.Source.Generic
         private const int ROWS = 40; // y
         // Higher than needed to account for pieces not covering death zone but above accesible field (guideline compliant)
         private const int COLUMNS = 10; // x
-        //private int[,] _matrix;
         private int[][] _matrix;
 
         public List<int> rowsToClear { get; private set; }
@@ -34,19 +33,8 @@ namespace MonoStacker.Source.Generic
         {
             rowsToClear = new();
             _offset = Position;
-            //_matrix = new int[ROWS, COLUMNS];
 
             GetImageCuts();
-
-            /*
-            for (int y = 0; y < ROWS; y++) // row
-            {
-                for (int x = 0; x < COLUMNS; x++) // column
-                {
-                    _matrix[y, x] = 0;
-                }
-            }
-            */
 
             _matrix = new int[ROWS][];
 
@@ -114,6 +102,40 @@ namespace MonoStacker.Source.Generic
                             return false;
                         //if (rowOffset + y < ROWS)
                             //continue;
+                        if (_matrix[rowOffset + y][columnOffset + x] != 0)
+                            return false;
+                    }
+                }
+            }
+
+            return true;
+        }
+
+        public bool IsDataPlacementValid(int[,] data, int rowOffset, int columnOffset) 
+        {
+            for (int y = 0; y < data.GetLength(0); y++) // row
+            {
+                for (int x = 0; x < data.GetLength(1); x++) // column
+                {
+                    if (data[y, x] > 0)
+                    {
+                        /*
+                        if (rowOffset + y < 0 || rowOffset + y > ROWS)
+                            return false;
+                        if (columnOffset + x < 0 || columnOffset + x > COLUMNS)
+                            return false;
+                        if (matrix[y + rowOffset, x + columnOffset] != 0)
+                            return false;
+                        */
+
+                        if (rowOffset + y >= ROWS)
+                            return false;
+                        if (columnOffset + x < 0)
+                            return false;
+                        if (columnOffset + x >= COLUMNS)
+                            return false;
+                        //if (rowOffset + y < ROWS)
+                        //continue;
                         if (_matrix[rowOffset + y][columnOffset + x] != 0)
                             return false;
                     }

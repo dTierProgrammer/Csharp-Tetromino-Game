@@ -8,6 +8,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoStacker.Source.Data;
 using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.Generic;
 using MonoStacker.Source.Global;
@@ -26,7 +27,7 @@ namespace MonoStacker.Source.GameObj
         Texture2D border = GetContent.Load<Texture2D>("Image/Board/generic_border_0");
         bool showGhostPiece = true;
         float lineClearDelay = .3f;
-        float lockDelayMax = .3f;
+        float lockDelayMax = 5f;
         float lockDelay;
         float dasTimerL = .1f;
         float dasTimerR = .1f;
@@ -90,6 +91,87 @@ namespace MonoStacker.Source.GameObj
             lockDelay = lockDelayMax;
         }
 
+        private bool RotateCWSRS() 
+        {
+            int testPt = 0;
+            switch (activePiece.rotationId) 
+            {
+                case 0: // 1 || 0 -> R
+                    testPt = 0;
+                    break;
+                case 1: // 2 || R -> 2
+                    testPt = 2;
+                    break; 
+                case 2: // 3 || 2 -> L
+                    testPt = 4;
+                    break;
+                case 3: // 0 || L -> 0
+                    testPt = 6;
+                    break;
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                if
+                    (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCW()],
+                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y)),
+                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X))) && activePiece is not O)
+                {
+                    activePiece.RotateCW();
+                    activePiece.offsetX += activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X;
+                    activePiece.offsetY += activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y;
+                    return true;
+                }
+                else 
+                {
+                    Debug.WriteLine("false at " + i);
+                    Console.WriteLine("false at " + i);
+                }
+                   
+            }
+            return false;
+        }
+
+        public bool RotateCCWSRS() 
+        {
+            int testPt = 0;
+            switch (activePiece.rotationId) 
+            {
+                case 0: // 3 || 0 -> L
+                    testPt = 7;
+                    break;
+                case 1: // 0 || R -> 0
+                    testPt = 1;
+                    break;
+                case 2: // 1 || 2 -> R
+                    testPt = 3;
+                    break;
+                case 3: // 2 || L -> 2
+                    testPt = 5;
+                    break;
+            }
+
+            for (int i = 0; i < 5; i++)
+            {
+                if
+                    (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCCW()],
+                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y)),
+                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X))) && activePiece is not O)
+                {
+                    activePiece.RotateCCW();
+                    activePiece.offsetX += activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X;
+                    activePiece.offsetY += activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y;
+                    return true;
+                }
+                else 
+                {
+                    Debug.WriteLine("false at " + i);
+                    Console.WriteLine("false at " + i);
+                }
+            }
+            return false;
+        }
+
         public void Update(float deltaTime) 
         {
             if (softDrop)
@@ -99,30 +181,14 @@ namespace MonoStacker.Source.GameObj
             nextPreview.Update();
             if (Keyboard.GetState().IsKeyDown(Keys.Up) && !prevKBState.IsKeyDown(Keys.Up) && showActivePiece)
             {
-                activePiece.RotateCW();
-                activePiece.Update();
-                if (!(grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX)))
-                {
-                    Debug.WriteLine("false");
-                    activePiece.RotateCCW();
-                    activePiece.Update();
-                }
+                RotateCWSRS();
                 activePiece.Update();
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Z) && !prevKBState.IsKeyDown(Keys.Z) && showActivePiece)
             {
-                activePiece.RotateCCW();
+                RotateCCWSRS();
                 activePiece.Update();
-                if (!(grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX))) 
-                {
-                    Debug.WriteLine("false");
-                    activePiece.RotateCW();
-                    activePiece.Update();
-                }
-                
             }
-
-
 
             if (Keyboard.GetState().IsKeyDown(Keys.Left) && showActivePiece)
             {

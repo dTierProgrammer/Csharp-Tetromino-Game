@@ -41,6 +41,7 @@ namespace MonoStacker.Source.Generic
                 {
                     HoldBox.Add(_playField.activePiece);
                     _playField.activePiece = _playField.nextPreview.GetNextPiece();
+                    ResetPiece(HoldBox.ElementAt(0));
                     canHold = false;
                 }
                 else if (HoldBox.Count == queueLength) 

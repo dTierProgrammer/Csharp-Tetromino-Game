@@ -37,6 +37,26 @@ namespace MonoStacker.Source.Generic
             
         }
 
+        public int ProjectRotateCW()
+        {
+            int projection = rotationId;
+            projection++;
+            if (projection > rotations.Count - 1)
+                projection = 0;
+
+            return projection;
+        }
+
+        public int ProjectRotateCCW()
+        {
+            int projection = rotationId;
+            projection--;
+            if (projection < 0)
+                projection = rotations.Count - 1;
+
+            return projection;
+        }
+
         public void Update() 
         {
             currentRotation = rotations[rotationId];
