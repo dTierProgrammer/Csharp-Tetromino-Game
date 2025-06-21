@@ -19,6 +19,13 @@ using Microsoft.Xna.Framework.Audio;
 
 namespace MonoStacker.Source.GameObj
 {
+    public enum SpinType 
+    {
+        None,
+        FullSpin,
+        MiniSpin
+    }
+
     public class PlayField
     {
         private Vector2 _offset;
@@ -41,6 +48,9 @@ namespace MonoStacker.Source.GameObj
         float dropSpeed;
         public NextPreview nextPreview { get; private set; }
         public HoldPreview holdPreview { get; private set; }
+        public bool b2bIsActive { get; private set; } = false;
+        public int b2bStreak { get; private set; }
+        public SpinType currentSpinType { get; private set; } = SpinType.None;
 
         private Texture2D bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
 
@@ -49,20 +59,20 @@ namespace MonoStacker.Source.GameObj
         private SoundEffect movePiece = GetContent.Load<SoundEffect>("Audio/Sound/move");
         private SoundEffect lockPiece = GetContent.Load<SoundEffect>("Audio/Sound/lock");
         private SoundEffect rotatePiece = GetContent.Load<SoundEffect>("Audio/Sound/rotate");
-        private SoundEffect clear0 = GetContent.Load<SoundEffect>("Audio/Sound/clear0");
-        private SoundEffect clear1 = GetContent.Load<SoundEffect>("Audio/Sound/clear1");
-        private SoundEffect clear2 = GetContent.Load<SoundEffect>("Audio/Sound/clear2");
-        private SoundEffect clear3 = GetContent.Load<SoundEffect>("Audio/Sound/clear3");
         private SoundEffect clear = GetContent.Load<SoundEffect>("Audio/Sound/clear");
         private SoundEffect lineFall = GetContent.Load<SoundEffect>("Audio/Sound/linefall");
         private SoundEffect applause = GetContent.Load<SoundEffect>("Audio/Sound/s_hakushu");
+        private SoundEffect b2b = GetContent.Load<SoundEffect>("Audio/Sound/b2b");
+        private SoundEffect b2bHit = GetContent.Load<SoundEffect>("Audio/Sound/b2b_hit");
+
+        public bool showDebug = true;
 
         public PlayField(Vector2 position)
         {
             _offset = position;
             grid = new Grid(_offset);
             lockDelay = lockDelayMax;
-            nextPreview = new(new Vector2((border.Width) + _offset.X, _offset.Y), 6);
+            nextPreview = new(new Vector2((border.Width) + _offset.X, _offset.Y), 3);
             activePiece = nextPreview.GetNextPiece();
             activePiece.offsetY = 20;
             activePiece.offsetX = 3;
@@ -168,6 +178,8 @@ namespace MonoStacker.Source.GameObj
                     activePiece.RotateCW();
                     activePiece.offsetX += activePiece is I ? SRSData.DataICW[testPt, i].X : SRSData.DataJLSTZCW[testPt, i].X;
                     activePiece.offsetY -= activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y;
+                    if(activePiece is T) 
+                        currentSpinType = grid.CheckForSpin(activePiece);
                     return true;
                 }
                 else 
@@ -211,6 +223,8 @@ namespace MonoStacker.Source.GameObj
                     activePiece.RotateCCW();
                     activePiece.offsetX += activePiece is I ? SRSData.DataICCW[testPt, i].X : SRSData.DataJLSTZCCW[testPt, i].X;
                     activePiece.offsetY -= activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y;
+                    if (activePiece is T)
+                        currentSpinType = grid.CheckForSpin(activePiece);
                     return true;
                 }
                 else 
@@ -328,8 +342,31 @@ namespace MonoStacker.Source.GameObj
                 {
                     LineClearFlash(Color.White, .5f);
                     clear.Play();
-                    if (grid.rowsToClear.Count() == 4)
-                        applause.Play();
+                    if (grid.rowsToClear.Count() == 4 || (activePiece is T && (currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
+                    {
+                        //applause.Play();
+                        if (!b2bIsActive)
+                        {
+                            b2bIsActive = true;
+                            b2bStreak = 0;
+                        }
+                        else
+                        {
+                            b2bStreak++;
+                            //b2bHit.Play();
+                            b2b.Play();
+                        }
+
+                    }
+                    else 
+                    {
+                        if (b2bIsActive) 
+                        {
+                            b2bIsActive = false;
+                            b2bStreak = 0;
+                        }
+                    }
+                        
                 }
                     lineClearDelay -= deltaTime;
                     if (lineClearDelay <= 0)
@@ -340,6 +377,7 @@ namespace MonoStacker.Source.GameObj
                         showActivePiece = true;
                         
                         lineFall.Play();
+                        currentSpinType = SpinType.None;
                         
                     }
             }
@@ -376,7 +414,7 @@ namespace MonoStacker.Source.GameObj
                             sourceRect = grid.imageTiles[6];
                             break;
                     }
-                    if (piece.currentRotation[y, x] != 0) 
+                    if (piece.currentRotation[y, x] > 0) 
                     {
                         if (showGhostPiece)
                         {
@@ -398,6 +436,35 @@ namespace MonoStacker.Source.GameObj
                    
                 }
             }
+            Texture2D cornerImg = grid.debugCM;
+            if (showActivePiece) 
+            {
+                for (int y = 0; y < piece.requiredCorners.GetLength(0); y++)
+                {
+                    for (int x = 0; x < piece.requiredCorners.GetLength(1); x++)
+                    {
+                        switch (piece.requiredCorners[y, x])
+                        {
+                            case 1:
+                                cornerImg = grid.debugCM;
+                                break;
+                            case 2:
+                                cornerImg = grid.debugCO;
+                                break;
+                        }
+
+                        if (piece.requiredCorners[y, x] > 0) 
+                        {
+                            spriteBatch.Draw(
+                                cornerImg,
+                                new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8),
+                                Color.White
+                                );
+                        }
+                    }
+                }
+            }
+            
         }
 
         public void Draw(SpriteBatch spriteBatch) 

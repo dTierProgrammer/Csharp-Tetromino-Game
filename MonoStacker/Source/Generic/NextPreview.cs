@@ -103,7 +103,7 @@ namespace MonoStacker.Source.Generic
                             sourceRect = queuePieceTiles[6];
                             break;
                     }
-                    if (piece.currentRotation[y, x] != 0) 
+                    if (piece.currentRotation[y, x] > 0) 
                     {
                         spriteBatch.Draw(
                             blocks,

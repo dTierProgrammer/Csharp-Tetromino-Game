@@ -39,7 +39,36 @@ namespace MonoStacker.Source.GameObj.Tetromino
                 { 0, 3, 0}
             });
 
+            spinData.Add(new int[,]
+            {
+                { 2, 2, 0},
+                { 0, 0, 0},
+                { 0, 0, 0}
+            });
+
+            spinData.Add(new int[,]
+            {
+                { 0, 0, 2},
+                { 0, 0, 2},
+                { 0, 0, 0}
+            });
+
+            spinData.Add(new int[,]
+            {
+                { 0, 0, 0},
+                { 0, 0, 0},
+                { 0, 2, 2}
+            });
+
+            spinData.Add(new int[,]
+            {
+                { 0, 0, 0},
+                { 2, 0, 0},
+                { 2, 0, 0}
+            });
+
             currentRotation = rotations[rotationId];
+            requiredCorners = spinData[rotationId];
         }
     }
 }

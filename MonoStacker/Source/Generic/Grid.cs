@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.Design;
 using System.Diagnostics;
 using System.Linq;
 using System.Net.Http.Headers;
@@ -7,6 +8,8 @@ using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using MonoStacker.Source.GameObj;
+using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
@@ -28,6 +31,9 @@ namespace MonoStacker.Source.Generic
         private Texture2D grid = GetContent.Load<Texture2D>("Image/Board/grid");
         public Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/0");
         public Texture2D ghostBlocks = GetContent.Load<Texture2D>("Image/Block/0gp");
+
+        public Texture2D debugCM = GetContent.Load<Texture2D>("Image/Block/cornerMandatory");
+        public Texture2D debugCO = GetContent.Load<Texture2D>("Image/Block/cornerOptional");
 
         public Grid(Microsoft.Xna.Framework.Vector2 Position) 
         {
@@ -68,7 +74,7 @@ namespace MonoStacker.Source.Generic
                 {
                     for (int x = 0; x < piece.currentRotation.GetLength(1); x++) // column
                     {
-                        if (piece.currentRotation[y, x] != 0) 
+                        if (piece.currentRotation[y, x] > 0) 
                         {
                             _matrix[y + rowOffset][ x + columnOffset] = piece.currentRotation[y, x];
                         }
@@ -100,9 +106,9 @@ namespace MonoStacker.Source.Generic
                             return false;
                         if (columnOffset + x >= COLUMNS)
                             return false;
-                        //if (rowOffset + y < ROWS)
+                        //if (rowOffset + y > ROWS)
                             //continue;
-                        if (_matrix[rowOffset + y][columnOffset + x] != 0)
+                        if (_matrix[rowOffset + y][columnOffset + x] > 0)
                             return false;
                     }
                 }
@@ -136,7 +142,7 @@ namespace MonoStacker.Source.Generic
                             return false;
                         //if (rowOffset + y < ROWS)
                         //continue;
-                        if (_matrix[rowOffset + y][columnOffset + x] != 0)
+                        if (_matrix[rowOffset + y][columnOffset + x] > 0)
                             return false;
                     }
                 }
@@ -170,6 +176,51 @@ namespace MonoStacker.Source.Generic
             return rowsToClear.Count;
         }
 
+
+        public SpinType CheckForSpin(Piece piece) // working, anticipating issues where tst is counted as tsd due to optional corners being out of matrix
+        {
+            int mandatoryCornersFilled = 0;
+            int optionalCornersFilled = 0;
+
+            for (int y = 0; y < piece.requiredCorners.GetLength(0); y++) // row
+            {
+                for (int x = 0; x < piece.requiredCorners.GetLength(1); x++) // column
+                {
+                    if (piece.requiredCorners[y, x] == 1)
+                    {
+                        if (_matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
+                            mandatoryCornersFilled++;
+                    }
+
+                    if (piece.requiredCorners[y, x] == 2)
+                    {
+                        if (_matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
+                            optionalCornersFilled++;
+                    }
+                }
+            }
+
+            if (piece is T)
+            {
+                if (mandatoryCornersFilled == 2 && optionalCornersFilled >= 1)
+                    return SpinType.FullSpin;
+                else if (mandatoryCornersFilled == 1)
+                    return SpinType.MiniSpin;
+            }
+            else
+            {
+                switch (optionalCornersFilled)
+                {
+                    case 1:
+                        return SpinType.MiniSpin;
+                    case 2:
+                        return SpinType.FullSpin;
+                }
+            }
+
+            return SpinType.None;
+        }
+
         public bool IsLineEmpty(int rowIndex) 
         {
             bool isEmpty = true;
@@ -177,7 +228,7 @@ namespace MonoStacker.Source.Generic
 
             for (int i = 0; i < COLUMNS; i++) 
             {
-                if (_matrix[rowIndex][i] != 0)
+                if (_matrix[rowIndex][i] > 0)
                 {
                     isEmpty = false;
                     break;
@@ -275,7 +326,7 @@ namespace MonoStacker.Source.Generic
                            
                     }
 
-                    if (_matrix[y][x] != 0 && !rowsToClear.Contains(y)) 
+                    if (_matrix[y][x] > 0 && !rowsToClear.Contains(y)) 
                     {
                         spriteBatch.Draw
                                 (

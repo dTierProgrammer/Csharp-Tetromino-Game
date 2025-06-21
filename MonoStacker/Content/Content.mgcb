@@ -13,6 +13,30 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Audio/Sound/b2b_hit.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/b2b_hit.wav
+
+#begin Audio/Sound/b2b.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/b2b.wav
+
+#begin Audio/Sound/b2b.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/b2b.wav
+
+#begin Audio/Sound/clear.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear.wav
+
 #begin Audio/Sound/clear.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -85,6 +109,12 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/linefall.wav
 
+#begin Audio/Sound/linefall.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/linefall.wav
+
 #begin Audio/Sound/lock.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -120,6 +150,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/rotate.wav
+
+#begin Audio/Sound/s_hakushu.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/s_hakushu.wav
 
 #begin Audio/Sound/s_hakushu.wav
 /importer:WavImporter
@@ -186,6 +222,30 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Block/0q.png
+
+#begin Image/Block/cornerMandatory.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Block/cornerMandatory.png
+
+#begin Image/Block/cornerOptional.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Block/cornerOptional.png
 
 #begin Image/Board/generic_border_0.png
 /importer:TextureImporter

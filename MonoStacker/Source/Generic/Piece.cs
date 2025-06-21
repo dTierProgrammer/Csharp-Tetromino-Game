@@ -9,7 +9,9 @@ namespace MonoStacker.Source.Generic
     public abstract class Piece
     {
         public readonly List<int[,]> rotations = new();
+        public readonly List<int[,]> spinData = new();
         public int[,] currentRotation { get; protected set; }
+        public int[,] requiredCorners { get; protected set; }
         public int rotationId { get; set; }
         public Piece() { rotationId = 0;  }
         public static int offset { get; set; }
@@ -33,8 +35,6 @@ namespace MonoStacker.Source.Generic
             rotationId--;
             if (rotationId < 0)
                 rotationId = rotations.Count - 1;
-
-            
         }
 
         public int ProjectRotateCW()
@@ -60,6 +60,7 @@ namespace MonoStacker.Source.Generic
         public void Update() 
         {
             currentRotation = rotations[rotationId];
+            requiredCorners = spinData[rotationId];
         }
     }
 }
