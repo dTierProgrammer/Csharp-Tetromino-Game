@@ -5,9 +5,11 @@ using System.Numerics;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.GameObj;
 using MonoStacker.Source.GameObj.Tetromino;
+using MonoStacker.Source.Global;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace MonoStacker.Source.Generic
@@ -17,6 +19,7 @@ namespace MonoStacker.Source.Generic
         PlayField _playField;
         public bool canHold;
         List<Piece> HoldBox;
+        private SoundEffect holdPiece = GetContent.Load<SoundEffect>("Audio/Sound/hold");
 
         public HoldPreview(Vector2 position, PlayField playField) : base(position) 
         {
@@ -54,7 +57,8 @@ namespace MonoStacker.Source.Generic
                     ResetPiece(HoldBox.ElementAt(0));
                     canHold = false;
                 }
-            }
+                holdPiece.Play();
+    }
         }
 
         public override void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset)

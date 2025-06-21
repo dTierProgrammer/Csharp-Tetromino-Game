@@ -13,6 +13,120 @@
 
 #---------------------------------- Content ---------------------------------#
 
+#begin Audio/Sound/clear.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear.wav
+
+#begin Audio/Sound/clear0.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear0.wav
+
+#begin Audio/Sound/clear0.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear0.wav
+
+#begin Audio/Sound/clear1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear1.wav
+
+#begin Audio/Sound/clear1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear1.wav
+
+#begin Audio/Sound/clear2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear2.wav
+
+#begin Audio/Sound/clear2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear2.wav
+
+#begin Audio/Sound/clear3.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear3.wav
+
+#begin Audio/Sound/clear3.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/clear3.wav
+
+#begin Audio/Sound/hold.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/hold.wav
+
+#begin Audio/Sound/hold.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/hold.wav
+
+#begin Audio/Sound/linefall.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/linefall.wav
+
+#begin Audio/Sound/lock.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/lock.wav
+
+#begin Audio/Sound/lock.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/lock.wav
+
+#begin Audio/Sound/move.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/move.wav
+
+#begin Audio/Sound/move.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/move.wav
+
+#begin Audio/Sound/rotate.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/rotate.wav
+
+#begin Audio/Sound/rotate.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/rotate.wav
+
+#begin Audio/Sound/s_hakushu.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/s_hakushu.wav
+
 #begin Image/Background/bg.png
 /importer:TextureImporter
 /processor:TextureProcessor

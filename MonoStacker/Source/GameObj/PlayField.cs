@@ -15,6 +15,7 @@ using MonoStacker.Source.Generic;
 using MonoStacker.Source.Global;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 using System.Data;
+using Microsoft.Xna.Framework.Audio;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -28,11 +29,13 @@ namespace MonoStacker.Source.GameObj
         Piece ghostPiece;
         Texture2D border = GetContent.Load<Texture2D>("Image/Board/generic_border_0");
         bool showGhostPiece = true;
-        float lineClearDelay = .3f;
+        const float lineClearDelayMax = .6f;
+        float lineClearDelay = lineClearDelayMax;
         float lockDelayMax = 5f;
         float lockDelay;
-        float dasTimerL = .1f;
-        float dasTimerR = .1f;
+        const float maxDasTime = .14f;
+        float dasTimerL = maxDasTime;
+        float dasTimerR = maxDasTime;
         bool showActivePiece = true;
         bool softDrop;
         float dropSpeed;
@@ -43,6 +46,17 @@ namespace MonoStacker.Source.GameObj
 
         private List<VisualEffect> _effectsList = new();
 
+        private SoundEffect movePiece = GetContent.Load<SoundEffect>("Audio/Sound/move");
+        private SoundEffect lockPiece = GetContent.Load<SoundEffect>("Audio/Sound/lock");
+        private SoundEffect rotatePiece = GetContent.Load<SoundEffect>("Audio/Sound/rotate");
+        private SoundEffect clear0 = GetContent.Load<SoundEffect>("Audio/Sound/clear0");
+        private SoundEffect clear1 = GetContent.Load<SoundEffect>("Audio/Sound/clear1");
+        private SoundEffect clear2 = GetContent.Load<SoundEffect>("Audio/Sound/clear2");
+        private SoundEffect clear3 = GetContent.Load<SoundEffect>("Audio/Sound/clear3");
+        private SoundEffect clear = GetContent.Load<SoundEffect>("Audio/Sound/clear");
+        private SoundEffect lineFall = GetContent.Load<SoundEffect>("Audio/Sound/linefall");
+        private SoundEffect applause = GetContent.Load<SoundEffect>("Audio/Sound/s_hakushu");
+
         public PlayField(Vector2 position)
         {
             _offset = position;
@@ -50,6 +64,8 @@ namespace MonoStacker.Source.GameObj
             lockDelay = lockDelayMax;
             nextPreview = new(new Vector2((border.Width) + _offset.X, _offset.Y), 6);
             activePiece = nextPreview.GetNextPiece();
+            activePiece.offsetY = 20;
+            activePiece.offsetX = 3;
         }
 
         public void Initialize() 
@@ -110,6 +126,7 @@ namespace MonoStacker.Source.GameObj
                 FlashPiece(activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f: .3f);
                 activePiece = nextPreview.GetNextPiece();
                 showActivePiece = true;
+                lockPiece.Play();
             }
             ResetLockDelay();
             holdPreview.canHold = true;
@@ -143,14 +160,14 @@ namespace MonoStacker.Source.GameObj
             {
                 if
                     (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCW()],
-                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y)),
+                    (int)(activePiece.offsetY - (activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y)),
                     (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataICW[testPt, i].X : SRSData.DataJLSTZCW[testPt, i].X))) && activePiece is not O)
                 {
                     Debug.WriteLine("true at " + i);
                     Console.WriteLine("true at " + i);
                     activePiece.RotateCW();
                     activePiece.offsetX += activePiece is I ? SRSData.DataICW[testPt, i].X : SRSData.DataJLSTZCW[testPt, i].X;
-                    activePiece.offsetY += activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y;
+                    activePiece.offsetY -= activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y;
                     return true;
                 }
                 else 
@@ -186,14 +203,14 @@ namespace MonoStacker.Source.GameObj
             {
                 if
                     (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCCW()],
-                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y)),
+                    (int)(activePiece.offsetY - (activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y)),
                     (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataICCW[testPt, i].X : SRSData.DataJLSTZCCW[testPt, i].X))) && activePiece is not O)
                 {
                     Debug.WriteLine("true at " + i);
                     Console.WriteLine("true at " + i);
                     activePiece.RotateCCW();
                     activePiece.offsetX += activePiece is I ? SRSData.DataICCW[testPt, i].X : SRSData.DataJLSTZCCW[testPt, i].X;
-                    activePiece.offsetY += activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y;
+                    activePiece.offsetY -= activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y;
                     return true;
                 }
                 else 
@@ -217,46 +234,61 @@ namespace MonoStacker.Source.GameObj
                 RotateCWSRS();
                 activePiece.Update();
                 Debug.WriteLine(activePiece.rotationId);
+                rotatePiece.Play();
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Z) && !prevKBState.IsKeyDown(Keys.Z) && showActivePiece)
             {
                 RotateCCWSRS();
                 activePiece.Update();
                 Debug.WriteLine(activePiece.rotationId);
+                rotatePiece.Play();
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Left) && showActivePiece)
             {
                 if (!prevKBState.IsKeyDown(Keys.Left))
                 {
-                    if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX - 1))
+                    if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX - 1)) 
+                    {
                         activePiece.offsetX -= 1;
+                        movePiece.Play();
+                    }
                 }
                 dasTimerL -= deltaTime;
                 if (dasTimerL <= 0)
                 {
                     if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX - 1))
+                    {
                         activePiece.offsetX -= 1;
+                        movePiece.Play();
+                    }
                 }
             }
             else if (Keyboard.GetState().IsKeyDown(Keys.Right) && showActivePiece)
             {
                 if (!prevKBState.IsKeyDown(Keys.Right))
                 {
-                    if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX + 1))
+                    if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX + 1)) 
+                    {
                         activePiece.offsetX += 1;
+                        movePiece.Play();
+                    }
+                        
                 }
                 dasTimerR -= deltaTime;
                 if (dasTimerR <= 0)
                 {
                     if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX + 1))
+                    {
                         activePiece.offsetX += 1;
+                        movePiece.Play();
+                    }
                 }
             }
             else 
             {
-                dasTimerR = .2f;
-                dasTimerL = .2f;
+                dasTimerR = maxDasTime;
+                dasTimerL = maxDasTime;
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.LeftShift) && !prevKBState.IsKeyDown(Keys.LeftShift) && showActivePiece)
@@ -292,19 +324,24 @@ namespace MonoStacker.Source.GameObj
 
             if (grid.CheckForLines() > 0)
             {
-                if(lineClearDelay == .3f)
-                    LineClearFlash(Color.White, .5f);
-                lineClearDelay -= deltaTime;
-                if (lineClearDelay <= 0)
+                if (lineClearDelay == lineClearDelayMax)
                 {
-                    grid.ClearLines();
-                    lineClearDelay = .3f;
-                    activePiece = nextPreview.GetNextPiece();
-                    showActivePiece = true;
-                    
+                    LineClearFlash(Color.White, .5f);
+                    clear.Play();
+                    if (grid.rowsToClear.Count() == 4)
+                        applause.Play();
                 }
-                
-
+                    lineClearDelay -= deltaTime;
+                    if (lineClearDelay <= 0)
+                    {
+                        grid.ClearLines();
+                        lineClearDelay = lineClearDelayMax;
+                        activePiece = nextPreview.GetNextPiece();
+                        showActivePiece = true;
+                        
+                        lineFall.Play();
+                        
+                    }
             }
         }
 
