@@ -21,7 +21,7 @@ namespace MonoStacker.Source.Generic
         private const int ROWS = 40; // y
         // Higher than needed to account for pieces not covering death zone but above accesible field (guideline compliant)
         private const int COLUMNS = 10; // x
-        private int[][] _matrix;
+        public int[][] _matrix { get; private set; }
 
         public List<int> rowsToClear { get; private set; }
 

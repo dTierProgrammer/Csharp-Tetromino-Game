@@ -9,10 +9,12 @@ using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Data;
+using MonoStacker.Source.VisualEffects;
 using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.Generic;
 using MonoStacker.Source.Global;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
+using System.Data;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -39,6 +41,7 @@ namespace MonoStacker.Source.GameObj
 
         private Texture2D bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
 
+        private List<VisualEffect> _effectsList = new();
 
         public PlayField(Vector2 position)
         {
@@ -62,6 +65,31 @@ namespace MonoStacker.Source.GameObj
 
         private void ResetPiece() { }
 
+        public void FlashPiece(Color color, float timeDislplayed) 
+        {
+            for (int y = 0; y < activePiece.currentRotation.GetLength(0); y++) 
+            {
+                for (int x = 0; x < activePiece.currentRotation.GetLength(1); x++) 
+                {
+                    if (activePiece.currentRotation[y, x] != 0) 
+                    {
+                        _effectsList.Add(new LockFlash(new Vector2((x * 8) + ((int)activePiece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)activePiece.offsetY * 8) + (int)_offset.Y - 160), color, timeDislplayed));
+                    }
+                }
+            }
+        }
+
+        public void LineClearFlash(Color color, float timeDisplayed) 
+        {
+            for (int y = 0; y < 40; y++)
+            {
+                if (grid.rowsToClear.Contains(y))
+                {
+                    _effectsList.Add(new ClearFlash(new Vector2(((border.Width / 2) - 5) + _offset.X, (int)(y * 8) + _offset.Y - 157), color, timeDisplayed));
+                }
+            }
+        }
+
         private int CalculateGhostPiece() 
         {
             int xOff = (int)activePiece.offsetX;
@@ -79,6 +107,7 @@ namespace MonoStacker.Source.GameObj
             showActivePiece = false;
             if (grid.CheckForLines() == 0)
             {
+                FlashPiece(activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f: .3f);
                 activePiece = nextPreview.GetNextPiece();
                 showActivePiece = true;
             }
@@ -94,19 +123,19 @@ namespace MonoStacker.Source.GameObj
         private bool RotateCWSRS() 
         {
             int testPt = 0;
-            switch (activePiece.rotationId) 
+            switch (activePiece.ProjectRotateCW()) 
             {
-                case 0: // 1 || 0 -> R
+                case 0:
+                    testPt = 3;
+                    break;
+                case 1:
                     testPt = 0;
-                    break;
-                case 1: // 2 || R -> 2
-                    testPt = 2;
                     break; 
-                case 2: // 3 || 2 -> L
-                    testPt = 4;
+                case 2: 
+                    testPt = 1;
                     break;
-                case 3: // 0 || L -> 0
-                    testPt = 6;
+                case 3:
+                    testPt = 2;
                     break;
             }
 
@@ -114,12 +143,14 @@ namespace MonoStacker.Source.GameObj
             {
                 if
                     (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCW()],
-                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y)),
-                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X))) && activePiece is not O)
+                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y)),
+                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataICW[testPt, i].X : SRSData.DataJLSTZCW[testPt, i].X))) && activePiece is not O)
                 {
+                    Debug.WriteLine("true at " + i);
+                    Console.WriteLine("true at " + i);
                     activePiece.RotateCW();
-                    activePiece.offsetX += activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X;
-                    activePiece.offsetY += activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y;
+                    activePiece.offsetX += activePiece is I ? SRSData.DataICW[testPt, i].X : SRSData.DataJLSTZCW[testPt, i].X;
+                    activePiece.offsetY += activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y;
                     return true;
                 }
                 else 
@@ -135,19 +166,19 @@ namespace MonoStacker.Source.GameObj
         public bool RotateCCWSRS() 
         {
             int testPt = 0;
-            switch (activePiece.rotationId) 
+            switch (activePiece.ProjectRotateCCW()) 
             {
-                case 0: // 3 || 0 -> L
-                    testPt = 7;
+                case 0:
+                    testPt = 0;
                     break;
-                case 1: // 0 || R -> 0
+                case 1:
                     testPt = 1;
                     break;
-                case 2: // 1 || 2 -> R
-                    testPt = 3;
+                case 2:
+                    testPt = 2;
                     break;
-                case 3: // 2 || L -> 2
-                    testPt = 5;
+                case 3:
+                    testPt = 3;
                     break;
             }
 
@@ -155,12 +186,14 @@ namespace MonoStacker.Source.GameObj
             {
                 if
                     (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCCW()],
-                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y)),
-                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X))) && activePiece is not O)
+                    (int)(activePiece.offsetY + (activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y)),
+                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataICCW[testPt, i].X : SRSData.DataJLSTZCCW[testPt, i].X))) && activePiece is not O)
                 {
+                    Debug.WriteLine("true at " + i);
+                    Console.WriteLine("true at " + i);
                     activePiece.RotateCCW();
-                    activePiece.offsetX += activePiece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X;
-                    activePiece.offsetY += activePiece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y;
+                    activePiece.offsetX += activePiece is I ? SRSData.DataICCW[testPt, i].X : SRSData.DataJLSTZCCW[testPt, i].X;
+                    activePiece.offsetY += activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y;
                     return true;
                 }
                 else 
@@ -183,11 +216,13 @@ namespace MonoStacker.Source.GameObj
             {
                 RotateCWSRS();
                 activePiece.Update();
+                Debug.WriteLine(activePiece.rotationId);
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Z) && !prevKBState.IsKeyDown(Keys.Z) && showActivePiece)
             {
                 RotateCCWSRS();
                 activePiece.Update();
+                Debug.WriteLine(activePiece.rotationId);
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Left) && showActivePiece)
@@ -224,13 +259,8 @@ namespace MonoStacker.Source.GameObj
                 dasTimerL = .2f;
             }
 
-
-
             if (Keyboard.GetState().IsKeyDown(Keys.LeftShift) && !prevKBState.IsKeyDown(Keys.LeftShift) && showActivePiece)
                 holdPreview.SwapPiece();
-
-
-
 
             if (Keyboard.GetState().IsKeyDown(Keys.Down) && showActivePiece)
                 softDrop = true;
@@ -239,34 +269,31 @@ namespace MonoStacker.Source.GameObj
             
 
             if (Keyboard.GetState().IsKeyDown(Keys.Space) && !prevKBState.IsKeyDown(Keys.Space) && showActivePiece)
-            {
                 HardDrop();
-            }
+
+            if (Keyboard.GetState().IsKeyDown(Keys.T) && !prevKBState.IsKeyDown(Keys.T) && showActivePiece)
+                _effectsList.Add(new ClearFlash(new Vector2(100, 100), Color.Red, .5f));
 
             prevKBState = Keyboard.GetState();
 
             if (grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + dropSpeed), (int)activePiece.offsetX))
-            {
                 activePiece.offsetY += dropSpeed;
-            }
+
             else 
             {
                 lockDelay -= deltaTime;
-
-                /*
-                if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX - 1) ||
-                    grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX - 1)) // makes lock delay inconsisteny when no directional inputs are made...
-                    lockDelay += deltaTime / 1.2f;
-                */
-                    if (lockDelay <= 0) 
-                {
+                if (lockDelay <= 0) 
                     LockPiece();
-                }
             }
 
+            foreach (var item in _effectsList) 
+                item.Update(deltaTime);
+            _effectsList.RemoveAll(item => item.TimeDisplayed < 0);
 
             if (grid.CheckForLines() > 0)
             {
+                if(lineClearDelay == .3f)
+                    LineClearFlash(Color.White, .5f);
                 lineClearDelay -= deltaTime;
                 if (lineClearDelay <= 0)
                 {
@@ -274,7 +301,9 @@ namespace MonoStacker.Source.GameObj
                     lineClearDelay = .3f;
                     activePiece = nextPreview.GetNextPiece();
                     showActivePiece = true;
+                    
                 }
+                
 
             }
         }
@@ -344,6 +373,8 @@ namespace MonoStacker.Source.GameObj
                 DrawPiece(spriteBatch, activePiece);
             nextPreview.Draw(spriteBatch);
             holdPreview.Draw(spriteBatch);
+            foreach (var item in _effectsList)
+                item.Draw(spriteBatch);
             spriteBatch.End();
             
         }
