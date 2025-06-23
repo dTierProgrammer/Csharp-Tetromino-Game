@@ -25,29 +25,11 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/b2b.wav
 
-#begin Audio/Sound/b2b.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/b2b.wav
-
 #begin Audio/Sound/clear.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/clear.wav
-
-#begin Audio/Sound/clear.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/clear.wav
-
-#begin Audio/Sound/clear0.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/clear0.wav
 
 #begin Audio/Sound/clear0.wav
 /importer:WavImporter
@@ -61,29 +43,11 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/clear1.wav
 
-#begin Audio/Sound/clear1.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/clear1.wav
-
 #begin Audio/Sound/clear2.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/clear2.wav
-
-#begin Audio/Sound/clear2.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/clear2.wav
-
-#begin Audio/Sound/clear3.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/clear3.wav
 
 #begin Audio/Sound/clear3.wav
 /importer:WavImporter
@@ -97,29 +61,11 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/hold.wav
 
-#begin Audio/Sound/hold.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/hold.wav
-
 #begin Audio/Sound/linefall.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/linefall.wav
-
-#begin Audio/Sound/linefall.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/linefall.wav
-
-#begin Audio/Sound/lock.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/lock.wav
 
 #begin Audio/Sound/lock.wav
 /importer:WavImporter
@@ -133,29 +79,11 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/move.wav
 
-#begin Audio/Sound/move.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/move.wav
-
 #begin Audio/Sound/rotate.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/rotate.wav
-
-#begin Audio/Sound/rotate.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/rotate.wav
-
-#begin Audio/Sound/s_hakushu.wav
-/importer:WavImporter
-/processor:SoundEffectProcessor
-/processorParam:Quality=Best
-/build:Audio/Sound/s_hakushu.wav
 
 #begin Audio/Sound/s_hakushu.wav
 /importer:WavImporter
@@ -180,6 +108,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Background/bg.png
+
+#begin Image/Background/bg1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Background/bg1.png
 
 #begin Image/Background/custombg_example_megurineluka.png
 /importer:TextureImporter
@@ -253,6 +193,18 @@
 /processorParam:TextureFormat=Color
 /build:Image/Block/cornerOptional.png
 
+#begin Image/Board/border.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/border.png
+
 #begin Image/Board/generic_border_0.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -276,6 +228,30 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Board/grid.png
+
+#begin Image/Board/grid.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/grid.png
+
+#begin Image/Board/queue_q.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/queue_q.png
 
 #begin Image/Board/queue.png
 /importer:TextureImporter

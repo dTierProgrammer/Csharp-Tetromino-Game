@@ -34,6 +34,9 @@ namespace MonoStacker.Source.Generic
 
         public Texture2D debugCM = GetContent.Load<Texture2D>("Image/Block/cornerMandatory");
         public Texture2D debugCO = GetContent.Load<Texture2D>("Image/Block/cornerOptional");
+        private Texture2D draw = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect");
+
+        bool drawLines = true;
 
         public Grid(Microsoft.Xna.Framework.Vector2 Position) 
         {
@@ -298,9 +301,9 @@ namespace MonoStacker.Source.Generic
             {
                 for (int x = 0; x < COLUMNS; x++) 
                 {
-                    Color color = Color.LightGray;
+                    Color color = Color.DarkGray;
                     if (y < 20)
-                        color = Color.PaleVioletRed;
+                        color = new Color(100, 100, 100);
                     if (y == 0)
                         color = Color.Black;
 
@@ -339,6 +342,22 @@ namespace MonoStacker.Source.Generic
                                 sourceRect,
                                 color
                                 );
+
+                        if (drawLines) 
+                        {
+                            if (y >= 19 && !(x - 1 < 0) && (_matrix[y][x - 1] == 0) ||
+                                (y <= 19 && x == 0) ||
+                                (y <= 19 && x > 0 && (_matrix[y][x - 1] == 0)))
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), 1, TILESIZE), Color.White);
+                            if  ((y >= 19 && !(x + 1 >= COLUMNS) && _matrix[y][x + 1] == 0) ||
+                                (y <= 19 && x == COLUMNS - 1) || 
+                                (y <= 19 && x < COLUMNS - 1) && _matrix[y][x + 1] == 0)
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X + 7), (int)((y * TILESIZE) + _offset.Y - 160), 1, TILESIZE), Color.White);
+                            if (!(y - 1 < 0) && (_matrix[y - 1][x] == 0) || rowsToClear.Contains(y - 1))
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, 1), Color.White);
+                            if (!(y + 1 >= ROWS) && (_matrix[y + 1][x] == 0 || rowsToClear.Contains(y + 1)))
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160 + 7), TILESIZE, 1), Color.White);
+                        }
                     }
                 }
             }

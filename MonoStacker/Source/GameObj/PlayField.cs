@@ -42,7 +42,7 @@ namespace MonoStacker.Source.GameObj
         KeyboardState prevKBState;
         public Piece activePiece { get; set; }
         Piece ghostPiece;
-        Texture2D border = GetContent.Load<Texture2D>("Image/Board/generic_border_0");
+        Texture2D border = GetContent.Load<Texture2D>("Image/Board/border");
         bool showGhostPiece = true;
         const float lineClearDelayMax = .6f;
         float lineClearDelay = lineClearDelayMax;
@@ -82,7 +82,7 @@ namespace MonoStacker.Source.GameObj
             _offset = position;
             grid = new Grid(_offset);
             lockDelay = lockDelayMax;
-            nextPreview = new(new Vector2((border.Width) + _offset.X, _offset.Y), 6);
+            nextPreview = new(new Vector2((border.Width) + _offset.X + 2, _offset.Y), 5);
             activePiece = nextPreview.GetNextPiece();
             activePiece.offsetY = 20;
             activePiece.offsetX = 3;
@@ -90,7 +90,7 @@ namespace MonoStacker.Source.GameObj
 
         public void Initialize() 
         {
-            holdPreview = new(new Vector2(_offset.X - 28, _offset.Y), this);
+            holdPreview = new(new Vector2(_offset.X - 42, _offset.Y), this);
         }
 
         private void HardDrop()
@@ -115,13 +115,13 @@ namespace MonoStacker.Source.GameObj
             }
         }
 
-        public void FlashPiece(Color color, float timeDislplayed, Vector2 distortFactor)
+        public void FlashPiece(Piece piece, Color color, float timeDislplayed, Vector2 distortFactor)
         {
-            for (int y = 0; y < activePiece.currentRotation.GetLength(0); y++)
+            for (int y = 0; y < piece.currentRotation.GetLength(0); y++)
             {
-                for (int x = 0; x < activePiece.currentRotation.GetLength(1); x++)
+                for (int x = 0; x < piece.currentRotation.GetLength(1); x++)
                 {
-                    if (activePiece.currentRotation[y, x] != 0)
+                    if (piece.currentRotation[y, x] != 0)
                     {
                         _effectsList.Add(new LockFlash(new Vector2((x * 8) + ((int)activePiece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)activePiece.offsetY * 8) + (int)_offset.Y - 160), color, timeDislplayed, distortFactor));
                     }
@@ -135,7 +135,7 @@ namespace MonoStacker.Source.GameObj
             {
                 if (grid.rowsToClear.Contains(y))
                 {
-                    _effectsList.Add(new ClearFlash(new Vector2(((border.Width / 2) - 5) + _offset.X, (int)(y * 8) + _offset.Y - 157), color, timeDisplayed));
+                    _effectsList.Add(new ClearFlash(new Vector2(((border.Width / 2) - 5) + _offset.X, (int)(y * 8) + _offset.Y - 157), color, timeDisplayed, new Vector2(3, 1)));
                 }
             }
         }
@@ -391,19 +391,19 @@ namespace MonoStacker.Source.GameObj
                     if (currentSpinType != SpinType.None) // fake switch case
                     {
                         if (activePiece is I)
-                            FlashPiece(Color.Cyan, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Cyan, .5f, new Vector2(.5f, .5f));
                         if (activePiece is J)
-                            FlashPiece(Color.RoyalBlue, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.RoyalBlue, .5f, new Vector2(.5f, .5f));
                         if (activePiece is L)
-                            FlashPiece(Color.Orange, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Orange, .5f, new Vector2(.5f, .5f));
                         if (activePiece is O)
-                            FlashPiece(Color.Yellow, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Yellow, .5f, new Vector2(.5f, .5f));
                         if (activePiece is S)
-                            FlashPiece(Color.Green, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Green, .5f, new Vector2(.5f, .5f));
                         if (activePiece is T)
-                            FlashPiece(Color.Purple, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Magenta, .5f, new Vector2(.5f, .5f));
                         if (activePiece is Z)
-                            FlashPiece(Color.Red, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Red, .5f, new Vector2(.5f, .5f));
                     }
 
                     if (grid.rowsToClear.Count() == 4 || (activePiece is T && (currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
@@ -538,7 +538,7 @@ namespace MonoStacker.Source.GameObj
             spriteBatch.Begin();
             //spriteBatch.Draw(bgTest, _offset, Color.White);
             grid.Draw(spriteBatch);
-            spriteBatch.Draw(border, new Vector2(_offset.X - 6, _offset.Y - 3), Color.White);
+            spriteBatch.Draw(border, new Vector2(_offset.X - 4, _offset.Y - 4), Color.White);
             if (showActivePiece)
                 DrawPiece(spriteBatch, activePiece);
             nextPreview.Draw(spriteBatch);

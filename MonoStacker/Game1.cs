@@ -53,7 +53,7 @@ namespace MonoStacker
             playField = new PlayField(new Vector2(150, 35));
             playField.Initialize();
             testPV = new NextPreview(new Vector2(10, 10), 6);
-            bg = GetContent.Load<Texture2D>("Image/Background/bg");
+            bg = GetContent.Load<Texture2D>("Image/Background/bg1");
         }
 
         protected override void Update(GameTime gameTime)

@@ -107,12 +107,12 @@ namespace MonoStacker.Source.Generic
 
         public override void Draw(SpriteBatch spriteBatch) 
         {
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, _offset.Y - 3), queueBorderTiles[2], Color.White);
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, (queueLength * GRIDSIZE) + _offset.Y), queueBorderTiles[2], Color.White);
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, _offset.Y - 12), queueBorderTiles[4], Color.White);
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (queueLength * GRIDSIZE) + _offset.Y), queueBorderTiles[2], Color.White);
             for (int i = 0; i < queueLength; i++)
             {
-                spriteBatch.Draw(borderTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[0], Color.White);
-                spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 2, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
+                spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
+                spriteBatch.Draw(borderTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[3], Color.White);
             }
             if (HoldBox.Count() > 0)
                 DrawPiece(spriteBatch, HoldBox.ElementAt(0), _offset);
