@@ -163,6 +163,12 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/s_hakushu.wav
 
+#begin Audio/Sound/spinrotate.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/spinrotate.wav
+
 #begin Image/Background/bg.png
 /importer:TextureImporter
 /processor:TextureProcessor

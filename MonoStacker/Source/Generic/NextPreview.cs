@@ -29,7 +29,7 @@ namespace MonoStacker.Source.Generic
             pieceQueue = new();
             GetImageCuts();
 
-            for(int i = 0; i < queueLength; i++)
+            for(int i = 0; i < 7; i++)
                 pieceQueue.Add(_GenerateTetromino.RandomTetromino7Bag());
         }
 
@@ -67,7 +67,7 @@ namespace MonoStacker.Source.Generic
         public virtual void Update() 
         {
             
-            if (pieceQueue.Count() < queueLength)
+            if (pieceQueue.Count() < 7)
                 pieceQueue.Add(_GenerateTetromino.RandomTetromino7Bag());
             
         }
@@ -118,9 +118,10 @@ namespace MonoStacker.Source.Generic
 
         public void DrawQueue(SpriteBatch spriteBatch) 
         {
-            for (int i = 0; i < pieceQueue.Count(); i++)
+            for (int i = 0; i < 7; i++)
             {
-                DrawPiece(spriteBatch, pieceQueue.ElementAt(i), new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y));
+                if(i < queueLength)
+                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i), new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y));
             }
         }
 

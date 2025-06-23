@@ -106,8 +106,8 @@ namespace MonoStacker.Source.Generic
                             return false;
                         if (columnOffset + x >= COLUMNS)
                             return false;
-                        //if (rowOffset + y > ROWS)
-                            //continue;
+                        if (rowOffset + y > ROWS)
+                            continue;
                         if (_matrix[rowOffset + y][columnOffset + x] > 0)
                             return false;
                     }
@@ -140,8 +140,8 @@ namespace MonoStacker.Source.Generic
                             return false;
                         if (columnOffset + x >= COLUMNS)
                             return false;
-                        //if (rowOffset + y < ROWS)
-                        //continue;
+                        if (rowOffset + y > ROWS)
+                            continue;
                         if (_matrix[rowOffset + y][columnOffset + x] > 0)
                             return false;
                     }
@@ -177,7 +177,7 @@ namespace MonoStacker.Source.Generic
         }
 
 
-        public SpinType CheckForSpin(Piece piece) // working, anticipating issues where tst is counted as tsd due to optional corners being out of matrix
+        public SpinType CheckForSpin(Piece piece)
         {
             int mandatoryCornersFilled = 0;
             int optionalCornersFilled = 0;
@@ -188,13 +188,17 @@ namespace MonoStacker.Source.Generic
                 {
                     if (piece.requiredCorners[y, x] == 1)
                     {
-                        if (_matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
+                        if ((piece.offsetX + x >= COLUMNS || piece.offsetX + x < 0) ||
+                            (piece.offsetY + y >= ROWS || piece.offsetY + y < 0) ||
+                            _matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
                             mandatoryCornersFilled++;
                     }
 
                     if (piece.requiredCorners[y, x] == 2)
                     {
-                        if (_matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
+                        if((piece.offsetX + x >= COLUMNS || piece.offsetX + x < 0) ||
+                            (piece.offsetY + y >= ROWS || piece.offsetY + y < 0) ||
+                            _matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
                             optionalCornersFilled++;
                     }
                 }
@@ -204,7 +208,7 @@ namespace MonoStacker.Source.Generic
             {
                 if (mandatoryCornersFilled == 2 && optionalCornersFilled >= 1)
                     return SpinType.FullSpin;
-                else if (mandatoryCornersFilled == 1)
+                else if (mandatoryCornersFilled == 1 && optionalCornersFilled >= 1)
                     return SpinType.MiniSpin;
             }
             else

@@ -14,6 +14,8 @@ namespace MonoStacker.Source.VisualEffects
         Color tint;
         float rectWidth;
         float rectHeight;
+        protected Vector2 distortFactor = new Vector2(3, 3);
+        
 
         public ClearFlash(Vector2 position, Color color, float timeDisplayed) : base(position)
         {
@@ -25,13 +27,24 @@ namespace MonoStacker.Source.VisualEffects
             rectWidth = image.Width;
             rectHeight = image.Height;
         }
+        public ClearFlash(Vector2 position, Color color, float timeDisplayed, Vector2 distortFactor) : base(position)
+        {
+            this.position = position;
+            tint = color;
+            MaxTimeDisplayed = timeDisplayed;
+            TimeDisplayed = timeDisplayed;
+            image = GetContent.Load<Texture2D>("Image/Effect/clearEffect");
+            rectWidth = image.Width;
+            rectHeight = image.Height;
+            this.distortFactor = distortFactor;
+        }
 
         public override void Update(float deltaTime)
         {
             TimeDisplayed -= deltaTime;
             tint *= (TimeDisplayed / (MaxTimeDisplayed));
-            rectWidth += 3f;
-            rectHeight += 3f;
+            rectWidth += distortFactor.X;
+            rectHeight += distortFactor.Y;
         }
 
         public override void Draw(SpriteBatch spriteBatch)
