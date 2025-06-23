@@ -75,7 +75,7 @@ namespace MonoStacker.Source.GameObj
         private SoundEffect b2bHit = GetContent.Load<SoundEffect>("Audio/Sound/b2b_hit");
         private SoundEffect pieceSpin = GetContent.Load<SoundEffect>("Audio/Sound/spinrotate");
 
-        public bool showDebug = false;
+        public bool showDebug = true;
 
         public PlayField(Vector2 position)
         {
@@ -516,6 +516,9 @@ namespace MonoStacker.Source.GameObj
                                 break;
                             case 2:
                                 cornerImg = grid.debugCO;
+                                break;
+                            case 3:
+                                cornerImg = GetContent.Load<Texture2D>("Image/Block/cenPt");
                                 break;
                         }
 

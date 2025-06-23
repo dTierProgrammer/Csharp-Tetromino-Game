@@ -20,7 +20,7 @@ namespace MonoStacker.Source.GameObj.Tetromino
             spinData.Add(new int[,]
             {
                 { 0, 0},
-                { 0, 0}
+                { 3, 0}
             });
 
             currentRotation = rotations[rotationId];

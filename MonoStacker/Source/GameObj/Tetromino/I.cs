@@ -46,7 +46,14 @@ namespace MonoStacker.Source.GameObj.Tetromino
             spinData.Add(new int[,]
             {
                 { 0, 0, 0, 0 },
+                { 0, 3, 0, 0 },
                 { 0, 0, 0, 0 },
+                { 0, 0, 0, 0 }
+            });
+            spinData.Add(new int[,]
+            {
+                { 0, 0, 0, 0 },
+                { 0, 0, 3, 0 },
                 { 0, 0, 0, 0 },
                 { 0, 0, 0, 0 }
             });
@@ -54,21 +61,14 @@ namespace MonoStacker.Source.GameObj.Tetromino
             {
                 { 0, 0, 0, 0 },
                 { 0, 0, 0, 0 },
-                { 0, 0, 0, 0 },
+                { 0, 0, 3, 0 },
                 { 0, 0, 0, 0 }
             });
             spinData.Add(new int[,]
             {
                 { 0, 0, 0, 0 },
                 { 0, 0, 0, 0 },
-                { 0, 0, 0, 0 },
-                { 0, 0, 0, 0 }
-            });
-            spinData.Add(new int[,]
-            {
-                { 0, 0, 0, 0 },
-                { 0, 0, 0, 0 },
-                { 0, 0, 0, 0 },
+                { 0, 3, 0, 0 },
                 { 0, 0, 0, 0 }
             });
 
