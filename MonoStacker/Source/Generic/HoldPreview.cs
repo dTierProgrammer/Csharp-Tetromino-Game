@@ -114,8 +114,18 @@ namespace MonoStacker.Source.Generic
                 spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
                 spriteBatch.Draw(borderTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[3], Color.White);
             }
-            if (HoldBox.Count() > 0)
-                DrawPiece(spriteBatch, HoldBox.ElementAt(0), _offset);
+            if (HoldBox.Count() > 0) 
+            {
+                int buffer = 0;
+                if (HoldBox.ElementAt(0) is O)
+                    buffer = 8;
+                else if (HoldBox.ElementAt(0) is I)
+                    buffer = 0;
+                else
+                    buffer = 4;
+                DrawPiece(spriteBatch, HoldBox.ElementAt(0), new Vector2(_offset.X + buffer, _offset.Y));
+            }
+                
         }
     }
 }

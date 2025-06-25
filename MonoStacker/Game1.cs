@@ -14,9 +14,6 @@ namespace MonoStacker
         private SpriteBatch _spriteBatch;
         private RenderTarget2D scaledDisp;
 
-        private Texture2D test;
-
-        private Grid testGrid;
         private PlayField playField;
 
         private Texture2D bg;
@@ -27,8 +24,8 @@ namespace MonoStacker
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
 
-            _graphics.PreferredBackBufferWidth = 1536;
-            _graphics.PreferredBackBufferHeight = 864;
+            _graphics.PreferredBackBufferWidth = 1712;
+            _graphics.PreferredBackBufferHeight = 960;
             _graphics.ApplyChanges();
 
             scaledDisp = new RenderTarget2D(GraphicsDevice, GraphicsDevice.DisplayMode.Width / 4, GraphicsDevice.DisplayMode.Height / 4);
@@ -50,7 +47,7 @@ namespace MonoStacker
             _spriteBatch = new SpriteBatch(GraphicsDevice);
             // TODO: use this.Content to load your game content here
 
-            playField = new PlayField(new Vector2(150, 35));
+            playField = new PlayField(new Vector2(43 + 43, 120 - 84 + 12));
             playField.Initialize();
             testPV = new NextPreview(new Vector2(10, 10), 6);
             bg = GetContent.Load<Texture2D>("Image/Background/bg1");

@@ -15,12 +15,14 @@ namespace MonoStacker.Source.Generic
         protected Vector2 _offset;
         protected int queueLength;
         protected static Texture2D borderTexture = GetContent.Load<Texture2D>("Image/Board/queue_q");
-        protected static Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/0");
+        protected static Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/1");
         protected static List<Rectangle> queueBorderTiles = new();
         protected static List<Rectangle> queuePieceTiles = new();
         protected const int TILESIZE = 8;
-        protected const int GRIDSIZE = 32;
+        protected const int GRIDSIZE = 24;
         protected List<Piece> pieceQueue;
+
+        bool alignPiecesToCenter = true;
 
         public NextPreview(Vector2 position, int queueLength) 
         {
@@ -53,9 +55,9 @@ namespace MonoStacker.Source.Generic
             queuePieceTiles.Add(new Rectangle(0, 8, 8, 8));
 
             queueBorderTiles.Add(new Rectangle(0, 0, 40, 12)); // top
-            queueBorderTiles.Add(new Rectangle(0, 12, 40, 32)); // sides
+            queueBorderTiles.Add(new Rectangle(0, 12, 40, GRIDSIZE)); // sides
             queueBorderTiles.Add(new Rectangle(0, 44, 40, 4)); // bottom
-            queueBorderTiles.Add(new Rectangle(40, 12, 32, 32)); // grid
+            queueBorderTiles.Add(new Rectangle(40, 12, 32, GRIDSIZE)); // grid
             
 
             queueBorderTiles.Add(new Rectangle(40, 0, 41, 12)); // top hold
@@ -122,10 +124,22 @@ namespace MonoStacker.Source.Generic
 
         public void DrawQueue(SpriteBatch spriteBatch) 
         {
-            for (int i = 0; i < 7; i++)
+            int buffer = 0;
+            for (int i = 1; i <= 7; i++)
             {
-                if(i < queueLength)
-                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i), new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y));
+                
+                if ((i - 1) < queueLength) 
+                {
+                    if (pieceQueue.ElementAt(i - 1) is O)
+                        buffer = 8;
+                    else if (pieceQueue.ElementAt(i - 1) is I)
+                        buffer = 0;
+                    else
+                        buffer = 4;
+
+                        DrawPiece(spriteBatch, pieceQueue.ElementAt(i - 1), new Vector2(_offset.X + buffer, ((i - 1) * GRIDSIZE) + _offset.Y));
+                }
+                    
             }
         }
 
