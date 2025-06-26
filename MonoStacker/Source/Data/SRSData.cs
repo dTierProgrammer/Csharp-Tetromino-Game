@@ -27,14 +27,14 @@ namespace MonoStacker.Source.Data
 
         public static Point[,] DataJLSTZ = new Point[,] 
         {
-            { new(0, 0), new(-1, 0), new(-1, 1), new(0, -2), new(-1, -2)}, // 0 -> R
-            { new(0, 0), new(1, 0), new(1, -1), new(0, 2), new(1, 2)}, // R -> 0
-            { new(0, 0), new(1, 0), new(1, -1), new(0, 2), new(1, 2)}, // R -> 2
-            { new(0, 0), new(-1, 0), new(-1, 1), new(0, -2), new(-1, -2)}, // 2 -> R
-            { new(0, 0), new(1, 0), new(1, 1), new(0, -2), new(1, -2)}, // 2 -> L
-            { new(0, 0), new(-1, 0), new(-1, -1), new(0, 2), new(-1, 2)}, // L -> 2
-            { new(0, 0), new(-1, 0), new(-1,-1), new( 0, 2), new(-1, 2)}, // L -> 0
-            { new(0, 0), new(1, 0), new(1, 1), new (0, -2), new(1, -2)}  // 0 -> L
+            /* 0 -> 1 (0)*/{ new(0, 0), new(-1, 0), new(-1, 1), new(0, -2), new(-1, -2)},
+            /* 1 -> 0 (1)*/{ new(0, 0), new(1, 0), new(1, -1), new(0, 2), new(1, 2)},
+            /* 1 -> 2 (2)*/{ new(0, 0), new(1, 0), new(1, -1), new(0, 2), new(1, 2)},
+            /* 2 -> 1 (3)*/{ new(0, 0), new(-1, 0), new(-1, 1), new(0, -2), new(-1, -2)},
+            /* 2 -> 3 (4)*/{ new(0, 0), new(1, 0), new(1, 1), new(0, -2), new(1, -2)},
+            /* 3 -> 2 (5)*/{ new(0, 0), new(-1, 0), new(-1, -1), new(0, 2), new(-1, 2)},
+            /* 3 -> 0 (6)*/{ new(0, 0), new(-1, 0), new(-1,-1), new( 0, 2), new(-1, 2)},
+            /* 0 -> 3 (7)*/{ new(0, 0), new(1, 0), new(1, 1), new (0, -2), new(1, -2)}
         };
 
         public static Point[,] DataJLSTZCW = new Point[,] 

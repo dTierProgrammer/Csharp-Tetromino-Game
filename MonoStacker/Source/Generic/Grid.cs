@@ -28,7 +28,7 @@ namespace MonoStacker.Source.Generic
 
         public List<int> rowsToClear { get; private set; }
 
-        public Texture2D grid { get; set; } = GetContent.Load<Texture2D>("Image/Board/bg_gradient");
+        public Texture2D grid { get; set; } = GetContent.Load<Texture2D>("Image/Board/grid");
         public Texture2D blocks { get; set; } = GetContent.Load<Texture2D>("Image/Block/1");
         public Texture2D ghostBlocks { get; set; } = GetContent.Load<Texture2D>("Image/Block/0gp");
 

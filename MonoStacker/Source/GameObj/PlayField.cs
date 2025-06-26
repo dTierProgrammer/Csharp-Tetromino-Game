@@ -34,10 +34,17 @@ namespace MonoStacker.Source.GameObj
         AllSpin
     }
 
+    public enum RotationType
+    {
+        Clockwise = 0,
+        CounterClockwise = 1
+        //Flip = 2
+    }
+
     public class PlayField
     {
         private Vector2 _offset;
-        Grid grid;
+        private Grid _grid;
 
         KeyboardState prevKBState;
         public Piece activePiece { get; set; }
@@ -55,6 +62,7 @@ namespace MonoStacker.Source.GameObj
         public int lockDelayResetRotateMax { get; set; } = 6;
         int lockDelayResetMovement { get; set; }
         int lockDelayResetRotate { get; set; }
+
         const float maxDasTime = .14f;
         float dasTimerL = maxDasTime;
         float dasTimerR = maxDasTime;
@@ -68,6 +76,7 @@ namespace MonoStacker.Source.GameObj
         public bool b2bIsActive { get; private set; } = false;
         public int b2bStreak { get; private set; }
         public SpinType currentSpinType { get; private set; } = SpinType.None;
+        public SpinDenotation parsedSpins = SpinDenotation.AllSpin;
 
         private Texture2D bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
 
@@ -84,14 +93,14 @@ namespace MonoStacker.Source.GameObj
         private SoundEffect b2bHit = GetContent.Load<SoundEffect>("Audio/Sound/b2b_hit");
         private SoundEffect pieceSpin = GetContent.Load<SoundEffect>("Audio/Sound/spinrotate");
 
-        public bool showDebug = false;
+        public bool showDebug = true;
         private float prevXOffset;
         private float prevRotationId;
 
         public PlayField(Vector2 position)
         {
             _offset = position;
-            grid = new Grid(_offset);
+            _grid = new Grid(_offset);
             lineClearDelay = lineClearDelayMax;
             lockDelay = lockDelayMax;
             lockDelayResetMovement = lockDelayResetMovementMax;
@@ -150,7 +159,7 @@ namespace MonoStacker.Source.GameObj
         {
             for (int y = 0; y < 40; y++)
             {
-                if (grid.rowsToClear.Contains(y))
+                if (_grid.rowsToClear.Contains(y))
                 {
                     _effectsList.Add(new ClearFlash(new Vector2(((border.Width / 2) - 5) + _offset.X, (int)(y * 8) + _offset.Y - 157), color, timeDisplayed, new Vector2(3, 1)));
                 }
@@ -161,7 +170,7 @@ namespace MonoStacker.Source.GameObj
         {
             int xOff = (int)activePiece.offsetX;
             int yOff = (int)activePiece.offsetY;
-            while (grid.IsPlacementValid(activePiece, yOff + 1, xOff))
+            while (_grid.IsPlacementValid(activePiece, yOff + 1, xOff))
             {
                 yOff++;
             }
@@ -172,9 +181,9 @@ namespace MonoStacker.Source.GameObj
         {
             activePieceColor = Color.White;
             ResetLockDelay();
-            grid.LockPiece(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX);
+            _grid.LockPiece(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX);
             showActivePiece = false;
-            if (grid.CheckForLines() == 0)
+            if (_grid.CheckForLines() == 0)
             {
                 if (pieceEntryDelay == pieceEntryDelayMax)
                     FlashPiece(activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f: .3f);
@@ -195,7 +204,7 @@ namespace MonoStacker.Source.GameObj
         private void MovePiece(float movementAmt) 
         {
             activePieceColor = Color.White;
-            if (grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)(activePiece.offsetX + movementAmt)))
+            if (_grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)(activePiece.offsetX + movementAmt)))
             {
                 activePiece.offsetX += movementAmt;
                 movePiece.Play();
@@ -237,106 +246,102 @@ namespace MonoStacker.Source.GameObj
             return false;
         }
 
-        private bool RotateCWSRS() 
+        public bool RotateSRS(Piece piece, RotationType rotation)
         {
-            activePieceColor = Color.White;
             currentSpinType = SpinType.None;
-            int testPt = 0;
-            switch (activePiece.ProjectRotateCW()) 
+            int previousRotation = piece.rotationId;
+            int projectedRotation = 0;
+            switch (rotation)
             {
-                case 0:
-                    testPt = 3;
+                case (RotationType)0:
+                    projectedRotation = piece.ProjectRotateCW();
                     break;
-                case 1:
-                    testPt = 0;
-                    break; 
-                case 2: 
-                    testPt = 1;
-                    break;
-                case 3:
-                    testPt = 2;
+                case (RotationType)1:
+                    projectedRotation = piece.ProjectRotateCCW();
                     break;
             }
 
-            for (int i = 0; i < 5; i++)
+            int testPt = 0;
+
+            switch (projectedRotation)
             {
-                if
-                    (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCW()],
-                    (int)(activePiece.offsetY - (activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y)),
-                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataICW[testPt, i].X : SRSData.DataJLSTZCW[testPt, i].X))) && activePiece is not O)
-                {
-                    activePiece.RotateCW();
-                    activePiece.offsetX += activePiece is I ? SRSData.DataICW[testPt, i].X : SRSData.DataJLSTZCW[testPt, i].X;
-                    activePiece.offsetY -= activePiece is I ? SRSData.DataICW[testPt, i].Y : SRSData.DataJLSTZCW[testPt, i].Y;
-                    if(activePiece is T) 
-                        currentSpinType = grid.CheckForSpin(activePiece);
-
-                    if (currentSpinType != SpinType.None)
-                        pieceSpin.Play();
-                    else
-                        rotatePiece.Play();
-
-
-                    if ((int)activePiece.offsetY == (int)CalculateGhostPiece())
+                case 0:
+                    if (previousRotation == 3) 
                     {
-                        ResetLockDelayRotate();
-                    }
-                    
-
-                    return true;
-                }
-                   
-            }
-            return false;
-        }
-
-        public bool RotateCCWSRS() 
-        {
-            activePieceColor = Color.White;
-            currentSpinType = SpinType.None;
-            int testPt = 0;
-            switch (activePiece.ProjectRotateCCW()) 
-            {
-                case 0:
-                    testPt = 0;
+                        testPt = 6;
+                        break;
+                    } // cw
+                        
+                    else if (previousRotation == 1) // ccw
+                        testPt = 1;
                     break;
                 case 1:
-                    testPt = 1;
+                    if (previousRotation == 0) 
+                    {
+                        testPt = 0;
+                        break;
+                    } // cw
+                        
+                    else if (previousRotation == 2) // ccw
+                        testPt = 3;
                     break;
                 case 2:
-                    testPt = 2;
+                    if (previousRotation == 1) 
+                    {
+                        testPt = 2;
+                    } // cw
+                        
+                    else if (previousRotation == 3) // ccw
+                        testPt = 5;
                     break;
                 case 3:
-                    testPt = 3;
+                    if (previousRotation == 2) 
+                    {
+                        testPt = 4;
+                        break;
+                    } // cw
+                        
+                    else if (previousRotation == 0) // ccw
+                        testPt = 7;
                     break;
             }
 
             for (int i = 0; i < 5; i++)
             {
-                if
-                    (grid.IsDataPlacementValid(activePiece.rotations[activePiece.ProjectRotateCCW()],
-                    (int)(activePiece.offsetY - (activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y)),
-                    (int)(activePiece.offsetX + (activePiece is I ? SRSData.DataICCW[testPt, i].X : SRSData.DataJLSTZCCW[testPt, i].X))) && activePiece is not O)
+                if (_grid.IsDataPlacementValid(piece.rotations[rotation == 0 ? piece.ProjectRotateCW() : piece.ProjectRotateCCW()],
+                    (int)(piece.offsetY - (piece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y)),
+                    (int)(piece.offsetX + (piece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X))))
                 {
-                    activePiece.RotateCCW();
-                    activePiece.offsetX += activePiece is I ? SRSData.DataICCW[testPt, i].X : SRSData.DataJLSTZCCW[testPt, i].X;
-                    activePiece.offsetY -= activePiece is I ? SRSData.DataICCW[testPt, i].Y : SRSData.DataJLSTZCCW[testPt, i].Y;
-                    if (activePiece is T)
+                    switch (rotation)
                     {
-                        currentSpinType = grid.CheckForSpin(activePiece);
-                        if (currentSpinType == SpinType.MiniSpin || currentSpinType == SpinType.FullSpin)
-                            pieceSpin.Play();
-                        else
-                            rotatePiece.Play();
+                        case (RotationType)0:
+                            piece.RotateCW();
+                            break;
+                        case (RotationType)1:
+                            piece.RotateCCW();
+                            break;
                     }
-                    else 
-                    { rotatePiece.Play(); }
 
-                    if ((int)activePiece.offsetY == (int)CalculateGhostPiece())
+                    piece.offsetX += piece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X;
+                    piece.offsetY -= piece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y;
+
+                    switch (parsedSpins)
+                    {
+                        case SpinDenotation.TSpinOnly:
+                            if (piece is T)
+                                currentSpinType = _grid.CheckForSpin(piece);
+                            break;
+                        default:
+                            currentSpinType = _grid.CheckForSpin(piece);
+                            break;
+                    }
+
+                    if ((int)piece.offsetY == CalculateGhostPiece()) 
                     {
                         ResetLockDelayRotate();
+                        activePieceColor = Color.White;
                     }
-
+                        
                     return true;
                 }
             }
@@ -346,21 +351,20 @@ namespace MonoStacker.Source.GameObj
         public void Update(float deltaTime) 
         {
             if (softDrop)
-                dropSpeed = .5f;
+                dropSpeed = .3f;
             else
-                dropSpeed = .02f;
+                dropSpeed = .03f;
+
             nextPreview.Update();
             if (Keyboard.GetState().IsKeyDown(Keys.Up) && !prevKBState.IsKeyDown(Keys.Up) && showActivePiece)
             {
-                RotateCWSRS();
+                RotateSRS(activePiece, RotationType.Clockwise);
                 activePiece.Update();
-                Debug.WriteLine($"LDRM: {lockDelayResetMovement}, LDRR: {lockDelayResetRotate}");
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Z) && !prevKBState.IsKeyDown(Keys.Z) && showActivePiece)
             {
-                RotateCCWSRS();
+                RotateSRS(activePiece, RotationType.CounterClockwise);
                 activePiece.Update();
-                Debug.WriteLine($"LDRM: {lockDelayResetMovement}, LDRR: {lockDelayResetRotate}");
             }
 
             if (Keyboard.GetState().IsKeyDown(Keys.Left) && showActivePiece)
@@ -402,11 +406,19 @@ namespace MonoStacker.Source.GameObj
 
             prevKBState = Keyboard.GetState();
 
-            if (grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + dropSpeed), (int)activePiece.offsetX)) 
+            if (activePiece.offsetY + dropSpeed <= CalculateGhostPiece())
             {
-                activePiece.offsetY += dropSpeed;
+                if (_grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + dropSpeed), (int)activePiece.offsetX))
+                {
+                    activePiece.offsetY += dropSpeed;
+                }
             }
-            if((int)activePiece.offsetY == (int)CalculateGhostPiece())
+            else 
+            {
+                activePiece.offsetY = CalculateGhostPiece();
+            }
+
+            if ((int)activePiece.offsetY == (int)CalculateGhostPiece())
             {
                 lockDelay -= deltaTime;
 
@@ -424,12 +436,14 @@ namespace MonoStacker.Source.GameObj
                 item.Update(deltaTime);
             _effectsList.RemoveAll(item => item.TimeDisplayed < 0);
 
-            if (grid.CheckForLines() > 0)
+            if (_grid.CheckForLines() > 0)
             {
+                activePieceColor = Color.White;
+                lockDelay = lockDelayMax;
                 if (lineClearDelay == lineClearDelayMax)
                 {
                     LineClearFlash(Color.White, .5f);
-                    if (grid.rowsToClear.Count() == 4)
+                    if (_grid.rowsToClear.Count() == 4)
                         bigClear.Play();
                     else
                         clear.Play();
@@ -437,22 +451,22 @@ namespace MonoStacker.Source.GameObj
                     if (currentSpinType != SpinType.None) // fake switch case
                     {
                         if (activePiece is I)
-                            FlashPiece(activePiece, Color.Cyan, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Cyan, .7f, new Vector2(.5f, .5f));
                         if (activePiece is J)
-                            FlashPiece(activePiece, Color.RoyalBlue, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.RoyalBlue, .7f, new Vector2(.5f, .5f));
                         if (activePiece is L)
-                            FlashPiece(activePiece, Color.Orange, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Orange, .7f, new Vector2(.5f, .5f));
                         if (activePiece is O)
-                            FlashPiece(activePiece, Color.Yellow, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Yellow, .7f, new Vector2(.5f, .5f));
                         if (activePiece is S)
-                            FlashPiece(activePiece, Color.Green, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Green, .7f, new Vector2(.5f, .5f));
                         if (activePiece is T)
-                            FlashPiece(activePiece, Color.Magenta, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Magenta, .7f, new Vector2(.5f, .5f));
                         if (activePiece is Z)
-                            FlashPiece(activePiece, Color.Red, .5f, new Vector2(.5f, .5f));
+                            FlashPiece(activePiece, Color.Red, .7f, new Vector2(.5f, .5f));
                     }
 
-                    if (grid.rowsToClear.Count() == 4 || (activePiece is T && (currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
+                    if (_grid.rowsToClear.Count() == 4 || ((currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
                     {
                         
                         if (!b2bIsActive)
@@ -481,7 +495,7 @@ namespace MonoStacker.Source.GameObj
                 lineClearDelay -= deltaTime;
                 if (lineClearDelay <= 0)
                 {
-                    grid.ClearLines();
+                    _grid.ClearLines();
                     lineClearDelay = lineClearDelayMax;
                     activePiece = nextPreview.GetNextPiece();
                     showActivePiece = true;
@@ -497,7 +511,7 @@ namespace MonoStacker.Source.GameObj
 
         public void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
         {
-            Rectangle sourceRect = grid.imageTiles[0];
+            Rectangle sourceRect = _grid.imageTiles[0];
             for (int y = 0; y < piece.currentRotation.GetLength(0); y++) 
             {
                 for (int x = 0; x < piece.currentRotation.GetLength(1); x++) 
@@ -505,25 +519,25 @@ namespace MonoStacker.Source.GameObj
                     switch (piece.currentRotation[y, x]) 
                     {
                         case 1:
-                            sourceRect = grid.imageTiles[0];
+                            sourceRect = _grid.imageTiles[0];
                             break;
                         case 2:
-                            sourceRect = grid.imageTiles[1];
+                            sourceRect = _grid.imageTiles[1];
                             break;
                         case 3:
-                            sourceRect = grid.imageTiles[2];
+                            sourceRect = _grid.imageTiles[2];
                             break;
                         case 4:
-                            sourceRect = grid.imageTiles[3];
+                            sourceRect = _grid.imageTiles[3];
                             break;
                         case 5:
-                            sourceRect = grid.imageTiles[4];
+                            sourceRect = _grid.imageTiles[4];
                             break;
                         case 6:
-                            sourceRect = grid.imageTiles[5];
+                            sourceRect = _grid.imageTiles[5];
                             break;
                         case 7:
-                            sourceRect = grid.imageTiles[6];
+                            sourceRect = _grid.imageTiles[6];
                             break;
                     }
                     if (piece.currentRotation[y, x] > 0) 
@@ -531,7 +545,7 @@ namespace MonoStacker.Source.GameObj
                         if (showGhostPiece)
                         {
                             spriteBatch.Draw(
-                                    grid.ghostBlocks,
+                                    _grid.ghostBlocks,
                                     new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (CalculateGhostPiece() * 8) + (int)_offset.Y - 160, 8, 8),
                                     sourceRect,
                                     Color.White * .5f
@@ -539,7 +553,7 @@ namespace MonoStacker.Source.GameObj
                         }
 
                         spriteBatch.Draw(
-                                grid.blocks,
+                                _grid.blocks,
                                 new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8),
                                 sourceRect,
                                 activePieceColor
@@ -548,7 +562,7 @@ namespace MonoStacker.Source.GameObj
                    
                 }
             }
-            Texture2D cornerImg = grid.debugCM;
+            Texture2D cornerImg = _grid.debugCM;
             if (showActivePiece && showDebug) 
             {
                 for (int y = 0; y < piece.requiredCorners.GetLength(0); y++)
@@ -558,10 +572,10 @@ namespace MonoStacker.Source.GameObj
                         switch (piece.requiredCorners[y, x])
                         {
                             case 1:
-                                cornerImg = grid.debugCM;
+                                cornerImg = _grid.debugCM;
                                 break;
                             case 2:
-                                cornerImg = grid.debugCO;
+                                cornerImg = _grid.debugCO;
                                 break;
                             case 3:
                                 cornerImg = GetContent.Load<Texture2D>("Image/Block/cenPt");
@@ -579,14 +593,13 @@ namespace MonoStacker.Source.GameObj
                     }
                 }
             }
-            
         }
 
         public void Draw(SpriteBatch spriteBatch) 
         {
             spriteBatch.Begin();
             spriteBatch.Draw(bgTest, _offset, Color.White);
-            grid.Draw(spriteBatch);
+            _grid.Draw(spriteBatch);
             spriteBatch.Draw(border, new Vector2(_offset.X - 4, _offset.Y - 4), Color.White);
             if (showActivePiece)
                 DrawPiece(spriteBatch, activePiece);
