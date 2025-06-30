@@ -154,6 +154,7 @@ namespace MonoStacker.Source.Generic
                 //spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 2, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[3], Color.White);
             }
             */
+
             spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, _offset.Y - 12), queueBorderTiles[0], Color.White);
             spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (queueLength * GRIDSIZE) + _offset.Y), queueBorderTiles[2], Color.White);
             for (int i = 0; i < queueLength; i++)
