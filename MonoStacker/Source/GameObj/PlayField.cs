@@ -48,20 +48,34 @@ namespace MonoStacker.Source.GameObj
         Right = 1
     }
 
+    public enum BoardState 
+    {
+        GameStart,
+        Neutral,
+        LineClearWait,
+        PieceEntryWait,
+        GameEnd
+    }
+
     public class PlayField
     {
         private Vector2 _offset;
         private Grid _grid;
 
         KeyboardState prevKBState;
+        InputManager _inputManager;
+
+        BoardState currentBoardState = BoardState.Neutral;
+        BoardState[] noDrawStates = new BoardState[] { BoardState.LineClearWait, BoardState.PieceEntryWait, BoardState.GameEnd};
         
         public Piece activePiece { get; set; }
         private Color activePieceColor = Color.White;
         Texture2D border = GetContent.Load<Texture2D>("Image/Board/border");
         bool showGhostPiece = true;
-        public float lineClearDelayMax { get; set; } = .5f;
+        float waitTime = 0;
+        public float lineClearDelayMax { get; set; } = .3f;
         private float lineClearDelay;
-        public float pieceEntryDelayMax { get; set; } = 0.06f;
+        public float pieceEntryDelayMax { get; set; } = 0f;
         private float pieceEntryDelay;
 
         public float lockDelayMax { get; set; } = .63f;
@@ -72,8 +86,6 @@ namespace MonoStacker.Source.GameObj
         int lockDelayResetRotate { get; set; }
 
         const float maxDasTime = .14f;
-        float dasTimerL = maxDasTime;
-        float dasTimerR = maxDasTime;
         private bool isPieceActive = true;
         private bool softDrop;
         private float dropSpeed;
@@ -100,6 +112,9 @@ namespace MonoStacker.Source.GameObj
         private SoundEffect b2b = GetContent.Load<SoundEffect>("Audio/Sound/b2b");
         private SoundEffect b2bHit = GetContent.Load<SoundEffect>("Audio/Sound/b2b_hit");
         private SoundEffect pieceSpin = GetContent.Load<SoundEffect>("Audio/Sound/spinrotate");
+
+        Dictionary<GameAction, float> eventTimeStamps = new();
+        List<GameAction> lastEvents = new();
         
 
 #if DEBUG
@@ -116,13 +131,17 @@ namespace MonoStacker.Source.GameObj
             lockDelay = lockDelayMax;
             lockDelayResetMovement = lockDelayResetMovementMax;
             lockDelayResetRotate = lockDelayResetRotateMax;
-            dasTimerL = maxDasTime;
-            dasTimerR = maxDasTime;
             pieceEntryDelay = pieceEntryDelayMax;
-            nextPreview = new(new Vector2((border.Width) + _offset.X + 2, _offset.Y), 1);
+            nextPreview = new(new Vector2((border.Width) + _offset.X + 2, _offset.Y), 6);
             activePiece = nextPreview.GetNextPiece();
             activePiece.offsetY = 20;
             activePiece.offsetX = 3;
+            _inputManager = new();
+        }
+
+        public void SetDelay(float delayAmt) 
+        {
+
         }
 
         public void Initialize() 
@@ -145,25 +164,13 @@ namespace MonoStacker.Source.GameObj
             }
         }
 
-        private bool MoveDelayedAutoShift(ShiftDirection direction, float time)
+        private bool CanDas(GameTime gameTime, float timeStamp)
         {
-            if (time == 0)
+            if ((float)(gameTime.TotalGameTime.TotalSeconds - timeStamp) >= maxDasTime) 
             {
-                if((int)direction == -1)
-                    MovePiece(-1);
-                
-                if((int)direction == 1)
-                    MovePiece(1);
-            }
-            else if (time >= maxDasTime)
-            {
-                if((int)direction == -1)
-                    MovePiece(-1);
-                if((int)direction == 1)
-                    MovePiece(1);
                 return true;
             }
-
+                
             return false;
         }
 
@@ -202,8 +209,8 @@ namespace MonoStacker.Source.GameObj
 
                     if ((int)piece.offsetY == CalculateGhostPiece())
                     {
-                        ResetLockDelayRotate();
-                        activePieceColor = Color.White;
+                        if (ResetLockDelayRotate())
+                            activePieceColor = Color.White;
                     }
                     activePiece.Update();
                     return true;
@@ -223,27 +230,20 @@ namespace MonoStacker.Source.GameObj
             return yOff;
         }
 
-        private void LockPiece(float deltaTime)
+        private void LockPiece(GameTime gameTime)
         {
             activePieceColor = Color.White;
             ResetLockDelay();
             _grid.LockPiece(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX);
-            isPieceActive = false;
-            Console.WriteLine(pieceEntryDelay);
-            if (_grid.CheckForLines() == 0)
+            if (_grid.CheckForLines() == 0) 
             {
-                if (pieceEntryDelay == pieceEntryDelayMax)
-                    FlashPiece(activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f);
-
-                pieceEntryDelay -= deltaTime;
-
-                if (pieceEntryDelay <= 0)
-                {
-                    activePiece = nextPreview.GetNextPiece();
-                    isPieceActive = true;
-                    lockPiece.Play();
-                    pieceEntryDelay = pieceEntryDelayMax;
-                }
+                currentBoardState = BoardState.PieceEntryWait;
+                pieceEntryDelay = pieceEntryDelayMax;
+            }
+            else if (_grid.CheckForLines() > 0) 
+            {
+                currentBoardState = BoardState.LineClearWait;
+                lineClearDelay = lineClearDelayMax;
             }
             holdPreview.canHold = true;
         }
@@ -278,7 +278,7 @@ namespace MonoStacker.Source.GameObj
             return false;
         }
 
-        private void GravitySoftDrop(float deltaTime) 
+        private void GravitySoftDrop(GameTime gameTime) 
         {
             if (softDrop)
                 dropSpeed = .3f;
@@ -299,27 +299,21 @@ namespace MonoStacker.Source.GameObj
 
             if ((int)activePiece.offsetY == (int)CalculateGhostPiece())
             {
-                lockDelay -= deltaTime;
+                lockDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                 
-                /*
-                activePieceColor.R -= (byte)(lockDelay * 17);
-                activePieceColor.G -= (byte)(lockDelay * 17);
-                activePieceColor.B -= (byte)(lockDelay * 17);
-                */
-
                 activePieceColor.R = (byte)Single.Lerp(activePieceColor.R, 50, (lockDelayMax - lockDelay) / 4);
                 activePieceColor.G = (byte)Single.Lerp(activePieceColor.G, 50, (lockDelayMax - lockDelay) / 4);
                 activePieceColor.B = (byte)Single.Lerp(activePieceColor.B, 50, (lockDelayMax - lockDelay) / 4);
                 
                 if (lockDelay <= 0)
-                    LockPiece(deltaTime);
+                    LockPiece(gameTime);
             }
         }
 
-        private void HardDrop(float deltaTime)
+        private void HardDrop(GameTime gameTime)
         {
             activePiece.offsetY = CalculateGhostPiece();
-            LockPiece(deltaTime);
+            LockPiece(gameTime);
         }
 
         public void FlashPiece(Color color, float timeDislplayed) 
@@ -350,74 +344,62 @@ namespace MonoStacker.Source.GameObj
             }
         }
 
-        private void ClearFilledLines(float deltaTime) 
+        private void ClearFilledLines() 
         {
-            if (_grid.CheckForLines() > 0)
+
+            activePieceColor = Color.White;
+            lockDelay = lockDelayMax;
+            if (lineClearDelay == lineClearDelayMax)
             {
-                activePieceColor = Color.White;
-                lockDelay = lockDelayMax;
-                if (lineClearDelay == lineClearDelayMax)
+                LineClearFlash(Color.White, .5f);
+                if (_grid.rowsToClear.Count() == 4)
+                    bigClear.Play();
+                else
+                    clear.Play();
+
+                if (currentSpinType != SpinType.None) // fake switch case
                 {
-                    LineClearFlash(Color.White, .5f);
-                    if (_grid.rowsToClear.Count() == 4)
-                        bigClear.Play();
-                    else
-                        clear.Play();
+                    if (activePiece is I)
+                        FlashPiece(activePiece, Color.Cyan, .7f, new Vector2(.5f, .5f));
+                    if (activePiece is J)
+                        FlashPiece(activePiece, Color.RoyalBlue, .7f, new Vector2(.5f, .5f));
+                    if (activePiece is L)
+                        FlashPiece(activePiece, Color.Orange, .7f, new Vector2(.5f, .5f));
+                    if (activePiece is O)
+                        FlashPiece(activePiece, Color.Yellow, .7f, new Vector2(.5f, .5f));
+                    if (activePiece is S)
+                        FlashPiece(activePiece, Color.Green, .7f, new Vector2(.5f, .5f));
+                    if (activePiece is T)
+                        FlashPiece(activePiece, Color.Magenta, .7f, new Vector2(.5f, .5f));
+                    if (activePiece is Z)
+                        FlashPiece(activePiece, Color.Red, .7f, new Vector2(.5f, .5f));
+                }
 
-                    if (currentSpinType != SpinType.None) // fake switch case
+                if (_grid.rowsToClear.Count() == 4 || ((currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
+                {
+
+                    if (!b2bIsActive)
                     {
-                        if (activePiece is I)
-                            FlashPiece(activePiece, Color.Cyan, .7f, new Vector2(.5f, .5f));
-                        if (activePiece is J)
-                            FlashPiece(activePiece, Color.RoyalBlue, .7f, new Vector2(.5f, .5f));
-                        if (activePiece is L)
-                            FlashPiece(activePiece, Color.Orange, .7f, new Vector2(.5f, .5f));
-                        if (activePiece is O)
-                            FlashPiece(activePiece, Color.Yellow, .7f, new Vector2(.5f, .5f));
-                        if (activePiece is S)
-                            FlashPiece(activePiece, Color.Green, .7f, new Vector2(.5f, .5f));
-                        if (activePiece is T)
-                            FlashPiece(activePiece, Color.Magenta, .7f, new Vector2(.5f, .5f));
-                        if (activePiece is Z)
-                            FlashPiece(activePiece, Color.Red, .7f, new Vector2(.5f, .5f));
-                    }
-
-                    if (_grid.rowsToClear.Count() == 4 || ((currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
-                    {
-
-                        if (!b2bIsActive)
-                        {
-                            b2bIsActive = true;
-                            b2bStreak = 0;
-                        }
-                        else
-                        {
-                            b2bStreak++;
-                            //b2bHit.Play();
-                            applause.Play();
-                        }
+                        b2bIsActive = true;
+                        b2bStreak = 0;
                     }
                     else
                     {
-                        if (b2bIsActive)
-                        {
-                            b2bIsActive = false;
-                            b2bStreak = 0;
-                        }
+                        b2bStreak++;
+                        //b2bHit.Play();
+                        applause.Play();
                     }
                 }
-                lineClearDelay -= deltaTime;
-                if (lineClearDelay <= 0)
+                else
                 {
-                    _grid.ClearLines();
-                    lineClearDelay = lineClearDelayMax;
-                    activePiece = nextPreview.GetNextPiece();
-                    isPieceActive = true;
-                    lineFall.Play();
-                    currentSpinType = SpinType.None;
-
+                    if (b2bIsActive)
+                    {
+                        b2bIsActive = false;
+                        b2bStreak = 0;
+                    }
                 }
             }
+
         }
 
         private void LineClearFlash(Color color, float timeDisplayed) 
@@ -435,65 +417,161 @@ namespace MonoStacker.Source.GameObj
         {
 
             nextPreview.Update();
-            
-                if (Keyboard.GetState().IsKeyDown(Keys.Up) && !prevKBState.IsKeyDown(Keys.Up)&& isPieceActive)
-                {
-                    RotateSRS(activePiece, RotationType.Clockwise);
-                    //activePiece.BufferInputs();
-                }
-                if (Keyboard.GetState().IsKeyDown(Keys.Z) && !prevKBState.IsKeyDown(Keys.Z)&& isPieceActive)
-                {
-                    RotateSRS(activePiece, RotationType.CounterClockwise);
-                }
 
-                if (Keyboard.GetState().IsKeyDown(Keys.Left)&& isPieceActive)
-                {
-                    if (!prevKBState.IsKeyDown(Keys.Left))
-                        MovePiece(-1);
-                    dasTimerL -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    if (dasTimerL <= 0)
-                        MovePiece(-1);
-                }
-                else if (Keyboard.GetState().IsKeyDown(Keys.Right)&& isPieceActive)
-                {
-                    if (!prevKBState.IsKeyDown(Keys.Right))
-                        MovePiece(1);
-                    dasTimerR -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    if (dasTimerR <= 0)
-                        MovePiece(1);
-                }
-                else 
-                {
-                        dasTimerR = maxDasTime;
-                        dasTimerL = maxDasTime;
-                }
+            switch (currentBoardState) 
+            {
+                case BoardState.Neutral:
+                    if (_inputManager.bufferQueue.Count > 0)
+                    {
+                        List<InputEvent> bufferedActions = _inputManager.GetBufferedActions();
+                        _inputManager.ClearBuffer();
 
-                if (Keyboard.GetState().IsKeyDown(Keys.LeftShift) && !prevKBState.IsKeyDown(Keys.LeftShift) && isPieceActive)
-                    holdPreview.SwapPiece();
+                        foreach (var item in bufferedActions)
+                        {
+                            if (!item.hasBeenExecuted)
+                            {
+                                List<GameAction> actionsStillHeld = _inputManager.GetKeyInput();
+                                if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(GameAction.Hold))
+                                    holdPreview.SwapPiece();
 
-                if (Keyboard.GetState().IsKeyDown(Keys.Down)&& isPieceActive)
-                    softDrop = true;
-                else 
-                    softDrop = false;
-            
+                                if ((item.gameAction == GameAction.MovePieceLeft || item.gameAction == GameAction.MovePieceRight) &&
+                                    (actionsStillHeld.Contains(GameAction.MovePieceLeft) || actionsStillHeld.Contains(GameAction.MovePieceRight)))
+                                {
+                                 
+                                        if (!eventTimeStamps.ContainsKey(item.gameAction))
+                                            eventTimeStamps.Add(item.gameAction, item.timePressed);
+                                    
+                                }
 
-                if (Keyboard.GetState().IsKeyDown(Keys.Space) && !prevKBState.IsKeyDown(Keys.Space)&& isPieceActive)
-                    HardDrop((float)gameTime.ElapsedGameTime.TotalSeconds);
-                
-                
-            
-# if DEBUG
-                if (Keyboard.GetState().IsKeyDown(Keys.T) && !prevKBState.IsKeyDown(Keys.T))
-                        showDebug = !showDebug;
-                if (Keyboard.GetState().IsKeyDown(Keys.Y) && !prevKBState.IsKeyDown(Keys.Y))
+                                if (item.gameAction == GameAction.RotateCw && actionsStillHeld.Contains(GameAction.RotateCw))
+                                    RotateSRS(activePiece, RotationType.Clockwise);
+                                if (item.gameAction == GameAction.RotateCcw && actionsStillHeld.Contains(GameAction.RotateCcw))
+                                    RotateSRS(activePiece, RotationType.CounterClockwise);
+                                item.hasBeenExecuted = true;
+                            }
+                        }
+                    }
+                    else // if no inputs were buffered, get immediate inputs
+                    {
+                        List<GameAction> heldActions = _inputManager.GetKeyInput();
+
+                        if (heldActions.Contains(GameAction.MovePieceLeft))
+                        {
+                            if (!lastEvents.Contains(GameAction.MovePieceLeft))
+                            {
+                                if (!eventTimeStamps.ContainsKey(GameAction.MovePieceLeft))
+                                {
+                                    eventTimeStamps.Add(GameAction.MovePieceLeft, (float)gameTime.TotalGameTime.TotalSeconds);
+                                    MovePiece(-1);
+                                }
+                            }
+
+                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceLeft))
+                            {
+                                float timeStamp = eventTimeStamps[GameAction.MovePieceLeft];
+                                if (CanDas(gameTime, timeStamp)) MovePiece(-1);
+                            }
+                        }
+                        else
+                        {
+                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceLeft))
+                                eventTimeStamps.Remove(GameAction.MovePieceLeft);
+                        }
+
+
+                        if (heldActions.Contains(GameAction.MovePieceRight))
+                        {
+                            if (!lastEvents.Contains(GameAction.MovePieceRight))
+                            {
+                                if (!eventTimeStamps.ContainsKey(GameAction.MovePieceRight))
+                                {
+                                    eventTimeStamps.Add(GameAction.MovePieceRight, (float)gameTime.TotalGameTime.TotalSeconds);
+                                    MovePiece(1);
+                                }
+                            }
+                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceRight))
+                            {
+                                float timeStamp = eventTimeStamps[GameAction.MovePieceRight];
+                                if (CanDas(gameTime, timeStamp)) MovePiece(1);
+                            }
+                        }
+                        else
+                        {
+                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceRight))
+                                eventTimeStamps.Remove(GameAction.MovePieceRight);
+                        }
+
+                        if (heldActions.Contains(GameAction.SoftDrop))
+                            softDrop = true;
+                        else
+                            softDrop = false;
+
+                        if (heldActions.Contains(GameAction.Hold) && !lastEvents.Contains(GameAction.Hold))
+                            holdPreview.SwapPiece();
+                        if (heldActions.Contains(GameAction.RotateCw) && !lastEvents.Contains(GameAction.RotateCw))
+                            RotateSRS(activePiece, RotationType.Clockwise);
+                        if (heldActions.Contains(GameAction.RotateCcw) && !lastEvents.Contains(GameAction.RotateCcw))
+                            RotateSRS(activePiece, RotationType.CounterClockwise);
+                        if (heldActions.Contains(GameAction.HardDrop) && !lastEvents.Contains(GameAction.HardDrop))
+                            HardDrop(gameTime);
+                    }
+                    GravitySoftDrop(gameTime);
+                    break;
+                case BoardState.LineClearWait:
+                    _inputManager.BufferKeyInput(gameTime);
+
+                    // action
+                    activePieceColor = Color.White;
+                    lockDelay = lockDelayMax;
+
+                    if (lineClearDelay == lineClearDelayMax)
+                        ClearFilledLines();
+
+                    lineClearDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                    if (lineClearDelay <= 0)
+                    {
+                        _grid.ClearLines();
+                        activePiece = nextPreview.GetNextPiece();
+                        activePieceColor = Color.White;
+                        currentBoardState = BoardState.Neutral;
+                        lineClearDelay = lineClearDelayMax;
+                    }
+
+
+                    break;
+                case BoardState.PieceEntryWait:
+                    _inputManager.BufferKeyInput(gameTime);
+
+                    // action
+                    if (pieceEntryDelay == pieceEntryDelayMax)
+                    {
+                        FlashPiece(activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f);
+                        lockPiece.Play();
+                    }
+
+                    pieceEntryDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+                    if (pieceEntryDelay <= 0) 
+                    {
+                        activePiece = nextPreview.GetNextPiece();
+                        activePieceColor = Color.White;
+                        currentBoardState = BoardState.Neutral;
+                        pieceEntryDelay = pieceEntryDelayMax;
+                    }
+                    break;
+            }
+            lastEvents = _inputManager.GetKeyInput();
+
+#if DEBUG
+            if (Keyboard.GetState().IsKeyDown(Keys.T) && !prevKBState.IsKeyDown(Keys.T))
+                showDebug = !showDebug;
+            if (Keyboard.GetState().IsKeyDown(Keys.Y) && !prevKBState.IsKeyDown(Keys.Y))
                         showGhostPiece = !showGhostPiece;
 # endif
-                prevKBState = Keyboard.GetState();
+            prevKBState = Keyboard.GetState();
             
             
-            
-            GravitySoftDrop((float)gameTime.ElapsedGameTime.TotalSeconds);
-            ClearFilledLines((float)gameTime.ElapsedGameTime.TotalSeconds);
 
             foreach (var item in _effectsList)
                 item.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
@@ -589,10 +667,10 @@ namespace MonoStacker.Source.GameObj
         public void Draw(SpriteBatch spriteBatch) 
         {
             spriteBatch.Begin();
-            //spriteBatch.Draw(bgTest, _offset, Color.White);
+            spriteBatch.Draw(bgTest, _offset, Color.White);
             _grid.Draw(spriteBatch);
             spriteBatch.Draw(border, new Vector2(_offset.X - 4, _offset.Y - 4), Color.White);
-            if (isPieceActive)
+            if(currentBoardState == BoardState.Neutral)
                 DrawPiece(spriteBatch, activePiece);
             nextPreview.Draw(spriteBatch);
             holdPreview.Draw(spriteBatch);

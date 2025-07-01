@@ -290,6 +290,7 @@ namespace MonoStacker.Source.Generic
                     MoveRow(y, clearedLines);
                 }
             }
+            rowsToClear.Clear();
         }
 
         public void Draw(SpriteBatch spriteBatch) 
