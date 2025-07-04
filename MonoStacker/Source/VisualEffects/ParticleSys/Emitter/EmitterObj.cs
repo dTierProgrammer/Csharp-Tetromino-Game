@@ -38,6 +38,8 @@ public class EmitterObj
         _timeLeft = data.activeTimeLeft;
     }
 
+    public EmitterObj() { }
+
     protected void Emit(Vector2 pos)
     {
         ParticleData bufferedParticleData = _data.particleData;
@@ -45,10 +47,14 @@ public class EmitterObj
         bufferedParticleData.speed = ExtendedMath.RandomFloat(_data.speed.min, _data.speed.max);
         float rand = (float)(ExtendedMath.Rng.NextDouble() * 2) - 1;
         bufferedParticleData.angle += _data.angleVarianceMax * rand;
+
+        ParticleObj bufferedParticle = new(pos, bufferedParticleData);
+        ParticleManager.AddParticle(bufferedParticle);
     }
 
     public virtual void Update()
     {
+        
         if (_emissionType != EmissionType.Burst && _isActive)
         {
             _timeInInterval -= (float)Game1.uGameTime.ElapsedGameTime.TotalSeconds;

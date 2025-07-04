@@ -39,6 +39,7 @@ public class ParticleObj
         _color = _data.colorTimeLine.color1;
         _opacity = _data.opacityTimeLine.X;
 
+
         if (data.speed != 0)
         {
             _data.angle = MathHelper.ToRadians(_data.angle);
@@ -99,6 +100,7 @@ public class ParticleObj
         _activeTimeAmount = MathHelper.Clamp(activeTimeLeft / _data.activeTime, 0, 1);
         _color = Color.Lerp(_data.colorTimeLine.color2, _data.colorTimeLine.color1, _activeTimeAmount);
         _opacity = MathHelper.Clamp(MathHelper.Lerp(_data.opacityTimeLine.Y, _data.opacityTimeLine.X, _activeTimeAmount), 0, 1);
+        _scale = MathHelper.Lerp(_data.scaleTimeLine.Y, _data.scaleTimeLine.X, _activeTimeAmount) / _data.texture.Width;
         _position += _direction * _data.speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
         _startingOrientation += _data.rotationSpeed;
     }

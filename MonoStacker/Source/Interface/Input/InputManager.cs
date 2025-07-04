@@ -42,6 +42,23 @@ namespace MonoStacker.Source.Interface.Input
 
         private KeyboardState _priorKbState;
 
+
+
+        public Buttons b_MovePieceLeft { get; set; } = Buttons.DPadLeft;
+        public Buttons b_MovePieceRight { get; set; } = Buttons.DPadRight;
+        public Buttons b_RotateCw { get; set; } = Buttons.A;
+        public Buttons b_RotateCcw { get; set; } = Buttons.B;
+        public Buttons b_Rotate180 { get; set; }
+        public Buttons b_HardDrop { get; set; } = Buttons.DPadUp;
+        public Buttons b_FirmDrop { get; set; }
+        public Buttons b_SoftDrop { get; set; } = Buttons.DPadDown;
+        public Buttons b_Hold { get; set; } = Buttons.LeftTrigger;
+        
+        public Buttons b_RotateCwAlt { get; set; }
+        public Buttons b_RotateCcwAlt { get; set; }
+
+        private GamePadState _priorPadState;
+
         public Queue<InputEvent> bufferQueue { get; private set; } = new();
         public Queue<InputEvent> holdBufferQueue { get; private set; } = new();
         public int bufferCapacity { get; set; } = 6;
@@ -108,6 +125,8 @@ namespace MonoStacker.Source.Interface.Input
                 currentKeys.Add(GameAction.RotateCcw);
             if (Keyboard.GetState().IsKeyDown(k_HardDrop))
                 currentKeys.Add(GameAction.HardDrop);
+            if (Keyboard.GetState().IsKeyDown(k_SoftDrop))
+                currentKeys.Add(GameAction.SoftDrop);
             if (Keyboard.GetState().IsKeyDown(k_Hold))
                 currentKeys.Add(GameAction.Hold);
             if (Keyboard.GetState().IsKeyDown(k_MovePieceRight))
@@ -131,6 +150,7 @@ namespace MonoStacker.Source.Interface.Input
                 k_Rotate180,
                 k_Hold,
                 k_HardDrop,
+                k_SoftDrop,
                 k_RotateCwAlt,
                 k_RotateCcwAlt
             };
@@ -156,6 +176,67 @@ namespace MonoStacker.Source.Interface.Input
             if (item == k_Hold) return GameAction.Hold;
             if (item == k_RotateCwAlt) return GameAction.RotateCwAlt;
             if (item == k_RotateCcwAlt) return GameAction.RotateCcwAlt;
+            return GameAction.None;
+        }
+        
+        public List<GameAction> GetButtonInput()
+        {
+            List<GameAction> currentButtons = new();
+            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(b_RotateCw))
+                currentButtons.Add(GameAction.RotateCw);
+            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(b_RotateCcw))
+                currentButtons.Add(GameAction.RotateCcw);
+            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(b_HardDrop))
+                currentButtons.Add(GameAction.HardDrop);
+            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(b_SoftDrop))
+                currentButtons.Add(GameAction.SoftDrop);
+            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(b_Hold))
+                currentButtons.Add(GameAction.Hold);
+            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(b_MovePieceRight))
+                currentButtons.Add(GameAction.MovePieceRight);
+            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(b_MovePieceLeft))
+                currentButtons.Add(GameAction.MovePieceLeft);
+            
+            return currentButtons;
+        }
+        
+        public void BufferButtonInput(GameTime gameTime) 
+        {
+            Buttons[] buttons = new Buttons[]
+            {
+                b_MovePieceLeft,
+                b_MovePieceLeft,
+                b_RotateCw,
+                b_RotateCcw,
+                b_Rotate180,
+                b_Hold,
+                b_HardDrop,
+                b_SoftDrop,
+                b_RotateCwAlt,
+                b_RotateCcwAlt
+            };
+
+            foreach (var button in buttons)
+            {
+                if (GamePad.GetState(0).IsButtonDown(button) && !_priorPadState.IsButtonDown(button)) 
+                    AddToBuffer(new InputEvent { gameAction = ConvButtonToAction(button), timePressed = (float)gameTime.TotalGameTime.TotalSeconds });
+            }
+            _priorPadState = GamePad.GetState(0);
+        }
+        
+        protected GameAction ConvButtonToAction(Buttons item) 
+        {
+            if (item == b_MovePieceLeft) return GameAction.MovePieceLeft;
+            if (item == b_MovePieceRight) return GameAction.MovePieceRight;
+            if (item == b_RotateCw) return GameAction.RotateCw;
+            if (item == b_RotateCcw) return GameAction.RotateCcw;
+            if (item == b_Rotate180) return GameAction.Rotate180;
+            if (item == b_HardDrop) return GameAction.HardDrop;
+            if (item == b_FirmDrop) return GameAction.FirmDrop;
+            if (item == b_SoftDrop) return GameAction.SoftDrop;
+            if (item == b_Hold) return GameAction.Hold;
+            if (item == b_RotateCwAlt) return GameAction.RotateCwAlt;
+            if (item == b_RotateCcwAlt) return GameAction.RotateCcwAlt;
             return GameAction.None;
         }
     }

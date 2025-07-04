@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using System.Diagnostics;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
 
@@ -38,21 +39,22 @@ public class ParticleManager
 
     private static void UpdateEmitters()
     {
-        //foreach (var emissionSource in _emitters)
-            //emissionSource.Update(Game1.uGameTime);
+        foreach (var emitter in _emitters)
+            emitter.Update();
     }
 
     public static void Update()
     {
         UpdateParticles();
         UpdateEmitters();
+        Debug.WriteLine(_particles.Count);
     }
 
     public static void Draw(SpriteBatch spriteBatch)
     {
-        spriteBatch.Begin();
+        
         foreach (var particle in _particles)
             particle.Draw(spriteBatch);
-        spriteBatch.End();
+        
     }
 }

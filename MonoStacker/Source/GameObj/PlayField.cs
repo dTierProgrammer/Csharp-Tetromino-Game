@@ -452,7 +452,7 @@ namespace MonoStacker.Source.GameObj
                         {
                             if (!item.hasBeenExecuted)
                             {
-                                List<GameAction> actionsStillHeld = _inputManager.GetKeyInput();
+                                List<GameAction> actionsStillHeld = _inputManager.GetButtonInput();
                                 if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(GameAction.Hold)) 
                                 {
                                     if (holdPreview.SwapPiece())
@@ -484,7 +484,7 @@ namespace MonoStacker.Source.GameObj
                     }
                     else // if no inputs were buffered, get immediate inputs
                     {
-                        List<GameAction> heldActions = _inputManager.GetKeyInput();
+                        List<GameAction> heldActions = _inputManager.GetButtonInput();
 
                         if (heldActions.Contains(GameAction.MovePieceLeft))
                         {
@@ -561,7 +561,7 @@ namespace MonoStacker.Source.GameObj
                     GravitySoftDrop(gameTime);
                     break;
                 case BoardState.LineClearWait:
-                    _inputManager.BufferKeyInput(gameTime);
+                    _inputManager.BufferButtonInput(gameTime);
 
                     // action
                     activePieceColor = Color.White;
@@ -585,7 +585,7 @@ namespace MonoStacker.Source.GameObj
 
                     break;
                 case BoardState.PieceEntryWait:
-                    _inputManager.BufferKeyInput(gameTime);
+                    _inputManager.BufferButtonInput(gameTime);
 
                     // action
                     if (pieceEntryDelay == pieceEntryDelayMax)
@@ -605,7 +605,7 @@ namespace MonoStacker.Source.GameObj
                     }
                     break;
             }
-            lastEvents = _inputManager.GetKeyInput();
+            lastEvents = _inputManager.GetButtonInput();
 
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.T) && !prevKBState.IsKeyDown(Keys.T))

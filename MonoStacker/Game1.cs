@@ -4,6 +4,9 @@ using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.Scene;
 using MonoStacker.Source.Scene.GameScenes;
+using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
+using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
+using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 
 namespace MonoStacker
 {
@@ -15,6 +18,7 @@ namespace MonoStacker
         private readonly SceneManager _sceneManager;
         private TestScene _testScene;
         public static GameTime uGameTime;
+        private StaticEmissionSource _testStaticSource = new(new(50, 50));
 
         public Game1()
         {
@@ -47,6 +51,27 @@ namespace MonoStacker
             _testScene = new TestScene();
 
             _sceneManager.EnterScene(_testScene);
+
+
+            EmitterData testData = new()
+            {
+                emissionInterval = 1f,
+                density = 100,
+                angleVarianceMax = 360,
+                particleActiveTime = (2, 2f),
+                speed = (250f, 250f),
+                particleData = new ParticleData()
+                {
+                    texture = GetContent.Load<Texture2D>("Image/Effect/Particle/default"),
+                    colorTimeLine = (Color.Yellow, Color.Red),
+                    scaleTimeLine = new(2, 1),
+                    
+                }
+
+            };
+
+            EmitterObj test = new(_testStaticSource, testData, EmissionType.Continuous);
+            ParticleManager.AddEmitter(test);
             // init any custom classes above base method call
             base.Initialize();
         }
@@ -67,7 +92,8 @@ namespace MonoStacker
                 Exit();
 
             // TODO: Add your update logic here
-            _sceneManager.CurrentScene().Update(gameTime);
+            //_sceneManager.CurrentScene().Update(gameTime);
+            ParticleManager.Update();
 
             base.Update(gameTime);
         }
@@ -78,15 +104,16 @@ namespace MonoStacker
             GraphicsDevice.Clear(Color.Black);
             _sceneManager.CurrentScene().Draw(_spriteBatch);
             _spriteBatch.Begin();
+            ParticleManager.Draw(_spriteBatch);
             _spriteBatch.End();
-  
+            
+
 
             // TODO: Add your drawing code here
             GraphicsDevice.SetRenderTarget(null);
             _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             _spriteBatch.Draw(_scaledDisp, new Rectangle(0, 0, GraphicsDevice.DisplayMode.Width, GraphicsDevice.DisplayMode.Height), Color.White);
             _spriteBatch.End();
-
             base.Draw(gameTime);
         }
     }
