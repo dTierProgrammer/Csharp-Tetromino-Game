@@ -36,7 +36,7 @@ namespace MonoStacker.Source.Generic
             piece.Update();
         }
 
-        public void SwapPiece()
+        public bool SwapPiece()
         {
             if (canHold) 
             {
@@ -45,7 +45,7 @@ namespace MonoStacker.Source.Generic
                     HoldBox.Add(_playField.activePiece);
                     _playField.activePiece = _playField.nextPreview.GetNextPiece();
                     ResetPiece(HoldBox.ElementAt(0));
-                    canHold = false;
+                    return true;
                 }
                 else if (HoldBox.Count == queueLength) 
                 {
@@ -55,10 +55,10 @@ namespace MonoStacker.Source.Generic
                     HoldBox.RemoveAt(0);
                     HoldBox.Add(prevActivePiece);
                     ResetPiece(HoldBox.ElementAt(0));
-                    canHold = false;
+                    return true;
                 }
-                holdPiece.Play();
-    }
+            }
+            return false;
         }
 
         public override void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset)

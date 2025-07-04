@@ -180,7 +180,7 @@ namespace MonoStacker.Source.Generic
         }
 
 
-        public SpinType CheckForSpin(Piece piece)
+        public SpinType CheckForSpin(Piece piece) // Z/S spin doubles arent counted for whatever reson, investigate sometime
         {
             int mandatoryCornersFilled = 0;
             int optionalCornersFilled = 0;
@@ -264,6 +264,24 @@ namespace MonoStacker.Source.Generic
             {
                 _matrix[rowIndex][i] = 0;
             }
+        }
+
+        public int GetNonEmptyRows() // iterate thru board, if encounter row that has values > 0, add to a list, return lists count
+        {
+            List<int[]> nonEmptyRows = new();
+
+            for (int y = 0; y < ROWS; y++)
+            {
+                for (int x = 0; x < COLUMNS; x++) 
+                {
+                    if (_matrix[y][x] != 0) 
+                    {
+                        nonEmptyRows.Add(_matrix[y]);
+                        break;
+                    }
+                }
+            }
+            return nonEmptyRows.Count();
         }
 
         public void MoveRow(int rowIndex, int offset) 

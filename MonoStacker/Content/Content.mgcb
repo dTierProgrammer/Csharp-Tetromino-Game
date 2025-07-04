@@ -13,47 +13,65 @@
 
 #---------------------------------- Content ---------------------------------#
 
-#begin Audio/Sound/b2b_hit.wav
+#begin Audio/Sound/b2b_break.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/b2b_hit.wav
+/build:Audio/Sound/b2b_break.wav
 
-#begin Audio/Sound/b2b.wav
+#begin Audio/Sound/b2b_streak.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/b2b.wav
+/build:Audio/Sound/b2b_streak.wav
 
-#begin Audio/Sound/clear.wav
+#begin Audio/Sound/clear_double.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/clear.wav
+/build:Audio/Sound/clear_double.wav
 
-#begin Audio/Sound/clear0.wav
+#begin Audio/Sound/clear_quadruple.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/clear0.wav
+/build:Audio/Sound/clear_quadruple.wav
 
-#begin Audio/Sound/clear1.wav
+#begin Audio/Sound/clear_single.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/clear1.wav
+/build:Audio/Sound/clear_single.wav
 
-#begin Audio/Sound/clear2.wav
+#begin Audio/Sound/clear_triple.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/clear2.wav
+/build:Audio/Sound/clear_triple.wav
 
-#begin Audio/Sound/clear3.wav
+#begin Audio/Sound/hard_drop.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/clear3.wav
+/build:Audio/Sound/hard_drop.wav
+
+#begin Audio/Sound/hold_buffer_alt.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/hold_buffer_alt.wav
+
+#begin Audio/Sound/hold_buffer.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/hold_buffer.wav
+
+#begin Audio/Sound/hold.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/hold.wav
 
 #begin Audio/Sound/hold.wav
 /importer:WavImporter
@@ -67,17 +85,89 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/linefall.wav
 
-#begin Audio/Sound/lock.wav
+#begin Audio/Sound/linefall.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/lock.wav
+/build:Audio/Sound/linefall.wav
 
-#begin Audio/Sound/move.wav
+#begin Audio/Sound/old/b2b_hit.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/move.wav
+/build:Audio/Sound/old/b2b_hit.wav
+
+#begin Audio/Sound/old/b2b.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/b2b.wav
+
+#begin Audio/Sound/old/clear.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/clear.wav
+
+#begin Audio/Sound/old/clear0.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/clear0.wav
+
+#begin Audio/Sound/old/clear1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/clear1.wav
+
+#begin Audio/Sound/old/clear2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/clear2.wav
+
+#begin Audio/Sound/old/clear3.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/clear3.wav
+
+#begin Audio/Sound/old/lock.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/lock.wav
+
+#begin Audio/Sound/old/move.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/move.wav
+
+#begin Audio/Sound/old/rotate.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/rotate.wav
+
+#begin Audio/Sound/old/s_hakushu.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/s_hakushu.wav
+
+#begin Audio/Sound/old/spinrotate.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/spinrotate.wav
+
+#begin Audio/Sound/rotate_buffer.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/rotate_buffer.wav
 
 #begin Audio/Sound/rotate.wav
 /importer:WavImporter
@@ -85,17 +175,41 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/rotate.wav
 
-#begin Audio/Sound/s_hakushu.wav
+#begin Audio/Sound/rotate.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/s_hakushu.wav
+/build:Audio/Sound/rotate.wav
 
-#begin Audio/Sound/spinrotate.wav
+#begin Audio/Sound/soft_lock.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
-/build:Audio/Sound/spinrotate.wav
+/build:Audio/Sound/soft_lock.wav
+
+#begin Audio/Sound/spin_double.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/spin_double.wav
+
+#begin Audio/Sound/spin_single.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/spin_single.wav
+
+#begin Audio/Sound/spin_triple.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/spin_triple.wav
+
+#begin Audio/Sound/step_hori.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/step_hori.wav
 
 #begin Image/Background/bg.png
 /importer:TextureImporter
@@ -264,18 +378,6 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Board/generic_border_0.png
-
-#begin Image/Board/grid.png
-/importer:TextureImporter
-/processor:TextureProcessor
-/processorParam:ColorKeyColor=255,0,255,255
-/processorParam:ColorKeyEnabled=True
-/processorParam:GenerateMipmaps=False
-/processorParam:PremultiplyAlpha=True
-/processorParam:ResizeToPowerOfTwo=False
-/processorParam:MakeSquare=False
-/processorParam:TextureFormat=Color
-/build:Image/Board/grid.png
 
 #begin Image/Board/grid.png
 /importer:TextureImporter

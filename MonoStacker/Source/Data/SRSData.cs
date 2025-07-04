@@ -13,7 +13,7 @@ namespace MonoStacker.Source.Data
         3/L - Left
         */
 
-        public static Point[,] DataJLSTZ = new Point[,] 
+        public static readonly Point[,] DataJLSTZ = new Point[,] 
         {
             /* 0 -> 1 (0) */ { new(0, 0), new(-1, 0), new(-1, 1), new(0, -2), new(-1, -2) },
             /* 1 -> 0 (1) */ { new(0, 0), new(1, 0), new(1, -1), new(0, 2), new(1, 2) },
@@ -25,7 +25,19 @@ namespace MonoStacker.Source.Data
             /* 0 -> 3 (7) */ { new(0, 0), new(1, 0), new(1, 1), new (0, -2), new(1, -2) }
         };
 
-        public static Point[,] DataI = new Point[,]
+        public static readonly Point[,] DataJLSTZ_Alt = new Point[,] // trying to add tgm styled kicks to SRS
+        {
+            /* 0 -> 1 (0) */ { new(0, 0), new(-1, 0), new (0, -1), new(-1, 1), new(0, -2), new(-1, -2) },
+            /* 1 -> 0 (1) */ { new(0, 0), new(1, 0), new(0, -1), new(1, -1), new(0, 2), new(1, 2) },
+            /* 1 -> 2 (2) */ { new(0, 0), new(1, 0), new (0, -1), new(1, -1), new(0, 2), new(1, 2) },
+            /* 2 -> 1 (3) */ { new(0, 0), new(-1, 0), new(0, -1), new(-1, 1), new(0, -2), new(-1, -2) },
+            /* 2 -> 3 (4) */ { new(0, 0), new(1, 0), new(0, -1),  new(1, 1), new(0, -2), new(1, -2) },
+            /* 3 -> 2 (5) */ { new(0, 0), new(-1, 0), new(0, -1), new(-1, -1), new(0, 2), new(-1, 2) },
+            /* 3 -> 0 (6) */ { new(0, 0), new(-1, 0), new(0, -1), new(-1,-1), new( 0, 2), new(-1, 2) },
+            /* 0 -> 3 (7) */ { new(0, 0), new(1, 0), new (0, -1), new(1, 1), new (0, -2), new(1, -2) }
+        };
+
+        public static readonly Point[,] DataI = new Point[,]
         {
             { new(0, 0), new(-2, 0), new(1, 0), new(-2,-1), new(1, 2) },
             { new(0, 0), new(2, 0), new(-1, 0), new(2, 1), new(-1,-2) },
@@ -37,7 +49,7 @@ namespace MonoStacker.Source.Data
             { new(0, 0), new(-1, 0), new(2, 0), new(-1, 2), new(2,-1) } 
         };
 
-        public static Point[,] DataIArika = new Point[,]
+        public static readonly Point[,] DataIArika = new Point[,]
         {
             { new( 0, 0), new(-2, 0), new(1, 0), new(1, 2), new(-2,-1) },
             { new( 0, 0), new(2, 0), new(-1, 0), new(2, 1), new(-1,-2) },

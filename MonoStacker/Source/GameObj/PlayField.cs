@@ -66,7 +66,7 @@ namespace MonoStacker.Source.GameObj
         InputManager _inputManager;
 
         BoardState currentBoardState = BoardState.Neutral;
-        BoardState[] noDrawStates = new BoardState[] { BoardState.LineClearWait, BoardState.PieceEntryWait, BoardState.GameEnd};
+        BoardState[] noDrawStates = { BoardState.LineClearWait, BoardState.PieceEntryWait, BoardState.GameEnd};
         
         public Piece activePiece { get; set; }
         private Color activePieceColor = Color.White;
@@ -75,7 +75,7 @@ namespace MonoStacker.Source.GameObj
         float waitTime = 0;
         public float lineClearDelayMax { get; set; } = .3f;
         private float lineClearDelay;
-        public float pieceEntryDelayMax { get; set; } = 0f;
+        public float pieceEntryDelayMax { get; set; } = .0f;
         private float pieceEntryDelay;
 
         public float lockDelayMax { get; set; } = .63f;
@@ -96,12 +96,13 @@ namespace MonoStacker.Source.GameObj
         public bool b2bIsActive { get; private set; } = false;
         public int b2bStreak { get; private set; }
         public SpinType currentSpinType { get; private set; } = SpinType.None;
-        public SpinDenotation parsedSpins = SpinDenotation.AllSpin;
+        public SpinDenotation parsedSpins = SpinDenotation.TSpinOnly;
 
         private Texture2D bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
 
         private List<VisualEffect> _effectsList = new();
 
+        /*
         private SoundEffect movePiece = GetContent.Load<SoundEffect>("Audio/Sound/move");
         private SoundEffect lockPiece = GetContent.Load<SoundEffect>("Audio/Sound/lock");
         private SoundEffect rotatePiece = GetContent.Load<SoundEffect>("Audio/Sound/rotate");
@@ -112,6 +113,7 @@ namespace MonoStacker.Source.GameObj
         private SoundEffect b2b = GetContent.Load<SoundEffect>("Audio/Sound/b2b");
         private SoundEffect b2bHit = GetContent.Load<SoundEffect>("Audio/Sound/b2b_hit");
         private SoundEffect pieceSpin = GetContent.Load<SoundEffect>("Audio/Sound/spinrotate");
+        */
 
         Dictionary<GameAction, float> eventTimeStamps = new();
         List<GameAction> lastEvents = new();
@@ -155,7 +157,7 @@ namespace MonoStacker.Source.GameObj
             if (_grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)(activePiece.offsetX + movementAmt)))
             {
                 activePiece.offsetX += movementAmt;
-                movePiece.Play();
+                SfxBank.stepHori.Play();
 
                 if ((int)activePiece.offsetY == (int)CalculateGhostPiece())
                 {
@@ -181,7 +183,7 @@ namespace MonoStacker.Source.GameObj
             if(piece is not O)
                 testPt = (int)SRSData.GetSrsChecks(piece.rotationId, rotation == 0? piece.ProjectRotateCW(): piece.ProjectRotateCCW() );
 
-            for (int i = 0; i < 5; i++)
+            for (int i = 0; i < (piece is I ? SRSData.DataIArika.GetLength(1): SRSData.DataJLSTZ.GetLength(1)); i++)
             {
                 if (_grid.IsDataPlacementValid(piece.rotations[rotation == 0 ? piece.ProjectRotateCW() : piece.ProjectRotateCCW()],
                     (int)(piece.offsetY - (piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y)),
@@ -304,9 +306,13 @@ namespace MonoStacker.Source.GameObj
                 activePieceColor.R = (byte)Single.Lerp(activePieceColor.R, 50, (lockDelayMax - lockDelay) / 4);
                 activePieceColor.G = (byte)Single.Lerp(activePieceColor.G, 50, (lockDelayMax - lockDelay) / 4);
                 activePieceColor.B = (byte)Single.Lerp(activePieceColor.B, 50, (lockDelayMax - lockDelay) / 4);
-                
-                if (lockDelay <= 0)
+
+                if (lockDelay <= 0) 
+                {
                     LockPiece(gameTime);
+                    SfxBank.softLock.Play();
+                }
+                    
             }
         }
 
@@ -314,6 +320,7 @@ namespace MonoStacker.Source.GameObj
         {
             activePiece.offsetY = CalculateGhostPiece();
             LockPiece(gameTime);
+            SfxBank.hardDrop.Play();
         }
 
         public void FlashPiece(Color color, float timeDislplayed) 
@@ -352,10 +359,25 @@ namespace MonoStacker.Source.GameObj
             if (lineClearDelay == lineClearDelayMax)
             {
                 LineClearFlash(Color.White, .5f);
-                if (_grid.rowsToClear.Count() == 4)
-                    bigClear.Play();
-                else
-                    clear.Play();
+                switch (_grid.rowsToClear.Count()) 
+                {
+                    case 1:
+                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[0].Play();
+                        else SfxBank.clear[0].Play();
+                        break;
+                    case 2:
+                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[1].Play();
+                        else SfxBank.clear[1].Play();
+                        break;
+                    case 3:
+                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[2].Play();
+                        else SfxBank.clear[2].Play();
+                        break;
+                    default:
+                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[3].Play();
+                        else SfxBank.clear[3].Play();
+                        break;
+                }
 
                 if (currentSpinType != SpinType.None) // fake switch case
                 {
@@ -370,14 +392,14 @@ namespace MonoStacker.Source.GameObj
                     if (activePiece is S)
                         FlashPiece(activePiece, Color.Green, .7f, new Vector2(.5f, .5f));
                     if (activePiece is T)
-                        FlashPiece(activePiece, Color.Magenta, .7f, new Vector2(.5f, .5f));
+                        FlashPiece(activePiece, Color.Magenta, .7f, new Vector2(.5f, .8f));
                     if (activePiece is Z)
                         FlashPiece(activePiece, Color.Red, .7f, new Vector2(.5f, .5f));
                 }
 
                 if (_grid.rowsToClear.Count() == 4 || ((currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
                 {
-
+                    
                     if (!b2bIsActive)
                     {
                         b2bIsActive = true;
@@ -386,8 +408,7 @@ namespace MonoStacker.Source.GameObj
                     else
                     {
                         b2bStreak++;
-                        //b2bHit.Play();
-                        applause.Play();
+                        SfxBank.b2b.Play();
                     }
                 }
                 else
@@ -396,10 +417,11 @@ namespace MonoStacker.Source.GameObj
                     {
                         b2bIsActive = false;
                         b2bStreak = 0;
+                        SfxBank.b2bBreak.Play();
                     }
                 }
+                currentSpinType = SpinType.None;
             }
-
         }
 
         private void LineClearFlash(Color color, float timeDisplayed) 
@@ -431,22 +453,31 @@ namespace MonoStacker.Source.GameObj
                             if (!item.hasBeenExecuted)
                             {
                                 List<GameAction> actionsStillHeld = _inputManager.GetKeyInput();
-                                if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(GameAction.Hold))
-                                    holdPreview.SwapPiece();
+                                if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(GameAction.Hold)) 
+                                {
+                                    if (holdPreview.SwapPiece())
+                                        SfxBank.holdBuffer.Play();
+                                }
+                                    
 
                                 if ((item.gameAction == GameAction.MovePieceLeft || item.gameAction == GameAction.MovePieceRight) &&
                                     (actionsStillHeld.Contains(GameAction.MovePieceLeft) || actionsStillHeld.Contains(GameAction.MovePieceRight)))
                                 {
-                                 
                                         if (!eventTimeStamps.ContainsKey(item.gameAction))
                                             eventTimeStamps.Add(item.gameAction, item.timePressed);
-                                    
                                 }
 
-                                if (item.gameAction == GameAction.RotateCw && actionsStillHeld.Contains(GameAction.RotateCw))
+                                if (item.gameAction == GameAction.RotateCw && actionsStillHeld.Contains(GameAction.RotateCw)) 
+                                {
                                     RotateSRS(activePiece, RotationType.Clockwise);
-                                if (item.gameAction == GameAction.RotateCcw && actionsStillHeld.Contains(GameAction.RotateCcw))
+                                    SfxBank.rotateBuffer.Play();
+                                }
+
+                                if (item.gameAction == GameAction.RotateCcw && actionsStillHeld.Contains(GameAction.RotateCcw)) 
+                                {
                                     RotateSRS(activePiece, RotationType.CounterClockwise);
+                                    SfxBank.rotateBuffer.Play();
+                                }
                                 item.hasBeenExecuted = true;
                             }
                         }
@@ -506,12 +537,24 @@ namespace MonoStacker.Source.GameObj
                         else
                             softDrop = false;
 
-                        if (heldActions.Contains(GameAction.Hold) && !lastEvents.Contains(GameAction.Hold))
-                            holdPreview.SwapPiece();
-                        if (heldActions.Contains(GameAction.RotateCw) && !lastEvents.Contains(GameAction.RotateCw))
+                        if (heldActions.Contains(GameAction.Hold) && !lastEvents.Contains(GameAction.Hold)) 
+                        {
+                            if (holdPreview.SwapPiece())
+                                SfxBank.hold.Play();
+                        }
+
+                        if (heldActions.Contains(GameAction.RotateCw) && !lastEvents.Contains(GameAction.RotateCw)) 
+                        {
                             RotateSRS(activePiece, RotationType.Clockwise);
-                        if (heldActions.Contains(GameAction.RotateCcw) && !lastEvents.Contains(GameAction.RotateCcw))
+                            SfxBank.rotate.Play();
+                        }
+
+                        if (heldActions.Contains(GameAction.RotateCcw) && !lastEvents.Contains(GameAction.RotateCcw)) 
+                        {
                             RotateSRS(activePiece, RotationType.CounterClockwise);
+                            SfxBank.rotate.Play();
+                        }
+                            
                         if (heldActions.Contains(GameAction.HardDrop) && !lastEvents.Contains(GameAction.HardDrop))
                             HardDrop(gameTime);
                     }
@@ -532,6 +575,7 @@ namespace MonoStacker.Source.GameObj
                     if (lineClearDelay <= 0)
                     {
                         _grid.ClearLines();
+                        if (_grid.GetNonEmptyRows() > 0) SfxBank.lineFall.Play(); ;
                         activePiece = nextPreview.GetNextPiece();
                         activePieceColor = Color.White;
                         currentBoardState = BoardState.Neutral;
@@ -547,7 +591,7 @@ namespace MonoStacker.Source.GameObj
                     if (pieceEntryDelay == pieceEntryDelayMax)
                     {
                         FlashPiece(activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f);
-                        lockPiece.Play();
+                        //lockPiece.Play();
                     }
 
                     pieceEntryDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
