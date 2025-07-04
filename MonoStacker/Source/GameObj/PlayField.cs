@@ -17,6 +17,10 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 using System.Data;
 using Microsoft.Xna.Framework.Audio;
 using MonoStacker.Source.Interface.Input;
+using MonoStacker.Source.VisualEffects.ParticleSys;
+using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
+using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
+using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -359,6 +363,7 @@ namespace MonoStacker.Source.GameObj
             if (lineClearDelay == lineClearDelayMax)
             {
                 LineClearFlash(Color.White, .5f);
+                LineClearEffect();
                 switch (_grid.rowsToClear.Count()) 
                 {
                     case 1:
@@ -435,6 +440,54 @@ namespace MonoStacker.Source.GameObj
             }
         }
 
+        private void LineClearEffect()
+        {
+          StaticEmissionSources sources = new(new());
+          for (int y = 0; y < 40; y++)
+          {
+            for (int x = 0; x < 10; x++)
+            {
+                if (_grid.rowsToClear.Contains(y))
+                {
+                    Color color = Color.White;
+                    switch (_grid._matrix[y][x]) 
+                    {
+                        case 1: color = Color.Cyan; break;
+                        case 2: color = Color.Blue; break;
+                        case 3: color = Color.Orange; break;
+                        case 4: color = Color.Yellow; break;
+                        case 5: color = new Color(0, 255, 0) ; break;
+                        case 6: color = Color.Magenta; break;
+                        case 7: color = Color.Red; break;
+                    }
+                    
+                    sources.Members.Add(new GroupPartData()
+                    {
+                        Position = new Vector2((x * 8) + _offset.X, (y * 8) + (_offset.Y - 160)),
+                        Data = new EmitterData
+                        {
+                            emissionInterval = 1f,
+                            density = 8,
+                            angleVarianceMax = 180,
+                            particleActiveTime = (.01f, .5f),
+                            speed = (50, 100),
+                            particleData = new ParticleData()
+                            {
+                                texture = GetContent.Load<Texture2D>("Image/Effect/Particle/default"),
+                                colorTimeLine = (color, Color.White),
+                                scaleTimeLine = new(2, 1),
+                                opacityTimeLine = new(1, 0)
+                            }
+                        }
+                    }); 
+                }
+            }
+          }
+
+          GroupEmitterObj clear = new(sources, EmissionType.Burst);
+          ParticleManager.AddEmitter(clear);
+        }
+
         public void Update(GameTime gameTime) 
         {
 
@@ -452,7 +505,7 @@ namespace MonoStacker.Source.GameObj
                         {
                             if (!item.hasBeenExecuted)
                             {
-                                List<GameAction> actionsStillHeld = _inputManager.GetButtonInput();
+                                List<GameAction> actionsStillHeld = _inputManager.GetKeyInput();
                                 if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(GameAction.Hold)) 
                                 {
                                     if (holdPreview.SwapPiece())
@@ -484,7 +537,7 @@ namespace MonoStacker.Source.GameObj
                     }
                     else // if no inputs were buffered, get immediate inputs
                     {
-                        List<GameAction> heldActions = _inputManager.GetButtonInput();
+                        List<GameAction> heldActions = _inputManager.GetKeyInput();
 
                         if (heldActions.Contains(GameAction.MovePieceLeft))
                         {
@@ -605,7 +658,7 @@ namespace MonoStacker.Source.GameObj
                     }
                     break;
             }
-            lastEvents = _inputManager.GetButtonInput();
+            lastEvents = _inputManager.GetKeyInput();
 
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.T) && !prevKBState.IsKeyDown(Keys.T))
@@ -711,7 +764,7 @@ namespace MonoStacker.Source.GameObj
         public void Draw(SpriteBatch spriteBatch) 
         {
             spriteBatch.Begin();
-            spriteBatch.Draw(bgTest, _offset, Color.White);
+            //spriteBatch.Draw(bgTest, _offset, Color.White);
             _grid.Draw(spriteBatch);
             spriteBatch.Draw(border, new Vector2(_offset.X - 4, _offset.Y - 4), Color.White);
             if(currentBoardState == BoardState.Neutral)

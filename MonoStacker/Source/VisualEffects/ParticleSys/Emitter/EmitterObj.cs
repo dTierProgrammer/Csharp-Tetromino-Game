@@ -17,9 +17,9 @@ public class EmitterObj
     protected readonly EmitterData _data; // given interval data
     protected float _timeInInterval; // time leftover within an interval
     protected readonly EmissionSource EmissionSource; //source of emission position
-    protected EmissionType _emissionType;
-    protected float _timeLeft;
-    protected bool _isActive = true;
+    public EmissionType _emissionType;
+    public float _timeLeft;
+    public bool _isActive = true;
 
     public EmitterObj(EmissionSource emissionSource, EmitterData data, EmissionType emissionType)
     {

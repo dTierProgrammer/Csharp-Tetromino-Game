@@ -41,12 +41,14 @@ public class ParticleManager
     {
         foreach (var emitter in _emitters)
             emitter.Update();
+        _emitters.RemoveAll(emitter => emitter._timeLeft <= 0);
     }
 
     public static void Update()
     {
         UpdateParticles();
         UpdateEmitters();
+        _emitters.RemoveAll(emitter => emitter._emissionType == EmissionType.Burst && emitter._timeLeft <= 0);
         Debug.WriteLine(_particles.Count);
     }
 

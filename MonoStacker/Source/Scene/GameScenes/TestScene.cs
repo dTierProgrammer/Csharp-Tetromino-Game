@@ -1,6 +1,7 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.GameObj;
+using MonoStacker.Source.Global;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -25,8 +26,11 @@ namespace MonoStacker.Source.Scene.GameScenes
             playfield.Update(gameTime);
         }
 
-        public void Draw(SpriteBatch spriteBatch) 
+        public void Draw(SpriteBatch spriteBatch)
         {
+          spriteBatch.Begin();
+          spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg1"), new Vector2(0, 0), Color.White);
+          spriteBatch.End();
             playfield.Draw(spriteBatch);
         }
     }
