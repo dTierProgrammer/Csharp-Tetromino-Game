@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Microsoft.Xna.Framework;
 
 namespace MonoStacker.Source.Generic
 {
@@ -12,22 +13,25 @@ namespace MonoStacker.Source.Generic
         public readonly List<int[,]> spinData = new();
         public int[,] currentRotation { get; protected set; }
         public int[,] requiredCorners { get; protected set; }
-        public int rotationId { get; set; }
-        public Piece() { rotationId = 0;  }
+        public int rotationId { get; protected set; } = 0;
         public static int offset { get; set; }
 
         public float offsetX { get; set; }
         public float offsetY { get; set; }
         public float initOffsetX { get; set; }
         public float initOffsetY { get; set; }
+        public Color color { get; protected set; }
 
+
+        public void ResetId()
+        {
+            rotationId = 0;
+        }
         public void RotateCW() 
         {
             rotationId++;
             if (rotationId > rotations.Count - 1)
                 rotationId = 0;
-
-            
         }
 
         public void RotateCCW() 

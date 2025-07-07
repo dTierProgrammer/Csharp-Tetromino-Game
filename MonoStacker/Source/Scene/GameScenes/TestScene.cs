@@ -7,6 +7,8 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MonoStacker.Source.VisualEffects;
+using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 
 namespace MonoStacker.Source.Scene.GameScenes
 {
@@ -23,15 +25,18 @@ namespace MonoStacker.Source.Scene.GameScenes
 
         public void Update(GameTime gameTime) 
         {
+            EffectManager.Update(gameTime);
             playfield.Update(gameTime);
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
           spriteBatch.Begin();
-          spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg1"), new Vector2(0, 0), Color.White);
+          spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg"), new Vector2(0, 0), Color.White);
           spriteBatch.End();
-            playfield.Draw(spriteBatch);
+          playfield.Draw(spriteBatch);
+          EffectManager.Draw(spriteBatch);
+          ParticleManager.Draw(spriteBatch);
         }
     }
 }

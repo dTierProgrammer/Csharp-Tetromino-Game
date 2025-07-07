@@ -177,9 +177,6 @@ namespace MonoStacker
             GraphicsDevice.SetRenderTarget(_scaledDisp);
             GraphicsDevice.Clear(Color.Black);
             _sceneManager.CurrentScene().Draw(_spriteBatch);
-            _spriteBatch.Begin();
-            ParticleManager.Draw(_spriteBatch);
-            _spriteBatch.End();
             
 
 

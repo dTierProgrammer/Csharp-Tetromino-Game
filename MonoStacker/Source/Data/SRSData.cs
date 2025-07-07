@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 
 namespace MonoStacker.Source.Data
 {
-    public static class SRSData
+    public struct SRSData
     {
         /*
         0 - Spawn / Up
@@ -13,7 +13,7 @@ namespace MonoStacker.Source.Data
         3/L - Left
         */
 
-        public static readonly Point[,] DataJLSTZ = new Point[,] 
+        public static readonly Point[,] DataJlstz =
         {
             /* 0 -> 1 (0) */ { new(0, 0), new(-1, 0), new(-1, 1), new(0, -2), new(-1, -2) },
             /* 1 -> 0 (1) */ { new(0, 0), new(1, 0), new(1, -1), new(0, 2), new(1, 2) },
@@ -25,7 +25,7 @@ namespace MonoStacker.Source.Data
             /* 0 -> 3 (7) */ { new(0, 0), new(1, 0), new(1, 1), new (0, -2), new(1, -2) }
         };
 
-        public static readonly Point[,] DataJLSTZ_Alt = new Point[,] // trying to add tgm styled kicks to SRS
+        public static readonly Point[,] DataJlstzAlt = // trying to add tgm styled kicks to SRS
         {
             /* 0 -> 1 (0) */ { new(0, 0), new(-1, 0), new (0, -1), new(-1, 1), new(0, -2), new(-1, -2) },
             /* 1 -> 0 (1) */ { new(0, 0), new(1, 0), new(0, -1), new(1, -1), new(0, 2), new(1, 2) },

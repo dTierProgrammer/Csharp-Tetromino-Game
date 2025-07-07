@@ -17,6 +17,8 @@ namespace MonoStacker.Source.VisualEffects
 
         public VisualEffect(Vector2 position) { this.position = position; }
 
+        public VisualEffect() { }
+
         public virtual void Update(float deltaTime) { }
 
         public virtual void Draw(SpriteBatch spriteBatch) { }

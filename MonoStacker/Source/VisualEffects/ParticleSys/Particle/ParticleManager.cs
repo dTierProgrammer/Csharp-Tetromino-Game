@@ -54,9 +54,9 @@ public class ParticleManager
 
     public static void Draw(SpriteBatch spriteBatch)
     {
-        
+        spriteBatch.Begin();
         foreach (var particle in _particles)
             particle.Draw(spriteBatch);
-        
+        spriteBatch.End();
     }
 }

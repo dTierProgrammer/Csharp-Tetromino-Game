@@ -16,6 +16,7 @@ using MonoStacker.Source.Global;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 using System.Data;
 using Microsoft.Xna.Framework.Audio;
+using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Interface.Input;
 using MonoStacker.Source.VisualEffects.ParticleSys;
 using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
@@ -24,12 +25,7 @@ using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 
 namespace MonoStacker.Source.GameObj
 {
-    public enum SpinType 
-    {
-        None,
-        FullSpin,
-        MiniSpin
-    }
+    
 
     public enum SpinDenotation 
     {
@@ -38,19 +34,7 @@ namespace MonoStacker.Source.GameObj
         TSpinSpecific,
         AllSpin
     }
-
-    public enum RotationType
-    {
-        Clockwise = 0,
-        CounterClockwise = 1
-        //Flip = 2
-    }
-
-    public enum ShiftDirection
-    {
-        Left = -1,
-        Right = 1
-    }
+    
 
     public enum BoardState 
     {
@@ -70,7 +54,7 @@ namespace MonoStacker.Source.GameObj
         InputManager _inputManager;
 
         BoardState currentBoardState = BoardState.Neutral;
-        BoardState[] noDrawStates = { BoardState.LineClearWait, BoardState.PieceEntryWait, BoardState.GameEnd};
+        //BoardState[] noDrawStates = { BoardState.LineClearWait, BoardState.PieceEntryWait, BoardState.GameEnd};
         
         public Piece activePiece { get; set; }
         private Color activePieceColor = Color.White;
@@ -144,12 +128,7 @@ namespace MonoStacker.Source.GameObj
             activePiece.offsetX = 3;
             _inputManager = new();
         }
-
-        public void SetDelay(float delayAmt) 
-        {
-
-        }
-
+        
         public void Initialize() 
         {
             holdPreview = new(new Vector2(_offset.X - 42, _offset.Y), this);
@@ -157,7 +136,7 @@ namespace MonoStacker.Source.GameObj
 
         private void MovePiece(float movementAmt)
         {
-            activePieceColor = Color.White;
+            //activePieceColor = Color.White;
             if (_grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)(activePiece.offsetX + movementAmt)))
             {
                 activePiece.offsetX += movementAmt;
@@ -173,10 +152,7 @@ namespace MonoStacker.Source.GameObj
         private bool CanDas(GameTime gameTime, float timeStamp)
         {
             if ((float)(gameTime.TotalGameTime.TotalSeconds - timeStamp) >= maxDasTime) 
-            {
                 return true;
-            }
-                
             return false;
         }
 
@@ -187,11 +163,11 @@ namespace MonoStacker.Source.GameObj
             if(piece is not O)
                 testPt = (int)SRSData.GetSrsChecks(piece.rotationId, rotation == 0? piece.ProjectRotateCW(): piece.ProjectRotateCCW() );
 
-            for (int i = 0; i < (piece is I ? SRSData.DataIArika.GetLength(1): SRSData.DataJLSTZ.GetLength(1)); i++)
+            for (int i = 0; i < (piece is I ? SRSData.DataIArika.GetLength(1): SRSData.DataJlstz.GetLength(1)); i++)
             {
                 if (_grid.IsDataPlacementValid(piece.rotations[rotation == 0 ? piece.ProjectRotateCW() : piece.ProjectRotateCCW()],
-                    (int)(piece.offsetY - (piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y)),
-                    (int)(piece.offsetX + (piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X))))
+                    (int)(piece.offsetY - (piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y)),
+                    (int)(piece.offsetX + (piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJlstz[testPt, i].X))))
                 {
                     switch (rotation)
                     {
@@ -199,9 +175,10 @@ namespace MonoStacker.Source.GameObj
                         case (RotationType)1: piece.RotateCCW(); break;
                     }
 
-                    piece.offsetX += piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJLSTZ[testPt, i].X;
-                    piece.offsetY -= piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJLSTZ[testPt, i].Y;
-
+                    piece.offsetX += piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJlstz[testPt, i].X;
+                    piece.offsetY -= piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y;
+    
+                    /*
                     switch (parsedSpins)
                     {
                         case SpinDenotation.TSpinOnly:
@@ -212,18 +189,20 @@ namespace MonoStacker.Source.GameObj
                             currentSpinType = _grid.CheckForSpin(piece);
                             break;
                     }
-
+                    */
+                    
+                    
                     if ((int)piece.offsetY == CalculateGhostPiece())
-                    {
-                        if (ResetLockDelayRotate())
-                            activePieceColor = Color.White;
-                    }
+                        ResetLockDelayRotate();
+                    
+                    
+                    
                     activePiece.Update();
                     return true;
                 }
             }
             return false;
-        }
+        } // Can be moved to a distinct class
 
         private int CalculateGhostPiece()
         {
@@ -234,11 +213,11 @@ namespace MonoStacker.Source.GameObj
                 yOff++;
             }
             return yOff;
-        }
+        } 
 
         private void LockPiece(GameTime gameTime)
         {
-            activePieceColor = Color.White;
+            //activePieceColor = Color.White;
             ResetLockDelay();
             _grid.LockPiece(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX);
             if (_grid.CheckForLines() == 0) 
@@ -254,14 +233,14 @@ namespace MonoStacker.Source.GameObj
             holdPreview.canHold = true;
         }
 
-        public void ResetLockDelay()
+        private void ResetLockDelay()
         {
             lockDelay = lockDelayMax;
             lockDelayResetMovement = lockDelayResetMovementMax;
             lockDelayResetRotate = lockDelayResetRotateMax;
         }
 
-        public bool ResetLockDelayRotate()
+        private bool ResetLockDelayRotate()
         {
             if (lockDelayResetRotate > 0)
             {
@@ -273,7 +252,7 @@ namespace MonoStacker.Source.GameObj
             return false;
         }
 
-        public bool ResetLockDelayMovement()
+        private bool ResetLockDelayMovement()
         {
             if (lockDelayResetMovement > 0)
             {
@@ -303,20 +282,22 @@ namespace MonoStacker.Source.GameObj
                 activePiece.offsetY = CalculateGhostPiece();
             }
 
-            if ((int)activePiece.offsetY == (int)CalculateGhostPiece())
+            if ((int)activePiece.offsetY == CalculateGhostPiece())
             {
                 lockDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                 
-                activePieceColor.R = (byte)Single.Lerp(activePieceColor.R, 50, (lockDelayMax - lockDelay) / 4);
-                activePieceColor.G = (byte)Single.Lerp(activePieceColor.G, 50, (lockDelayMax - lockDelay) / 4);
-                activePieceColor.B = (byte)Single.Lerp(activePieceColor.B, 50, (lockDelayMax - lockDelay) / 4);
-
+                float lockDelayLeft = MathHelper.Clamp(lockDelay / lockDelayMax, 0, 1);
+                activePieceColor = Color.Lerp(new(90, 90, 90), Color.White, lockDelayLeft);
+                
                 if (lockDelay <= 0) 
                 {
                     LockPiece(gameTime);
                     SfxBank.softLock.Play();
                 }
-                    
+            }
+            else
+            {
+                activePieceColor = Color.White;
             }
         }
 
@@ -327,43 +308,15 @@ namespace MonoStacker.Source.GameObj
             SfxBank.hardDrop.Play();
         }
 
-        public void FlashPiece(Color color, float timeDislplayed) 
-        {
-            for (int y = 0; y < activePiece.currentRotation.GetLength(0); y++) 
-            {
-                for (int x = 0; x < activePiece.currentRotation.GetLength(1); x++) 
-                {
-                    if (activePiece.currentRotation[y, x] != 0) 
-                    {
-                        _effectsList.Add(new LockFlash(new Vector2((x * 8) + ((int)activePiece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)activePiece.offsetY * 8) + (int)_offset.Y - 160), color, timeDislplayed));
-                    }
-                }
-            }
-        }
-
-        private void FlashPiece(Piece piece, Color color, float timeDislplayed, Vector2 distortFactor)
-        {
-            for (int y = 0; y < piece.currentRotation.GetLength(0); y++)
-            {
-                for (int x = 0; x < piece.currentRotation.GetLength(1); x++)
-                {
-                    if (piece.currentRotation[y, x] != 0)
-                    {
-                        _effectsList.Add(new LockFlash(new Vector2((x * 8) + ((int)activePiece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)activePiece.offsetY * 8) + (int)_offset.Y - 160), color, timeDislplayed, distortFactor));
-                    }
-                }
-            }
-        }
-
         private void ClearFilledLines() 
         {
 
-            activePieceColor = Color.White;
+            //activePieceColor = Color.White;
             lockDelay = lockDelayMax;
             if (lineClearDelay == lineClearDelayMax)
             {
-                LineClearFlash(Color.White, .5f);
-                LineClearEffect();
+                PlayfieldEffects.LineClearFlash(Color.White, .5f, _grid, _offset);
+                PlayfieldEffects.LineClearEffect(_grid, _offset);
                 switch (_grid.rowsToClear.Count()) 
                 {
                     case 1:
@@ -386,25 +339,19 @@ namespace MonoStacker.Source.GameObj
 
                 if (currentSpinType != SpinType.None) // fake switch case
                 {
-                    if (activePiece is I)
-                        FlashPiece(activePiece, Color.Cyan, .7f, new Vector2(.5f, .5f));
-                    if (activePiece is J)
-                        FlashPiece(activePiece, Color.RoyalBlue, .7f, new Vector2(.5f, .5f));
-                    if (activePiece is L)
-                        FlashPiece(activePiece, Color.Orange, .7f, new Vector2(.5f, .5f));
-                    if (activePiece is O)
-                        FlashPiece(activePiece, Color.Yellow, .7f, new Vector2(.5f, .5f));
-                    if (activePiece is S)
-                        FlashPiece(activePiece, Color.Green, .7f, new Vector2(.5f, .5f));
-                    if (activePiece is T)
-                        FlashPiece(activePiece, Color.Magenta, .7f, new Vector2(.5f, .8f));
-                    if (activePiece is Z)
-                        FlashPiece(activePiece, Color.Red, .7f, new Vector2(.5f, .5f));
+                    Color color = Color.White;
+                    if (activePiece is I) color = Color.Cyan;
+                    if (activePiece is J) color = Color.RoyalBlue;
+                    if (activePiece is L) color = Color.Orange;
+                    if (activePiece is O) color = Color.Yellow;
+                    if (activePiece is S) color = new Color(0, 255, 0);
+                    if (activePiece is T) color = Color.Magenta;
+                    if (activePiece is Z) color = Color.Red;
+                    PlayfieldEffects.FlashPiece(activePiece, color, .7f, new Vector2(.5f, .5f), _offset);
                 }
 
                 if (_grid.rowsToClear.Count() == 4 || ((currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
                 {
-                    
                     if (!b2bIsActive)
                     {
                         b2bIsActive = true;
@@ -427,67 +374,8 @@ namespace MonoStacker.Source.GameObj
                 }
                 currentSpinType = SpinType.None;
             }
-        }
-
-        private void LineClearFlash(Color color, float timeDisplayed) 
-        {
-            for (int y = 0; y < 40; y++)
-            {
-                if (_grid.rowsToClear.Contains(y))
-                {
-                    _effectsList.Add(new ClearFlash(new Vector2(((border.Width / 2) - 5) + _offset.X, (int)(y * 8) + _offset.Y - 157), color, timeDisplayed, new Vector2(3, 1)));
-                }
-            }
-        }
-
-        private void LineClearEffect()
-        {
-          StaticEmissionSources sources = new(new());
-          for (int y = 0; y < 40; y++)
-          {
-            for (int x = 0; x < 10; x++)
-            {
-                if (_grid.rowsToClear.Contains(y))
-                {
-                    Color color = Color.White;
-                    switch (_grid._matrix[y][x]) 
-                    {
-                        case 1: color = Color.Cyan; break;
-                        case 2: color = Color.Blue; break;
-                        case 3: color = Color.Orange; break;
-                        case 4: color = Color.Yellow; break;
-                        case 5: color = new Color(0, 255, 0) ; break;
-                        case 6: color = Color.Magenta; break;
-                        case 7: color = Color.Red; break;
-                    }
-                    
-                    sources.Members.Add(new GroupPartData()
-                    {
-                        Position = new Vector2((x * 8) + _offset.X, (y * 8) + (_offset.Y - 160)),
-                        Data = new EmitterData
-                        {
-                            emissionInterval = 1f,
-                            density = 8,
-                            angleVarianceMax = 180,
-                            particleActiveTime = (.01f, .5f),
-                            speed = (50, 100),
-                            particleData = new ParticleData()
-                            {
-                                texture = GetContent.Load<Texture2D>("Image/Effect/Particle/default"),
-                                colorTimeLine = (color, Color.White),
-                                scaleTimeLine = new(2, 1),
-                                opacityTimeLine = new(1, 0)
-                            }
-                        }
-                    }); 
-                }
-            }
-          }
-
-          GroupEmitterObj clear = new(sources, EmissionType.Burst);
-          ParticleManager.AddEmitter(clear);
-        }
-
+        } // move to "effect manager" class
+        
         public void Update(GameTime gameTime) 
         {
 
@@ -614,10 +502,10 @@ namespace MonoStacker.Source.GameObj
                     GravitySoftDrop(gameTime);
                     break;
                 case BoardState.LineClearWait:
-                    _inputManager.BufferButtonInput(gameTime);
+                    _inputManager.BufferKeyInput(gameTime);
 
                     // action
-                    activePieceColor = Color.White;
+                    //activePieceColor = Color.White;
                     lockDelay = lockDelayMax;
 
                     if (lineClearDelay == lineClearDelayMax)
@@ -630,7 +518,7 @@ namespace MonoStacker.Source.GameObj
                         _grid.ClearLines();
                         if (_grid.GetNonEmptyRows() > 0) SfxBank.lineFall.Play(); ;
                         activePiece = nextPreview.GetNextPiece();
-                        activePieceColor = Color.White;
+                        //activePieceColor = Color.White;
                         currentBoardState = BoardState.Neutral;
                         lineClearDelay = lineClearDelayMax;
                     }
@@ -638,12 +526,12 @@ namespace MonoStacker.Source.GameObj
 
                     break;
                 case BoardState.PieceEntryWait:
-                    _inputManager.BufferButtonInput(gameTime);
+                    _inputManager.BufferKeyInput(gameTime);
 
                     // action
                     if (pieceEntryDelay == pieceEntryDelayMax)
                     {
-                        FlashPiece(activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f);
+                        PlayfieldEffects.FlashPiece(activePiece, activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f, _offset);
                         //lockPiece.Play();
                     }
 
@@ -652,7 +540,7 @@ namespace MonoStacker.Source.GameObj
                     if (pieceEntryDelay <= 0) 
                     {
                         activePiece = nextPreview.GetNextPiece();
-                        activePieceColor = Color.White;
+                        //activePieceColor = Color.White;
                         currentBoardState = BoardState.Neutral;
                         pieceEntryDelay = pieceEntryDelayMax;
                     }
@@ -668,8 +556,6 @@ namespace MonoStacker.Source.GameObj
 # endif
             prevKBState = Keyboard.GetState();
             
-            
-
             foreach (var item in _effectsList)
                 item.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
             _effectsList.RemoveAll(item => item.TimeDisplayed < 0);
@@ -684,27 +570,13 @@ namespace MonoStacker.Source.GameObj
                 {
                     switch (piece.currentRotation[y, x]) 
                     {
-                        case 1:
-                            sourceRect = _grid.imageTiles[0];
-                            break;
-                        case 2:
-                            sourceRect = _grid.imageTiles[1];
-                            break;
-                        case 3:
-                            sourceRect = _grid.imageTiles[2];
-                            break;
-                        case 4:
-                            sourceRect = _grid.imageTiles[3];
-                            break;
-                        case 5:
-                            sourceRect = _grid.imageTiles[4];
-                            break;
-                        case 6:
-                            sourceRect = _grid.imageTiles[5];
-                            break;
-                        case 7:
-                            sourceRect = _grid.imageTiles[6];
-                            break;
+                        case 1: sourceRect = _grid.imageTiles[0]; break;
+                        case 2: sourceRect = _grid.imageTiles[1]; break;
+                        case 3: sourceRect = _grid.imageTiles[2]; break;
+                        case 4: sourceRect = _grid.imageTiles[3]; break;
+                        case 5: sourceRect = _grid.imageTiles[4]; break;
+                        case 6: sourceRect = _grid.imageTiles[5]; break;
+                        case 7: sourceRect = _grid.imageTiles[6]; break;
                     }
                     if (piece.currentRotation[y, x] > 0) 
                     {
@@ -759,7 +631,7 @@ namespace MonoStacker.Source.GameObj
                     }
                 }
             }
-        }
+        } // potentially move within piece class?
 
         public void Draw(SpriteBatch spriteBatch) 
         {

@@ -10,6 +10,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.GameObj;
 using MonoStacker.Source.GameObj.Tetromino;
+using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
@@ -22,7 +23,7 @@ namespace MonoStacker.Source.Generic
         private const int TILESIZE = 8;
 
         private const int ROWS = 40; // y
-        // Higher than needed to account for pieces not covering death zone but above accesible field (guideline compliant)
+        // Higher than needed to account for pieces not covering death zone but above accessible field (guideline compliant)
         private const int COLUMNS = 10; // x
         public int[][] _matrix { get; private set; }
 
@@ -180,7 +181,7 @@ namespace MonoStacker.Source.Generic
         }
 
 
-        public SpinType CheckForSpin(Piece piece) // Z/S spin doubles arent counted for whatever reson, investigate sometime
+        public SpinType CheckForSpin(Piece piece) // Z/S spin doubles aren't counted for whatever reason, investigate sometime
         {
             int mandatoryCornersFilled = 0;
             int optionalCornersFilled = 0;
@@ -266,7 +267,7 @@ namespace MonoStacker.Source.Generic
             }
         }
 
-        public int GetNonEmptyRows() // iterate thru board, if encounter row that has values > 0, add to a list, return lists count
+        public int GetNonEmptyRows() // iterate through board, if encounter row that has values > 0, add to a list, return lists count
         {
             List<int[]> nonEmptyRows = new();
 

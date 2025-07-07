@@ -19,7 +19,6 @@ namespace MonoStacker.Source.Generic
         PlayField _playField;
         public bool canHold;
         List<Piece> HoldBox;
-        private SoundEffect holdPiece = GetContent.Load<SoundEffect>("Audio/Sound/hold");
 
         public HoldPreview(Vector2 position, PlayField playField) : base(position) 
         {
@@ -32,7 +31,7 @@ namespace MonoStacker.Source.Generic
         {
             piece.offsetX = piece.initOffsetX;
             piece.offsetY = piece.initOffsetY;
-            piece.rotationId = 0;
+            piece.ResetId();
             piece.Update();
         }
 
@@ -45,6 +44,7 @@ namespace MonoStacker.Source.Generic
                     HoldBox.Add(_playField.activePiece);
                     _playField.activePiece = _playField.nextPreview.GetNextPiece();
                     ResetPiece(HoldBox.ElementAt(0));
+                    canHold = false;
                     return true;
                 }
                 else if (HoldBox.Count == queueLength) 
@@ -55,6 +55,7 @@ namespace MonoStacker.Source.Generic
                     HoldBox.RemoveAt(0);
                     HoldBox.Add(prevActivePiece);
                     ResetPiece(HoldBox.ElementAt(0));
+                    canHold = false;
                     return true;
                 }
             }
