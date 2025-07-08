@@ -8,8 +8,8 @@ public class BasicSys: IRotationSystem
         {
             switch (rotationType)
             {
-                case RotationType.Clockwise: piece.RotateCW(); return true;
-                case RotationType.CounterClockwise: piece.RotateCCW(); return true;
+                case RotationType.Clockwise: piece.RotateCW(); piece.Update(); return true;
+                case RotationType.CounterClockwise: piece.RotateCCW(); piece.Update(); return true;
             }
         }
         return false;
