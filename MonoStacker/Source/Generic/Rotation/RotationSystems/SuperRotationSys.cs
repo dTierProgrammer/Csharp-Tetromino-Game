@@ -48,7 +48,7 @@ public class SuperRotationSys: IRotationSystem
                 //if ((int)piece.offsetY == CalculateGhostPiece()) // since method is bool, just implement check upon if rotation is true in pieceManager class
                 //ResetLockDelayRotate();
                 
-                //piece.Update();
+                piece.Update();
                 return true;
             }
         }
