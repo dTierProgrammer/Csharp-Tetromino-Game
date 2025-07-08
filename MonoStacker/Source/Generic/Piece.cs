@@ -20,7 +20,7 @@ namespace MonoStacker.Source.Generic
         public float offsetY { get; set; }
         public float initOffsetX { get; set; }
         public float initOffsetY { get; set; }
-        public Color color { get; protected set; }
+        public Color color { get; protected set; } = Color.White;
 
 
         public void ResetId()

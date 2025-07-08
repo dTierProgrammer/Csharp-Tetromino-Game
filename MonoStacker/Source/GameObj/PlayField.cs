@@ -1,27 +1,17 @@
-﻿using System;
+﻿
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
-using Microsoft.Xna.Framework.Content;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
-using MonoStacker.Source.Data;
 using MonoStacker.Source.VisualEffects;
 using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.Generic;
 using MonoStacker.Source.Global;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
-using System.Data;
-using Microsoft.Xna.Framework.Audio;
 using MonoStacker.Source.Generic.Rotation;
+using MonoStacker.Source.Generic.Rotation.RotationSystems;
 using MonoStacker.Source.Interface.Input;
-using MonoStacker.Source.VisualEffects.ParticleSys;
-using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
-using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
-using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -47,604 +37,432 @@ namespace MonoStacker.Source.GameObj
 
     public class PlayField
     {
-        private Vector2 _offset;
-        private Grid _grid;
+        private readonly Vector2 _offset;
+        private readonly Grid _grid;
 
-        KeyboardState prevKBState;
-        InputManager _inputManager;
+        private KeyboardState _prevKbState;
+        private readonly InputManager _inputManager;
 
-        BoardState currentBoardState = BoardState.Neutral;
+        private BoardState _currentBoardState = BoardState.Neutral;
         //BoardState[] noDrawStates = { BoardState.LineClearWait, BoardState.PieceEntryWait, BoardState.GameEnd};
-        
+        private readonly IRotationSystem _rotationSystem;
         public Piece activePiece { get; set; }
-        private Color activePieceColor = Color.White;
-        Texture2D border = GetContent.Load<Texture2D>("Image/Board/border");
-        bool showGhostPiece = true;
-        float waitTime = 0;
-        public float lineClearDelayMax { get; set; } = .3f;
-        private float lineClearDelay;
-        public float pieceEntryDelayMax { get; set; } = .0f;
-        private float pieceEntryDelay;
+        private Color _activePieceColor = Color.White;
+        private readonly Texture2D _border = GetContent.Load<Texture2D>("Image/Board/border");
+        private bool _showGhostPiece = true;
+        private (float min, float max) _lcDelay;
+        private (float min, float max) _arrivalDelay;
+        private (float min, float max) _softLockDelay;
+        private (int maxResets , int leftoverResets) _stepReset;
+        private (int maxResets, int leftoverResets) _rotateReset;
 
-        public float lockDelayMax { get; set; } = .63f;
-        float lockDelay;
-        public int lockDelayResetMovementMax { get; set; } = 15;
-        public int lockDelayResetRotateMax { get; set; } = 6;
-        int lockDelayResetMovement { get; set; }
-        int lockDelayResetRotate { get; set; }
-
-        const float maxDasTime = .14f;
-        private bool isPieceActive = true;
-        private bool softDrop;
-        private float dropSpeed;
-        public float softDropSpeed { get; set; } = .5f;
+        private readonly float _maxDasTime = .14f;
+        
+        private bool _softDrop;
+        private float _dropSpeed;
         public NextPreview nextPreview { get; private set; }
-        public int queueLength { get; private set; } = 5;
-        public HoldPreview holdPreview { get; private set; }
-        public bool b2bIsActive { get; private set; } = false;
-        public int b2bStreak { get; private set; }
-        public SpinType currentSpinType { get; private set; } = SpinType.None;
-        public SpinDenotation parsedSpins = SpinDenotation.TSpinOnly;
+        private readonly int _queueLength = 5;
+        private HoldPreview _holdBox;
+        private bool _streakIsActive = false;
+        private int _streak;
+        private SpinType _currentSpinType = SpinType.None;
+        private readonly SpinDenotation _parsedSpins = SpinDenotation.TSpinOnly;
 
-        private Texture2D bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
+        private Texture2D _bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
 
-        private List<VisualEffect> _effectsList = new();
-
-        /*
-        private SoundEffect movePiece = GetContent.Load<SoundEffect>("Audio/Sound/move");
-        private SoundEffect lockPiece = GetContent.Load<SoundEffect>("Audio/Sound/lock");
-        private SoundEffect rotatePiece = GetContent.Load<SoundEffect>("Audio/Sound/rotate");
-        private SoundEffect clear = GetContent.Load<SoundEffect>("Audio/Sound/clear");
-        private SoundEffect bigClear = GetContent.Load<SoundEffect>("Audio/Sound/clear0");
-        private SoundEffect lineFall = GetContent.Load<SoundEffect>("Audio/Sound/linefall");
-        private SoundEffect applause = GetContent.Load<SoundEffect>("Audio/Sound/s_hakushu");
-        private SoundEffect b2b = GetContent.Load<SoundEffect>("Audio/Sound/b2b");
-        private SoundEffect b2bHit = GetContent.Load<SoundEffect>("Audio/Sound/b2b_hit");
-        private SoundEffect pieceSpin = GetContent.Load<SoundEffect>("Audio/Sound/spinrotate");
-        */
-
-        Dictionary<GameAction, float> eventTimeStamps = new();
-        List<GameAction> lastEvents = new();
+        private readonly Dictionary<GameAction, float> _eventTimeStamps = [];
+        private List<GameAction> _lastEvents = [];
         
 
 #if DEBUG
-        public bool showDebug = true;
+        private bool _showDebug = true;
 #else
-        public bool showDebug = false;
+        private bool _showDebug = false;
 #endif
 
         public PlayField(Vector2 position)
         {
             _offset = position;
             _grid = new Grid(_offset);
-            lineClearDelay = lineClearDelayMax;
-            lockDelay = lockDelayMax;
-            lockDelayResetMovement = lockDelayResetMovementMax;
-            lockDelayResetRotate = lockDelayResetRotateMax;
-            pieceEntryDelay = pieceEntryDelayMax;
-            nextPreview = new(new Vector2((border.Width) + _offset.X + 2, _offset.Y), 6);
+            _softLockDelay = (.63f, .63f);
+            _lcDelay = (.3f, .3f);
+            _stepReset = (15, 15);
+            _rotateReset = (6, 6);
+            _arrivalDelay = (0, 0);
+            nextPreview = new NextPreview(new Vector2((_border.Width) + _offset.X + 2, _offset.Y), _queueLength);
             activePiece = nextPreview.GetNextPiece();
             activePiece.offsetY = 20;
             activePiece.offsetX = 3;
-            _inputManager = new();
+            _inputManager = new InputManager();
+            _rotationSystem = new SuperRotationSys();
         }
         
         public void Initialize() 
         {
-            holdPreview = new(new Vector2(_offset.X - 42, _offset.Y), this);
+            _holdBox = new HoldPreview(new Vector2(_offset.X - 42, _offset.Y), this);
         }
 
         private void MovePiece(float movementAmt)
         {
-            //activePieceColor = Color.White;
-            if (_grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)(activePiece.offsetX + movementAmt)))
-            {
-                activePiece.offsetX += movementAmt;
-                SfxBank.stepHori.Play();
-
-                if ((int)activePiece.offsetY == (int)CalculateGhostPiece())
-                {
-                    ResetLockDelayMovement();
-                }
-            }
+            if (!_grid.IsPlacementValid(activePiece, (int)activePiece.offsetY,
+                    (int)(activePiece.offsetX + movementAmt)))
+                return;
+            activePiece.offsetX += movementAmt;
+            SfxBank.stepHori.Play();
+            if ((int)activePiece.offsetY == CalculateGhostPiece())
+                StepReset();
         }
 
         private bool CanDas(GameTime gameTime, float timeStamp)
         {
-            if ((float)(gameTime.TotalGameTime.TotalSeconds - timeStamp) >= maxDasTime) 
-                return true;
-            return false;
+            return (float)(gameTime.TotalGameTime.TotalSeconds - timeStamp) >= _maxDasTime;
         }
 
-        public bool RotateSRS(Piece piece, RotationType rotation)
+        private bool Rotate(RotationType rotation)
         {
-            currentSpinType = SpinType.None;
-            int testPt = 0;
-            if(piece is not O)
-                testPt = (int)SRSData.GetSrsChecks(piece.rotationId, rotation == 0? piece.ProjectRotateCW(): piece.ProjectRotateCCW() );
-
-            for (int i = 0; i < (piece is I ? SRSData.DataIArika.GetLength(1): SRSData.DataJlstz.GetLength(1)); i++)
+            _currentSpinType = SpinType.None;
+            if (!_rotationSystem.Rotate(activePiece, _grid, rotation)) return false;
+            _currentSpinType = _parsedSpins switch
             {
-                if (_grid.IsDataPlacementValid(piece.rotations[rotation == 0 ? piece.ProjectRotateCW() : piece.ProjectRotateCCW()],
-                    (int)(piece.offsetY - (piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y)),
-                    (int)(piece.offsetX + (piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJlstz[testPt, i].X))))
-                {
-                    switch (rotation)
-                    {
-                        case (RotationType)0: piece.RotateCW(); break;
-                        case (RotationType)1: piece.RotateCCW(); break;
-                    }
-
-                    piece.offsetX += piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJlstz[testPt, i].X;
-                    piece.offsetY -= piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y;
-    
-                    /*
-                    switch (parsedSpins)
-                    {
-                        case SpinDenotation.TSpinOnly:
-                            if (piece is T)
-                                currentSpinType = _grid.CheckForSpin(piece);
-                            break;
-                        default:
-                            currentSpinType = _grid.CheckForSpin(piece);
-                            break;
-                    }
-                    */
-                    
-                    
-                    if ((int)piece.offsetY == CalculateGhostPiece())
-                        ResetLockDelayRotate();
-                    
-                    
-                    
-                    activePiece.Update();
-                    return true;
-                }
-            }
-            return false;
-        } // Can be moved to a distinct class
+                SpinDenotation.TSpinOnly => activePiece is T? _grid.CheckForSpin(activePiece): SpinType.None,
+                _ => SpinType.None
+            };
+            if((int)activePiece.offsetY == CalculateGhostPiece())
+                RotateReset();
+            activePiece.Update();
+            return true;
+        } 
 
         private int CalculateGhostPiece()
         {
-            int xOff = (int)activePiece.offsetX;
-            int yOff = (int)activePiece.offsetY;
+            var xOff = (int)activePiece.offsetX;
+            var yOff = (int)activePiece.offsetY;
             while (_grid.IsPlacementValid(activePiece, yOff + 1, xOff))
-            {
                 yOff++;
-            }
             return yOff;
         } 
 
-        private void LockPiece(GameTime gameTime)
+        private void LockPiece()
         {
             //activePieceColor = Color.White;
-            ResetLockDelay();
+            //lockDelay = lockDelayMax;
+            _softLockDelay.min = _softLockDelay.max;
+            _stepReset.leftoverResets = _stepReset.maxResets;
+            _rotateReset.leftoverResets = _rotateReset.maxResets;
+            _currentSpinType = SpinType.None;
             _grid.LockPiece(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX);
-            if (_grid.CheckForLines() == 0) 
+            if (_grid.CheckForLines() > 0) 
             {
-                currentBoardState = BoardState.PieceEntryWait;
-                pieceEntryDelay = pieceEntryDelayMax;
+                _currentBoardState = BoardState.LineClearWait;
+                //_lineClearDelay = _lineClearDelayMax;
+                _lcDelay.min = _lcDelay.max;
             }
-            else if (_grid.CheckForLines() > 0) 
+            else
             {
-                currentBoardState = BoardState.LineClearWait;
-                lineClearDelay = lineClearDelayMax;
+                _currentBoardState = BoardState.PieceEntryWait;
+                //_pieceEntryDelay = _pieceEntryDelayMax;
+                _arrivalDelay.min = _arrivalDelay.max;
             }
-            holdPreview.canHold = true;
+            _holdBox.canHold = true;
         }
 
-        private void ResetLockDelay()
+        private bool RotateReset()
         {
-            lockDelay = lockDelayMax;
-            lockDelayResetMovement = lockDelayResetMovementMax;
-            lockDelayResetRotate = lockDelayResetRotateMax;
+            if (_rotateReset.leftoverResets  <= 0) return false;
+            _rotateReset.leftoverResets--;
+            _softLockDelay.min = _softLockDelay.max;
+            return true;
         }
 
-        private bool ResetLockDelayRotate()
+        private bool StepReset()
         {
-            if (lockDelayResetRotate > 0)
-            {
-                lockDelayResetRotate--;
-                lockDelay = lockDelayMax;
-
-                return true;
-            }
-            return false;
-        }
-
-        private bool ResetLockDelayMovement()
-        {
-            if (lockDelayResetMovement > 0)
-            {
-                lockDelayResetMovement--;
-                lockDelay = lockDelayMax;
-                return true;
-            }
-            return false;
+            if (_stepReset.leftoverResets  <= 0) return false;
+            _stepReset.leftoverResets--;
+            _softLockDelay.min = _softLockDelay.max;
+            return true;
         }
 
         private void GravitySoftDrop(GameTime gameTime) 
         {
-            if (softDrop)
-                dropSpeed = .3f;
-            else
-                dropSpeed = .03f;
+            _dropSpeed = _softDrop? .3f : .03f;
 
-            if (activePiece.offsetY + dropSpeed <= CalculateGhostPiece())
+            if (activePiece.offsetY + _dropSpeed <= CalculateGhostPiece())
             {
-                if (_grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + dropSpeed), (int)activePiece.offsetX))
-                {
-                    activePiece.offsetY += dropSpeed;
-                }
+                if (_grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + _dropSpeed), (int)activePiece.offsetX))
+                    activePiece.offsetY += _dropSpeed;
             }
             else
-            {
                 activePiece.offsetY = CalculateGhostPiece();
-            }
 
             if ((int)activePiece.offsetY == CalculateGhostPiece())
             {
-                lockDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                _softLockDelay.min -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                 
-                float lockDelayLeft = MathHelper.Clamp(lockDelay / lockDelayMax, 0, 1);
-                activePieceColor = Color.Lerp(new(90, 90, 90), Color.White, lockDelayLeft);
-                
-                if (lockDelay <= 0) 
+                var lockDelayLeft = MathHelper.Clamp(_softLockDelay.min / _softLockDelay.max, 0, 1);
+                _activePieceColor = Color.Lerp(new Color(90, 90, 90), Color.White, lockDelayLeft);
+
+                if (_softLockDelay.min <= 0)
                 {
-                    LockPiece(gameTime);
+                    LockPiece();
                     SfxBank.softLock.Play();
                 }
             }
             else
-            {
-                activePieceColor = Color.White;
-            }
+                _activePieceColor = Color.White;
         }
 
-        private void HardDrop(GameTime gameTime)
+        private void HardDrop()
         {
             activePiece.offsetY = CalculateGhostPiece();
-            LockPiece(gameTime);
+            LockPiece();
             SfxBank.hardDrop.Play();
         }
 
-        private void ClearFilledLines() 
+        private void ClearFilledLines()
         {
-
-            //activePieceColor = Color.White;
-            lockDelay = lockDelayMax;
-            if (lineClearDelay == lineClearDelayMax)
+            //_lcDelay.min = _lcDelay.max;
+            if ((int)_lcDelay.min != (int)_lcDelay.max) return;
+            PlayfieldEffects.LineClearFlash(Color.White, .5f, _grid, _offset);
+            PlayfieldEffects.LineClearEffect(_grid, _offset);
+            switch (_grid.rowsToClear.Count()) 
             {
-                PlayfieldEffects.LineClearFlash(Color.White, .5f, _grid, _offset);
-                PlayfieldEffects.LineClearEffect(_grid, _offset);
-                switch (_grid.rowsToClear.Count()) 
-                {
-                    case 1:
-                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[0].Play();
-                        else SfxBank.clear[0].Play();
-                        break;
-                    case 2:
-                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[1].Play();
-                        else SfxBank.clear[1].Play();
-                        break;
-                    case 3:
-                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[2].Play();
-                        else SfxBank.clear[2].Play();
-                        break;
-                    default:
-                        if (currentSpinType != SpinType.None) SfxBank.clearSpin[3].Play();
-                        else SfxBank.clear[3].Play();
-                        break;
-                }
+                case 1:
+                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[0].Play();
+                    else SfxBank.clear[0].Play(); break;
+                case 2:
+                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[1].Play();
+                    else SfxBank.clear[1].Play(); break;
+                case 3:
+                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[2].Play();
+                    else SfxBank.clear[2].Play(); break;
+                default:
+                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[3].Play();
+                    else SfxBank.clear[3].Play(); break;
+            }
 
-                if (currentSpinType != SpinType.None) // fake switch case
-                {
-                    Color color = Color.White;
-                    if (activePiece is I) color = Color.Cyan;
-                    if (activePiece is J) color = Color.RoyalBlue;
-                    if (activePiece is L) color = Color.Orange;
-                    if (activePiece is O) color = Color.Yellow;
-                    if (activePiece is S) color = new Color(0, 255, 0);
-                    if (activePiece is T) color = Color.Magenta;
-                    if (activePiece is Z) color = Color.Red;
-                    PlayfieldEffects.FlashPiece(activePiece, color, .7f, new Vector2(.5f, .5f), _offset);
-                }
+            if (_currentSpinType != SpinType.None) // fake switch case
+                PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), _offset);
 
-                if (_grid.rowsToClear.Count() == 4 || ((currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
+            if (_grid.rowsToClear.Count == 4 || ((_currentSpinType == SpinType.FullSpin || _currentSpinType == SpinType.MiniSpin)))
+            {
+                if (!_streakIsActive)
                 {
-                    if (!b2bIsActive)
-                    {
-                        b2bIsActive = true;
-                        b2bStreak = 0;
-                    }
-                    else
-                    {
-                        b2bStreak++;
-                        SfxBank.b2b.Play();
-                    }
+                    _streakIsActive = true; 
+                    _streak = 0;
                 }
                 else
                 {
-                    if (b2bIsActive)
+                    _streak++;
+                    SfxBank.b2b.Play();
+                }
+            }
+            else
+            {
+                if (_streakIsActive)
+                {
+                    _streakIsActive = false;
+                    _streak = 0;
+                    SfxBank.b2bBreak.Play();
+                }
+            }
+            _currentSpinType = SpinType.None;
+        }
+
+        private void DropLines()
+        {
+            _grid.ClearLines();
+            if (_grid.GetNonEmptyRows() > 0) SfxBank.lineFall.Play();
+            GrabNextPiece();
+        }
+
+        private void GrabNextPiece()
+        {
+            activePiece = nextPreview.GetNextPiece();
+            _currentBoardState = BoardState.Neutral;
+            _arrivalDelay.min = _arrivalDelay.max;
+            _currentSpinType = SpinType.None;
+        }
+
+        private void ProcessBuffer()
+        {
+            var bufferedActions = _inputManager.GetBufferedActions();
+            foreach (var item in bufferedActions)
+            {
+                var actionsStillHeld = _inputManager.GetKeyInput();
+                if (actionsStillHeld.Contains(item.gameAction) && item.hasBeenExecuted == false)
+                {
+                    switch (item.gameAction)
                     {
-                        b2bIsActive = false;
-                        b2bStreak = 0;
-                        SfxBank.b2bBreak.Play();
+                        case GameAction.Hold: 
+                            if (_holdBox.SwapPiece()) SfxBank.holdBuffer.Play(); 
+                            break;
+                        case GameAction.RotateCcw: case GameAction.RotateCw:
+                            Rotate(item.gameAction is GameAction.RotateCw ? 
+                                RotationType.Clockwise : RotationType.CounterClockwise);
+                            SfxBank.rotateBuffer.Play();
+                            break;
+                        case GameAction.MovePieceLeft: case GameAction.MovePieceRight: 
+                            _eventTimeStamps.TryAdd(item.gameAction, item.timePressed);
+                            break;
                     }
                 }
-                currentSpinType = SpinType.None;
+                if (!item.hasBeenExecuted)
+                    item.hasBeenExecuted = true;
             }
-        } // move to "effect manager" class
-        
+            if (_inputManager.bufferQueue.Count > 0)
+                _inputManager.ClearBuffer(); 
+        }
+
+        private void ProcessInput(GameTime gameTime)
+        {
+            List<GameAction> heldActions = _inputManager.GetKeyInput();
+            
+            if (heldActions.Contains(GameAction.MovePieceLeft))
+            {
+                if (!_lastEvents.Contains(GameAction.MovePieceLeft))
+                {
+                    _eventTimeStamps.Add(GameAction.MovePieceLeft, (float)gameTime.TotalGameTime.TotalSeconds);
+                    MovePiece(-1);
+                }
+                if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceLeft))) MovePiece(-1);
+            }
+            else
+                _eventTimeStamps.Remove(GameAction.MovePieceLeft);
+
+
+            if (heldActions.Contains(GameAction.MovePieceRight))
+            {
+                if (!_lastEvents.Contains(GameAction.MovePieceRight))
+                { 
+                    _eventTimeStamps.Add(GameAction.MovePieceRight, (float)gameTime.TotalGameTime.TotalSeconds); 
+                    MovePiece(1);
+                }
+                if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceRight))) MovePiece(1);
+            }
+            else
+                _eventTimeStamps.Remove(GameAction.MovePieceRight);
+                        
+            _softDrop = heldActions.Contains(GameAction.SoftDrop);
+
+            if (heldActions.Contains(GameAction.Hold) && !_lastEvents.Contains(GameAction.Hold)) 
+            {
+                if (_holdBox.SwapPiece())
+                    SfxBank.hold.Play();
+            }
+
+            if (heldActions.Contains(GameAction.RotateCw) && !_lastEvents.Contains(GameAction.RotateCw)) 
+            {
+                Rotate(RotationType.Clockwise);
+                SfxBank.rotate.Play();
+            }
+
+            if (heldActions.Contains(GameAction.RotateCcw) && !_lastEvents.Contains(GameAction.RotateCcw)) 
+            {
+                Rotate(RotationType.CounterClockwise);
+                SfxBank.rotate.Play();
+            }
+
+            if (!heldActions.Contains(GameAction.HardDrop) ||
+                _lastEvents.Contains(GameAction.HardDrop)) return;
+            HardDrop();
+        }
+
         public void Update(GameTime gameTime) 
         {
-
             nextPreview.Update();
-
-            switch (currentBoardState) 
+            switch (_currentBoardState) 
             {
                 case BoardState.Neutral:
                     if (_inputManager.bufferQueue.Count > 0)
-                    {
-                        List<InputEvent> bufferedActions = _inputManager.GetBufferedActions();
-                        _inputManager.ClearBuffer();
-
-                        foreach (var item in bufferedActions)
-                        {
-                            if (!item.hasBeenExecuted)
-                            {
-                                List<GameAction> actionsStillHeld = _inputManager.GetKeyInput();
-                                if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(GameAction.Hold)) 
-                                {
-                                    if (holdPreview.SwapPiece())
-                                        SfxBank.holdBuffer.Play();
-                                }
-                                    
-
-                                if ((item.gameAction == GameAction.MovePieceLeft || item.gameAction == GameAction.MovePieceRight) &&
-                                    (actionsStillHeld.Contains(GameAction.MovePieceLeft) || actionsStillHeld.Contains(GameAction.MovePieceRight)))
-                                {
-                                        if (!eventTimeStamps.ContainsKey(item.gameAction))
-                                            eventTimeStamps.Add(item.gameAction, item.timePressed);
-                                }
-
-                                if (item.gameAction == GameAction.RotateCw && actionsStillHeld.Contains(GameAction.RotateCw)) 
-                                {
-                                    RotateSRS(activePiece, RotationType.Clockwise);
-                                    SfxBank.rotateBuffer.Play();
-                                }
-
-                                if (item.gameAction == GameAction.RotateCcw && actionsStillHeld.Contains(GameAction.RotateCcw)) 
-                                {
-                                    RotateSRS(activePiece, RotationType.CounterClockwise);
-                                    SfxBank.rotateBuffer.Play();
-                                }
-                                item.hasBeenExecuted = true;
-                            }
-                        }
-                    }
-                    else // if no inputs were buffered, get immediate inputs
-                    {
-                        List<GameAction> heldActions = _inputManager.GetKeyInput();
-
-                        if (heldActions.Contains(GameAction.MovePieceLeft))
-                        {
-                            if (!lastEvents.Contains(GameAction.MovePieceLeft))
-                            {
-                                if (!eventTimeStamps.ContainsKey(GameAction.MovePieceLeft))
-                                {
-                                    eventTimeStamps.Add(GameAction.MovePieceLeft, (float)gameTime.TotalGameTime.TotalSeconds);
-                                    MovePiece(-1);
-                                }
-                            }
-
-                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceLeft))
-                            {
-                                float timeStamp = eventTimeStamps[GameAction.MovePieceLeft];
-                                if (CanDas(gameTime, timeStamp)) MovePiece(-1);
-                            }
-                        }
-                        else
-                        {
-                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceLeft))
-                                eventTimeStamps.Remove(GameAction.MovePieceLeft);
-                        }
-
-
-                        if (heldActions.Contains(GameAction.MovePieceRight))
-                        {
-                            if (!lastEvents.Contains(GameAction.MovePieceRight))
-                            {
-                                if (!eventTimeStamps.ContainsKey(GameAction.MovePieceRight))
-                                {
-                                    eventTimeStamps.Add(GameAction.MovePieceRight, (float)gameTime.TotalGameTime.TotalSeconds);
-                                    MovePiece(1);
-                                }
-                            }
-                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceRight))
-                            {
-                                float timeStamp = eventTimeStamps[GameAction.MovePieceRight];
-                                if (CanDas(gameTime, timeStamp)) MovePiece(1);
-                            }
-                        }
-                        else
-                        {
-                            if (eventTimeStamps.ContainsKey(GameAction.MovePieceRight))
-                                eventTimeStamps.Remove(GameAction.MovePieceRight);
-                        }
-
-                        if (heldActions.Contains(GameAction.SoftDrop))
-                            softDrop = true;
-                        else
-                            softDrop = false;
-
-                        if (heldActions.Contains(GameAction.Hold) && !lastEvents.Contains(GameAction.Hold)) 
-                        {
-                            if (holdPreview.SwapPiece())
-                                SfxBank.hold.Play();
-                        }
-
-                        if (heldActions.Contains(GameAction.RotateCw) && !lastEvents.Contains(GameAction.RotateCw)) 
-                        {
-                            RotateSRS(activePiece, RotationType.Clockwise);
-                            SfxBank.rotate.Play();
-                        }
-
-                        if (heldActions.Contains(GameAction.RotateCcw) && !lastEvents.Contains(GameAction.RotateCcw)) 
-                        {
-                            RotateSRS(activePiece, RotationType.CounterClockwise);
-                            SfxBank.rotate.Play();
-                        }
-                            
-                        if (heldActions.Contains(GameAction.HardDrop) && !lastEvents.Contains(GameAction.HardDrop))
-                            HardDrop(gameTime);
-                    }
+                        ProcessBuffer();
+                    else
+                        ProcessInput(gameTime);
                     GravitySoftDrop(gameTime);
                     break;
                 case BoardState.LineClearWait:
                     _inputManager.BufferKeyInput(gameTime);
-
-                    // action
-                    //activePieceColor = Color.White;
-                    lockDelay = lockDelayMax;
-
-                    if (lineClearDelay == lineClearDelayMax)
-                        ClearFilledLines();
-
-                    lineClearDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-                    if (lineClearDelay <= 0)
-                    {
-                        _grid.ClearLines();
-                        if (_grid.GetNonEmptyRows() > 0) SfxBank.lineFall.Play(); ;
-                        activePiece = nextPreview.GetNextPiece();
-                        //activePieceColor = Color.White;
-                        currentBoardState = BoardState.Neutral;
-                        lineClearDelay = lineClearDelayMax;
-                    }
-
-
+                    if (_lcDelay.min == _lcDelay.max) // marked
+                        ClearFilledLines(); //_lcDelay.min = _lcDelay.max;
+                    
+                    _lcDelay.min -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if(_lcDelay.min <= 0)
+                        DropLines();
                     break;
                 case BoardState.PieceEntryWait:
                     _inputManager.BufferKeyInput(gameTime);
-
-                    // action
-                    if (pieceEntryDelay == pieceEntryDelayMax)
-                    {
+                    
+                    if (_arrivalDelay.min == _arrivalDelay.max) // marked
                         PlayfieldEffects.FlashPiece(activePiece, activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f, _offset);
-                        //lockPiece.Play();
-                    }
+                    _arrivalDelay.min -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
-                    pieceEntryDelay -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-                    if (pieceEntryDelay <= 0) 
-                    {
-                        activePiece = nextPreview.GetNextPiece();
-                        //activePieceColor = Color.White;
-                        currentBoardState = BoardState.Neutral;
-                        pieceEntryDelay = pieceEntryDelayMax;
-                    }
+                    if (_arrivalDelay.min <= 0) 
+                        GrabNextPiece();
                     break;
             }
-            lastEvents = _inputManager.GetKeyInput();
+            _lastEvents = _inputManager.GetKeyInput();
 
 #if DEBUG
-            if (Keyboard.GetState().IsKeyDown(Keys.T) && !prevKBState.IsKeyDown(Keys.T))
-                showDebug = !showDebug;
-            if (Keyboard.GetState().IsKeyDown(Keys.Y) && !prevKBState.IsKeyDown(Keys.Y))
-                        showGhostPiece = !showGhostPiece;
+            if (Keyboard.GetState().IsKeyDown(Keys.T) && !_prevKbState.IsKeyDown(Keys.T))
+                _showDebug = !_showDebug;
+            if (Keyboard.GetState().IsKeyDown(Keys.Y) && !_prevKbState.IsKeyDown(Keys.Y))
+                        _showGhostPiece = !_showGhostPiece;
 # endif
-            prevKBState = Keyboard.GetState();
-            
-            foreach (var item in _effectsList)
-                item.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
-            _effectsList.RemoveAll(item => item.TimeDisplayed < 0);
+            _prevKbState = Keyboard.GetState();
         }
 
-        public void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
+        private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
         {
-            Rectangle sourceRect = _grid.imageTiles[0];
-            for (int y = 0; y < piece.currentRotation.GetLength(0); y++) 
+            for (var y = 0; y < piece.currentRotation.GetLength(0); y++) 
             {
-                for (int x = 0; x < piece.currentRotation.GetLength(1); x++) 
+                for (var x = 0; x < piece.currentRotation.GetLength(1); x++)
                 {
-                    switch (piece.currentRotation[y, x]) 
+                    var sourceRect = piece.currentRotation[y, x] switch
                     {
-                        case 1: sourceRect = _grid.imageTiles[0]; break;
-                        case 2: sourceRect = _grid.imageTiles[1]; break;
-                        case 3: sourceRect = _grid.imageTiles[2]; break;
-                        case 4: sourceRect = _grid.imageTiles[3]; break;
-                        case 5: sourceRect = _grid.imageTiles[4]; break;
-                        case 6: sourceRect = _grid.imageTiles[5]; break;
-                        case 7: sourceRect = _grid.imageTiles[6]; break;
-                    }
-                    if (piece.currentRotation[y, x] > 0) 
-                    {
-                        if (showGhostPiece)
-                        {
-                            spriteBatch.Draw(
-                                    _grid.ghostBlocks,
-                                    new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (CalculateGhostPiece() * 8) + (int)_offset.Y - 160, 8, 8),
-                                    sourceRect,
-                                    Color.White * .5f
-                                    );
-                        }
+                        1 => _grid.imageTiles[0], 2 => _grid.imageTiles[1],
+                        3 => _grid.imageTiles[2], 4 => _grid.imageTiles[3],
+                        5 => _grid.imageTiles[4], 6 => _grid.imageTiles[5],
+                        7 => _grid.imageTiles[6], _ => Rectangle.Empty
+                    };
 
-                        spriteBatch.Draw(
-                                _grid.blocks,
-                                new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8),
-                                sourceRect,
-                                activePieceColor
-                                );
-                    }
-                   
-                }
-            }
-            Texture2D cornerImg = _grid.debugCM;
-            if (isPieceActive && showDebug) 
-            {
-                for (int y = 0; y < piece.requiredCorners.GetLength(0); y++)
-                {
-                    for (int x = 0; x < piece.requiredCorners.GetLength(1); x++)
+                    if (piece.currentRotation[y, x] != 0)
                     {
-                        switch (piece.requiredCorners[y, x])
-                        {
-                            case 1:
-                                cornerImg = _grid.debugCM;
-                                break;
-                            case 2:
-                                cornerImg = _grid.debugCO;
-                                break;
-                            case 3:
-                                cornerImg = GetContent.Load<Texture2D>("Image/Block/cenPt");
-                                break;
-                        }
-
-                        if (piece.requiredCorners[y, x] > 0) 
-                        {
-                            spriteBatch.Draw(
-                                cornerImg,
-                                new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8),
-                                Color.White
-                                );
-                        }
+                        if (_showGhostPiece)
+                            spriteBatch.Draw(_grid.ghostBlocks, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (CalculateGhostPiece() * 8) + (int)_offset.Y - 160, 8, 8), sourceRect, Color.White * .5f);
+                        spriteBatch.Draw(_grid.blocks, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8), sourceRect, _activePieceColor);
                     }
                 }
             }
-        } // potentially move within piece class?
+
+            if (!(_currentBoardState == BoardState.Neutral && _showDebug)) return;
+            
+            for (var y = 0; y < piece.requiredCorners.GetLength(0); y++)
+            {
+                for (var x = 0; x < piece.requiredCorners.GetLength(1); x++)
+                {
+                    var cornerImg = piece.requiredCorners[y, x] switch
+                    {
+                        1 => _grid.debugCM,
+                        2 => _grid.debugCO,
+                        3 => GetContent.Load<Texture2D>("Image/Block/cenPt"),
+                        _ => null
+                    };
+                        
+                    if (piece.requiredCorners[y, x] > 0) 
+                        spriteBatch.Draw(cornerImg, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8), Color.White);
+                }
+            }
+        }
 
         public void Draw(SpriteBatch spriteBatch) 
         {
             spriteBatch.Begin();
             //spriteBatch.Draw(bgTest, _offset, Color.White);
             _grid.Draw(spriteBatch);
-            spriteBatch.Draw(border, new Vector2(_offset.X - 4, _offset.Y - 4), Color.White);
-            if(currentBoardState == BoardState.Neutral)
+            spriteBatch.Draw(_border, new Vector2(_offset.X - 4, _offset.Y - 4), Color.White);
+            if(_currentBoardState == BoardState.Neutral)
                 DrawPiece(spriteBatch, activePiece);
             nextPreview.Draw(spriteBatch);
-            holdPreview.Draw(spriteBatch);
-            foreach (var item in _effectsList)
-                item.Draw(spriteBatch);
+            _holdBox.Draw(spriteBatch);
             spriteBatch.End();
             
         }

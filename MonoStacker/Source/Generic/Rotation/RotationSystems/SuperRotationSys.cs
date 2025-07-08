@@ -13,14 +13,14 @@ public class SuperRotationSys: IRotationSystem
         if (piece is not O)
             testPt = (int)SRSData.GetSrsChecks(piece.rotationId, rotationType == 0 ? piece.ProjectRotateCW() : piece.ProjectRotateCCW()).Value;
     
-        for (int i = 0; i < (piece is I ? SRSData.DataIArika.GetLength(1) : SRSData.DataJlstz.GetLength(1)); i++)
+        for (int i = 0; i < (piece is I ? SRSData.DataI.GetLength(1) : SRSData.DataJlstz.GetLength(1)); i++)
         {
             if (grid.IsDataPlacementValid(
                     piece.rotations[rotationType == 0 ? piece.ProjectRotateCW() : piece.ProjectRotateCCW()],
                     (int)(piece.offsetY -
-                          (piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y)),
+                          (piece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y)),
                     (int)(piece.offsetX +
-                          (piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJlstz[testPt, i].X))))
+                          (piece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJlstz[testPt, i].X))))
             {
                 switch (rotationType)
                 {
@@ -28,8 +28,8 @@ public class SuperRotationSys: IRotationSystem
                     case (RotationType)1: piece.RotateCCW(); break;
                 }
 
-                piece.offsetX += piece is I ? SRSData.DataIArika[testPt, i].X : SRSData.DataJlstz[testPt, i].X;
-                piece.offsetY -= piece is I ? SRSData.DataIArika[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y;
+                piece.offsetX += piece is I ? SRSData.DataI[testPt, i].X : SRSData.DataJlstz[testPt, i].X;
+                piece.offsetY -= piece is I ? SRSData.DataI[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y;
 
                 /*
                 switch (parsedSpins) // since method is bool, just implement check upon if rotation is true in pieceManager class
