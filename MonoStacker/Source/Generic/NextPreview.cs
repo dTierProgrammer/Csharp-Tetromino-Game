@@ -14,12 +14,14 @@ namespace MonoStacker.Source.Generic
     {
         protected Vector2 _offset;
         protected int queueLength;
-        protected static Texture2D borderTexture = GetContent.Load<Texture2D>("Image/Board/queue_q");
+        protected static Texture2D borderTexture = GetContent.Load<Texture2D>("Image/Board/queue0");
+        protected static Texture2D bgTexture = GetContent.Load<Texture2D>("Image/Board/queue_bg");
         protected static Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/1");
         protected static List<Rectangle> queueBorderTiles = new();
         protected static List<Rectangle> queuePieceTiles = new();
+        protected static List<Rectangle> queueBgTiles = new();
         protected const int TILESIZE = 8;
-        protected const int GRIDSIZE = 24;
+        protected const int GRIDSIZE = 25;
         protected List<Piece> pieceQueue;
 
         bool alignPiecesToCenter = true;
@@ -54,10 +56,16 @@ namespace MonoStacker.Source.Generic
             queuePieceTiles.Add(new Rectangle(TILESIZE * 6, 0, TILESIZE, TILESIZE)); // Z
             queuePieceTiles.Add(new Rectangle(0, 8, 8, 8));
 
-            queueBorderTiles.Add(new Rectangle(0, 0, 40, 12)); // top
-            queueBorderTiles.Add(new Rectangle(0, 12, 40, GRIDSIZE)); // sides
-            queueBorderTiles.Add(new Rectangle(0, 44, 40, 4)); // bottom
-            queueBorderTiles.Add(new Rectangle(40, 12, 32, GRIDSIZE)); // grid
+            queueBorderTiles.Add(new Rectangle(0, 0, 41, 11)); // top (0)
+            queueBorderTiles.Add(new Rectangle(0, 12, 40, 25)); // sides (1)
+            queueBorderTiles.Add(new Rectangle(0, 38, 41, 11)); // bottom (2)
+            queueBorderTiles.Add(new Rectangle(0, 50, 22, 7)); // hold title (3)
+            queueBorderTiles.Add(new Rectangle(0, 58, 21, 7)); // next title (4)
+            
+            queueBgTiles.Add(new Rectangle(0, 0, 34, 25)); // bg top (0)
+            queueBgTiles.Add(new Rectangle(0, 26, 34, 25)); // bg mid (1)
+            queueBgTiles.Add(new Rectangle(0, 52, 34, 25)); // bg bottom (2)
+            queueBgTiles.Add(new Rectangle(0, 78, 34, 25)); // bg static (3)
             
 
             queueBorderTiles.Add(new Rectangle(40, 0, 41, 12)); // top hold
@@ -80,39 +88,27 @@ namespace MonoStacker.Source.Generic
 
         public virtual void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset)
         {
-            Rectangle sourceRect = queuePieceTiles[0];
+            //Rectangle sourceRect = queuePieceTiles[0];
             for (int y = 0; y < piece.currentRotation.GetLength(0); y++) 
             {
                 for (int x = 0; x < piece.currentRotation.GetLength(1); x++) 
                 {
-                    switch (piece.currentRotation[y, x]) 
+                    var sourceRect = piece.currentRotation[y, x] switch
                     {
-                        case 1:
-                            sourceRect = queuePieceTiles[0];
-                            break;
-                        case 2:
-                            sourceRect = queuePieceTiles[1];
-                            break;
-                        case 3:
-                            sourceRect = queuePieceTiles[2];
-                            break;
-                        case 4:
-                            sourceRect = queuePieceTiles[3];
-                            break;
-                        case 5:
-                            sourceRect = queuePieceTiles[4];
-                            break;
-                        case 6:
-                            sourceRect = queuePieceTiles[5];
-                            break;
-                        case 7:
-                            sourceRect = queuePieceTiles[6];
-                            break;
-                    }
+                        1 => queuePieceTiles[0],
+                        2 => queuePieceTiles[1],
+                        3 => queuePieceTiles[2],
+                        4 => queuePieceTiles[3],
+                        5 => queuePieceTiles[4],
+                        6 => queuePieceTiles[5],
+                        7 => queuePieceTiles[6],
+                        _ => Rectangle.Empty
+                    };
+                    
                     if (piece.currentRotation[y, x] > 0) 
                     {
                         spriteBatch.Draw(
-                            blocks,
+                            ImgBank.BlockTexture,
                             new Rectangle((int)(x * TILESIZE + offset.X), (int)(y * TILESIZE + offset.Y), TILESIZE, TILESIZE),
                             sourceRect,
                             Color.White
@@ -124,20 +120,25 @@ namespace MonoStacker.Source.Generic
 
         public void DrawQueue(SpriteBatch spriteBatch) 
         {
-            int buffer = 0;
+            //int buffer = 0;
             for (int i = 1; i <= 7; i++)
             {
-                
                 if ((i - 1) < queueLength) 
                 {
-                    if (pieceQueue.ElementAt(i - 1) is O)
-                        buffer = 8;
-                    else if (pieceQueue.ElementAt(i - 1) is I)
-                        buffer = 0;
-                    else
-                        buffer = 4;
-
-                        DrawPiece(spriteBatch, pieceQueue.ElementAt(i - 1), new Vector2(_offset.X + buffer, ((i - 1) * GRIDSIZE) + _offset.Y));
+                    var buffer = pieceQueue.ElementAt(i - 1) switch
+                    {
+                        O => 9,
+                        I => 1,
+                        _ => 5
+                    };
+                    
+                    var bufferY = pieceQueue.ElementAt(i - 1) switch
+                    {
+                        I => 1,
+                        _ => 5
+                    };
+                    
+                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i - 1), new Vector2(_offset.X + buffer, ((i - 1) * GRIDSIZE) + _offset.Y + bufferY));
                 }
                     
             }
@@ -145,23 +146,14 @@ namespace MonoStacker.Source.Generic
 
         public virtual void Draw(SpriteBatch spriteBatch) 
         {
-            /*
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, _offset.Y - 3), queueBorderTiles[0], Color.White);
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, (queueLength * GRIDSIZE) + _offset.Y), queueBorderTiles[2], Color.White);
-            for (int i = 0; i < queueLength; i++) 
-            {
-                //spriteBatch.Draw(borderTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[0], Color.White);
-                //spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 2, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[3], Color.White);
-            }
-            */
-
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, _offset.Y - 12), queueBorderTiles[0], Color.White);
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (queueLength * GRIDSIZE) + _offset.Y), queueBorderTiles[2], Color.White);
             for (int i = 0; i < queueLength; i++)
             {
-                spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
-                spriteBatch.Draw(borderTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[3], Color.White);
+                spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
+                spriteBatch.Draw(bgTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBgTiles[3], Color.White);
             }
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, _offset.Y - 3), queueBorderTiles[0], Color.White); // top
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, (queueLength * GRIDSIZE) + _offset.Y - 7), queueBorderTiles[2], Color.White); // bottom
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3 , _offset.Y - 11), queueBorderTiles[4], Color.White);
             DrawQueue(spriteBatch);
         }
     }

@@ -45,7 +45,7 @@ public static class PlayfieldEffects
         {
             if (grid.rowsToClear.Contains(y))
             {
-                EffectManager.AddEffect(new ClearFlash(new Vector2(39 + pos.X, (int)(y * 8) + pos.Y - 157), color, timeDisplayed, new Vector2(3, 1)));
+                EffectManager.AddEffect(new ClearFlash(new Vector2(39 + pos.X, (int)(y * 8) + pos.Y - 155.5f), color, timeDisplayed, new Vector2(3, 0)));
             }
         }
     } // move to "effect manager" class
@@ -85,7 +85,7 @@ public static class PlayfieldEffects
                             {
                                 texture = GetContent.Load<Texture2D>("Image/Effect/Particle/default"),
                                 colorTimeLine = (color, color),
-                                scaleTimeLine = new(3, 0),
+                                scaleTimeLine = new(3, 1),
                                 opacityTimeLine = new(1, 1)
                             }
                         }

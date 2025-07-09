@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace MonoStacker.Source.Global
 {
-    public class SfxBank
+    public struct SfxBank
     {
         public static SoundEffect[] clear = new SoundEffect[]
         {

@@ -35,7 +35,7 @@ namespace MonoStacker.Source.Generic
             piece.Update();
         }
 
-        public bool SwapPiece()
+        public bool ChangePiece()
         {
             if (canHold) 
             {
@@ -47,7 +47,7 @@ namespace MonoStacker.Source.Generic
                     canHold = false;
                     return true;
                 }
-                else if (HoldBox.Count == queueLength) 
+                if (HoldBox.Count == queueLength) 
                 {
                     Piece prevActivePiece = _playField.activePiece ;
 
@@ -69,64 +69,51 @@ namespace MonoStacker.Source.Generic
             {
                 for (int x = 0; x < piece.currentRotation.GetLength(1); x++)
                 {
-                    switch (piece.currentRotation[y, x])
+                    sourceRect = piece.currentRotation[y, x] switch
                     {
-                        case 1:
-                            sourceRect = queuePieceTiles[0];
-                            break;
-                        case 2:
-                            sourceRect = queuePieceTiles[1];
-                            break;
-                        case 3:
-                            sourceRect = queuePieceTiles[2];
-                            break;
-                        case 4:
-                            sourceRect = queuePieceTiles[3];
-                            break;
-                        case 5:
-                            sourceRect = queuePieceTiles[4];
-                            break;
-                        case 6:
-                            sourceRect = queuePieceTiles[5];
-                            break;
-                        case 7:
-                            sourceRect = queuePieceTiles[6];
-                            break;
-                    }
+                        1 => queuePieceTiles[0],
+                        2 => queuePieceTiles[1],
+                        3 => queuePieceTiles[2],
+                        4 => queuePieceTiles[3],
+                        5 => queuePieceTiles[4],
+                        6 => queuePieceTiles[5],
+                        7 => queuePieceTiles[6],
+                        _ => Rectangle.Empty
+                    };
                     if (piece.currentRotation[y, x] > 0)
-                    {
-                        spriteBatch.Draw(
-                            blocks,
-                            new Rectangle((int)(x * TILESIZE + offset.X), (int)(y * TILESIZE + offset.Y), TILESIZE, TILESIZE),
-                            canHold ? sourceRect : queuePieceTiles[7],
-                            Color.White
-                            );
-                    }
+                        spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((int)(x * TILESIZE + offset.X), (int)(y * TILESIZE + offset.Y), TILESIZE, TILESIZE), canHold ? sourceRect : queuePieceTiles[7], Color.White);
                 }
             }
         }
 
         public override void Draw(SpriteBatch spriteBatch) 
         {
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, _offset.Y - 12), queueBorderTiles[4], Color.White);
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (queueLength * GRIDSIZE) + _offset.Y), queueBorderTiles[2], Color.White);
-            for (int i = 0; i < queueLength; i++)
+            
+            for (var i = 0; i < queueLength; i++)
             {
-                spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
-                spriteBatch.Draw(borderTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[3], Color.White);
+                spriteBatch.Draw(bgTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBgTiles[3], Color.White);
+                spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
             }
-            if (HoldBox.Count() > 0) 
+            
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, _offset.Y - 3), queueBorderTiles[0], Color.White, 0, Vector2.Zero, 1, SpriteEffects.FlipHorizontally, 0);
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, (queueLength * GRIDSIZE) + _offset.Y - 7), queueBorderTiles[2], Color.White, 0, Vector2.Zero, 1, SpriteEffects.FlipHorizontally, 0);
+            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 4, _offset.Y - 11), queueBorderTiles[3], Color.White);
+            
+            if (HoldBox.Count == 0) return;
+            var buffer = HoldBox.ElementAt(0) switch
             {
-                int buffer = 0;
-                if (HoldBox.ElementAt(0) is O)
-                    buffer = 8;
-                else if (HoldBox.ElementAt(0) is I)
-                    buffer = 0;
-                else
-                    buffer = 4;
-                DrawPiece(spriteBatch, HoldBox.ElementAt(0), new Vector2(_offset.X + buffer, _offset.Y));
-            }
-                
+                O => 9,
+                I => 1,
+                _ => 5
+            };
+            
+            var bufferY = HoldBox.ElementAt(0) switch
+            {
+                I => 1,
+                _ => 5
+            };
+            
+            DrawPiece(spriteBatch, HoldBox.ElementAt(0), new Vector2(_offset.X + buffer, _offset.Y + bufferY));
         }
     }
 }

@@ -68,6 +68,9 @@ namespace MonoStacker.Source.Generic
             imageTiles.Add(new Rectangle(TILESIZE * 4, 0, TILESIZE, TILESIZE)); // S
             imageTiles.Add(new Rectangle(TILESIZE * 5, 0, TILESIZE,  TILESIZE)); // T
             imageTiles.Add(new Rectangle(TILESIZE * 6, 0, TILESIZE, TILESIZE)); // Z
+            imageTiles.Add(new Rectangle(0, TILESIZE, TILESIZE, TILESIZE));
+            imageTiles.Add(new Rectangle(TILESIZE, TILESIZE, TILESIZE, TILESIZE));
+            imageTiles.Add(new Rectangle(TILESIZE * 2, TILESIZE, TILESIZE, TILESIZE));
         }
 
         public void LockPiece(Piece piece, int rowOffset, int columnOffset) 
@@ -129,25 +132,11 @@ namespace MonoStacker.Source.Generic
                 {
                     if (data[y, x] > 0)
                     {
-                        /*
-                        if (rowOffset + y < 0 || rowOffset + y > ROWS)
-                            return false;
-                        if (columnOffset + x < 0 || columnOffset + x > COLUMNS)
-                            return false;
-                        if (matrix[y + rowOffset, x + columnOffset] != 0)
-                            return false;
-                        */
-
-                        if (rowOffset + y >= ROWS)
-                            return false;
-                        if (columnOffset + x < 0)
-                            return false;
-                        if (columnOffset + x >= COLUMNS)
-                            return false;
-                        if (rowOffset + y > ROWS)
-                            continue;
-                        if (_matrix[rowOffset + y][columnOffset + x] > 0)
-                            return false;
+                        if (rowOffset + y >= ROWS) return false;
+                        if (columnOffset + x < 0) return false;
+                        if (columnOffset + x >= COLUMNS) return false;
+                        if (rowOffset + y > ROWS) continue;
+                        if (_matrix[rowOffset + y][columnOffset + x] > 0) return false;
                     }
                 }
             }
@@ -171,10 +160,8 @@ namespace MonoStacker.Source.Generic
                         break;
                     }
                 }
-                if (clearedLines == true) 
-                {
+                if (clearedLines) 
                     rowsToClear.Add(y);
-                }
                     
             }
             return rowsToClear.Count;
@@ -314,7 +301,6 @@ namespace MonoStacker.Source.Generic
 
         public void Draw(SpriteBatch spriteBatch) 
         {
-            spriteBatch.Draw(grid, new Vector2(_offset.X, _offset.Y), Color.White);
             Rectangle sourceRect = imageTiles[0];
 
             for (int y = 0; y < ROWS; y++) 
@@ -357,7 +343,7 @@ namespace MonoStacker.Source.Generic
                     {
                         spriteBatch.Draw
                                 (
-                                blocks,
+                                ImgBank.BlockTexture,
                                 new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
                                 sourceRect,
                                 color
