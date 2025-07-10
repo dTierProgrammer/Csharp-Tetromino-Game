@@ -301,6 +301,18 @@
 /processorParam:TextureFormat=Color
 /build:Image/Block/2.png
 
+#begin Image/Block/3.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Block/3.png
+
 #begin Image/Block/cenPt.png
 /importer:TextureImporter
 /processor:TextureProcessor

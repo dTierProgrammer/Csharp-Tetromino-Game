@@ -4,10 +4,11 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
+using MonoStacker.Source.GameObj.Tetromino;
 
 namespace MonoStacker.Source.Generic
 {
-    public abstract class Piece
+    public class Piece
     {
         public readonly List<int[,]> rotations = new();
         public readonly List<int[,]> spinData = new();
@@ -21,6 +22,19 @@ namespace MonoStacker.Source.Generic
         public float initOffsetX { get; set; }
         public float initOffsetY { get; set; }
         public Color color { get; protected set; } = Color.White;
+        public TetrominoType type { get; private set; }
+
+        public Piece() { }
+
+        public Piece(TetrominoType type, List<int[,]> rotations, List<int[,]> spinData, Color color) 
+        { 
+            this.type = type;
+            this.rotations = rotations;
+            this.spinData = spinData;
+            this.color = color;
+            currentRotation = rotations[rotationId];
+            requiredCorners = spinData[rotationId];
+        }
 
 
         public void ResetId()

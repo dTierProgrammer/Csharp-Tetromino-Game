@@ -1,116 +1,101 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.GameObj.Tetromino;
+using MonoStacker.Source.GameObj.Tetromino.Factory;
+using MonoStacker.Source.GameObj.Tetromino.RandGenerator;
 using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
 {
     public class NextPreview
     {
-        protected Vector2 _offset;
-        protected int queueLength;
-        protected static Texture2D borderTexture = GetContent.Load<Texture2D>("Image/Board/queue0");
-        protected static Texture2D bgTexture = GetContent.Load<Texture2D>("Image/Board/queue_bg");
-        protected static Texture2D blocks = GetContent.Load<Texture2D>("Image/Block/1");
-        protected static List<Rectangle> queueBorderTiles = new();
-        protected static List<Rectangle> queuePieceTiles = new();
-        protected static List<Rectangle> queueBgTiles = new();
-        protected const int TILESIZE = 8;
-        protected const int GRIDSIZE = 25;
-        protected List<Piece> pieceQueue;
+        protected Vector2 Offset;
+        protected readonly int QueueLength;
+        protected static readonly Texture2D BorderTexture = GetContent.Load<Texture2D>("Image/Board/queue0");
+        protected static readonly Texture2D BgTexture = GetContent.Load<Texture2D>("Image/Board/queue_bg");
+        protected static readonly List<Rectangle> QueueBorderTiles = [];
+        protected static readonly List<Rectangle> QueuePieceTiles = [];
+        protected static readonly List<Rectangle> QueueBgTiles = [];
+        protected const int Tilesize = 8;
+        protected const int Gridsize = 25;
+        private readonly List<Piece> _pieceQueue;
+        private readonly ITetrominoFactory _factory;
+        private readonly IRandGenerator _generator;
 
-        bool alignPiecesToCenter = true;
-
-        public NextPreview(Vector2 position, int queueLength) 
+        public NextPreview(Vector2 position, int queueLength, ITetrominoFactory factory, IRandGenerator generator) 
         {
-            _offset = position;
-            this.queueLength = queueLength;
-            pieceQueue = new();
+            Offset = position;
+            this.QueueLength = queueLength;
+            _pieceQueue = [];
+            _factory = new SrsFactory();
+            _generator = generator;
             GetImageCuts();
 
-            for(int i = 0; i < 7; i++)
-                pieceQueue.Add(_GenerateTetromino.RandomTetromino7Bag());
+            for(var i = 0; i < 7; i++)
+                _pieceQueue.Add(_generator.GetNextTetromino(_factory));
         }
 
         public NextPreview(Vector2 position)
         {
-            _offset = position;
-            queueLength = 1;
-            pieceQueue = new();
+            Offset = position;
+            QueueLength = 1;
+            _pieceQueue = [];
             GetImageCuts();
         }
 
-        protected static void GetImageCuts() 
+        private static void GetImageCuts() 
         {
-            queuePieceTiles.Add(new Rectangle(0, 0, TILESIZE, TILESIZE)); // I
-            queuePieceTiles.Add(new Rectangle(TILESIZE, 0, TILESIZE, TILESIZE)); // J
-            queuePieceTiles.Add(new Rectangle(TILESIZE * 2, 0, TILESIZE, TILESIZE)); // L
-            queuePieceTiles.Add(new Rectangle(TILESIZE * 3, 0, TILESIZE, TILESIZE)); // O
-            queuePieceTiles.Add(new Rectangle(TILESIZE * 4, 0, TILESIZE, TILESIZE)); // S
-            queuePieceTiles.Add(new Rectangle(TILESIZE * 5, 0, TILESIZE, TILESIZE)); // T
-            queuePieceTiles.Add(new Rectangle(TILESIZE * 6, 0, TILESIZE, TILESIZE)); // Z
-            queuePieceTiles.Add(new Rectangle(0, 8, 8, 8));
+            QueuePieceTiles.Add(new Rectangle(0, 0, Tilesize, Tilesize)); // I
+            QueuePieceTiles.Add(new Rectangle(Tilesize, 0, Tilesize, Tilesize)); // J
+            QueuePieceTiles.Add(new Rectangle(Tilesize * 2, 0, Tilesize, Tilesize)); // L
+            QueuePieceTiles.Add(new Rectangle(Tilesize * 3, 0, Tilesize, Tilesize)); // O
+            QueuePieceTiles.Add(new Rectangle(Tilesize * 4, 0, Tilesize, Tilesize)); // S
+            QueuePieceTiles.Add(new Rectangle(Tilesize * 5, 0, Tilesize, Tilesize)); // T
+            QueuePieceTiles.Add(new Rectangle(Tilesize * 6, 0, Tilesize, Tilesize)); // Z
+            QueuePieceTiles.Add(new Rectangle(0, 8, 8, 8));
 
-            queueBorderTiles.Add(new Rectangle(0, 0, 41, 11)); // top (0)
-            queueBorderTiles.Add(new Rectangle(0, 12, 40, 25)); // sides (1)
-            queueBorderTiles.Add(new Rectangle(0, 38, 41, 11)); // bottom (2)
-            queueBorderTiles.Add(new Rectangle(0, 50, 22, 7)); // hold title (3)
-            queueBorderTiles.Add(new Rectangle(0, 58, 21, 7)); // next title (4)
+            QueueBorderTiles.Add(new Rectangle(0, 0, 41, 11)); // top (0)
+            QueueBorderTiles.Add(new Rectangle(0, 12, 40, 25)); // sides (1)
+            QueueBorderTiles.Add(new Rectangle(0, 38, 41, 11)); // bottom (2)
+            QueueBorderTiles.Add(new Rectangle(0, 50, 22, 7)); // hold title (3)
+            QueueBorderTiles.Add(new Rectangle(0, 58, 21, 7)); // next title (4)
             
-            queueBgTiles.Add(new Rectangle(0, 0, 34, 25)); // bg top (0)
-            queueBgTiles.Add(new Rectangle(0, 26, 34, 25)); // bg mid (1)
-            queueBgTiles.Add(new Rectangle(0, 52, 34, 25)); // bg bottom (2)
-            queueBgTiles.Add(new Rectangle(0, 78, 34, 25)); // bg static (3)
+            QueueBgTiles.Add(new Rectangle(0, 0, 34, 25)); // bg top (0)
+            QueueBgTiles.Add(new Rectangle(0, 26, 34, 25)); // bg mid (1)
+            QueueBgTiles.Add(new Rectangle(0, 52, 34, 25)); // bg bottom (2)
+            QueueBgTiles.Add(new Rectangle(0, 78, 34, 25)); // bg static (3)
             
 
-            queueBorderTiles.Add(new Rectangle(40, 0, 41, 12)); // top hold
+            QueueBorderTiles.Add(new Rectangle(40, 0, 41, 12)); // top hold
         }
 
         public Piece GetNextPiece() 
         {
-            Piece tetromino = pieceQueue.ElementAt(0);
-            pieceQueue.RemoveAt(0);
+            Piece tetromino = _pieceQueue.ElementAt(0);
+            _pieceQueue.RemoveAt(0);
             return tetromino;
         }
 
         public virtual void Update() 
         {
-            
-            if (pieceQueue.Count() < 7)
-                pieceQueue.Add(_GenerateTetromino.RandomTetromino7Bag());
-            
+            if (_pieceQueue.Count < 7)
+                _pieceQueue.Add(_generator.GetNextTetromino(_factory));
         }
 
-        public virtual void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset)
+        protected virtual void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset)
         {
-            //Rectangle sourceRect = queuePieceTiles[0];
-            for (int y = 0; y < piece.currentRotation.GetLength(0); y++) 
+            for (var y = 0; y < piece.currentRotation.GetLength(0); y++) 
             {
-                for (int x = 0; x < piece.currentRotation.GetLength(1); x++) 
+                for (var x = 0; x < piece.currentRotation.GetLength(1); x++) 
                 {
-                    var sourceRect = piece.currentRotation[y, x] switch
-                    {
-                        1 => queuePieceTiles[0],
-                        2 => queuePieceTiles[1],
-                        3 => queuePieceTiles[2],
-                        4 => queuePieceTiles[3],
-                        5 => queuePieceTiles[4],
-                        6 => queuePieceTiles[5],
-                        7 => queuePieceTiles[6],
-                        _ => Rectangle.Empty
-                    };
-                    
                     if (piece.currentRotation[y, x] > 0) 
                     {
                         spriteBatch.Draw(
                             ImgBank.BlockTexture,
-                            new Rectangle((int)(x * TILESIZE + offset.X), (int)(y * TILESIZE + offset.Y), TILESIZE, TILESIZE),
-                            sourceRect,
+                            new Rectangle((int)(x * Tilesize + offset.X), (int)(y * Tilesize + offset.Y), Tilesize, Tilesize),
+                            QueuePieceTiles[piece.currentRotation[y, x] - 1],
                             Color.White
                             );
                     }
@@ -118,27 +103,27 @@ namespace MonoStacker.Source.Generic
             }
         }
 
-        public void DrawQueue(SpriteBatch spriteBatch) 
+        private void DrawQueue(SpriteBatch spriteBatch) 
         {
             //int buffer = 0;
-            for (int i = 1; i <= 7; i++)
+            for (var i = 1; i <= 7; i++)
             {
-                if ((i - 1) < queueLength) 
+                if ((i - 1) < QueueLength) 
                 {
-                    var buffer = pieceQueue.ElementAt(i - 1) switch
+                    var buffer = _pieceQueue.ElementAt(i - 1).type switch
                     {
-                        O => 9,
-                        I => 1,
+                        TetrominoType.O => 9,
+                        TetrominoType.I => 1,
                         _ => 5
                     };
                     
-                    var bufferY = pieceQueue.ElementAt(i - 1) switch
+                    var bufferY = _pieceQueue.ElementAt(i - 1).type switch
                     {
-                        I => 1,
+                        TetrominoType.I => 1,
                         _ => 5
                     };
                     
-                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i - 1), new Vector2(_offset.X + buffer, ((i - 1) * GRIDSIZE) + _offset.Y + bufferY));
+                    DrawPiece(spriteBatch, _pieceQueue.ElementAt(i - 1), new Vector2(Offset.X + buffer, ((i - 1) * Gridsize) + Offset.Y + bufferY));
                 }
                     
             }
@@ -146,14 +131,14 @@ namespace MonoStacker.Source.Generic
 
         public virtual void Draw(SpriteBatch spriteBatch) 
         {
-            for (int i = 0; i < queueLength; i++)
+            for (var i = 0; i < QueueLength; i++)
             {
-                spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, (i * GRIDSIZE) + _offset.Y), queueBorderTiles[1], Color.White);
-                spriteBatch.Draw(bgTexture, new Vector2(_offset.X, (i * GRIDSIZE) + _offset.Y), queueBgTiles[3], Color.White);
+                spriteBatch.Draw(BorderTexture, new Vector2(Offset.X - 3, (i * Gridsize) + Offset.Y), QueueBorderTiles[1], Color.White);
+                spriteBatch.Draw(BgTexture, new Vector2(Offset.X, (i * Gridsize) + Offset.Y), QueueBgTiles[3], Color.White);
             }
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, _offset.Y - 3), queueBorderTiles[0], Color.White); // top
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3, (queueLength * GRIDSIZE) + _offset.Y - 7), queueBorderTiles[2], Color.White); // bottom
-            spriteBatch.Draw(borderTexture, new Vector2(_offset.X - 3 , _offset.Y - 11), queueBorderTiles[4], Color.White);
+            spriteBatch.Draw(BorderTexture, new Vector2(Offset.X - 3, Offset.Y - 3), QueueBorderTiles[0], Color.White); // top
+            spriteBatch.Draw(BorderTexture, new Vector2(Offset.X - 3, (QueueLength * Gridsize) + Offset.Y - 7), QueueBorderTiles[2], Color.White); // bottom
+            spriteBatch.Draw(BorderTexture, new Vector2(Offset.X - 3 , Offset.Y - 11), QueueBorderTiles[4], Color.White);
             DrawQueue(spriteBatch);
         }
     }

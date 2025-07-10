@@ -195,7 +195,7 @@ namespace MonoStacker.Source.Generic
                 }
             }
 
-            if (piece is T)
+            if (piece.type is TetrominoType.T)
             {
                 if (mandatoryCornersFilled == 2 && optionalCornersFilled >= 1)
                     return SpinType.FullSpin;
@@ -312,40 +312,13 @@ namespace MonoStacker.Source.Generic
                         color = new Color(100, 100, 100);
                     if (y == 0)
                         color = Color.Black;
-
-                    switch (_matrix[y][x]) 
-                    {
-                        case 1:
-                            sourceRect = imageTiles[0];
-                            break;
-                        case 2:
-                            sourceRect = imageTiles[1];
-                            break;
-                        case 3:
-                            sourceRect = imageTiles[2];
-                            break;
-                        case 4:
-                            sourceRect = imageTiles[3];
-                            break;
-                        case 5:
-                            sourceRect = imageTiles[4];
-                            break;
-                        case 6:
-                            sourceRect = imageTiles[5];
-                            break;
-                        case 7:
-                            sourceRect = imageTiles[6];
-                            break;
-                           
-                    }
-
                     if (_matrix[y][x] > 0 && !rowsToClear.Contains(y)) 
                     {
                         spriteBatch.Draw
                                 (
                                 ImgBank.BlockTexture,
                                 new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
-                                sourceRect,
+                                imageTiles[_matrix[y][x] - 1],
                                 color
                                 );
 
