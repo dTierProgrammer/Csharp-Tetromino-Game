@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection.Metadata.Ecma335;
 using System.Text;
 using System.Threading.Tasks;
 using Microsoft.Xna.Framework;
@@ -11,18 +12,18 @@ namespace MonoStacker.Source.Interface.Input
 {
     public enum GameAction 
     {
-        None,
-        MovePieceLeft,
-        MovePieceRight,
-        RotateCw,
-        RotateCcw,
-        Rotate180,
-        HardDrop,
-        FirmDrop,
-        SoftDrop,
-        Hold,
-        RotateCwAlt,
-        RotateCcwAlt
+        None = 0,
+        MovePieceLeft = 1,
+        MovePieceRight = 2,
+        RotateCw = 3,
+        RotateCcw = 4,
+        Rotate180 = 5,
+        HardDrop = 6,
+        FirmDrop = 7,
+        SoftDrop = 8,
+        Hold = 9,
+        RotateCwAlt = 10,
+        RotateCcwAlt = 11
     }
 
     public class InputManager
@@ -55,7 +56,7 @@ namespace MonoStacker.Source.Interface.Input
 
         public Queue<InputEvent> bufferQueue { get; private set; } = [];
         
-        public int bufferCapacity { get; set; } = 6;
+        public int bufferCapacity { get; set; } = 10;
 
         public void ClearBuffer()
         {
@@ -94,14 +95,18 @@ namespace MonoStacker.Source.Interface.Input
             List < InputEvent > returnValue = [];
             foreach (var item in bufferQueue)
                 returnValue.Add(item);
-
+            //returnValue.Sort();
+            foreach (var item in returnValue)
+            {
+                if(item.gameAction is GameAction.Hold || item.gameAction is GameAction.RotateCcw)
+                    Console.WriteLine(item.gameAction);
+            }
             return returnValue;
         }
 
         public InputEvent GetFirstBufferedAction() 
         {
-            InputEvent item = bufferQueue.Dequeue();
-            return item;
+            return bufferQueue.Dequeue();
         }
 
        
@@ -109,6 +114,8 @@ namespace MonoStacker.Source.Interface.Input
         public List<GameAction> GetKeyInput() 
         {
             List<GameAction> currentKeys = new();
+            if (Keyboard.GetState().IsKeyDown(_keyHold))
+                currentKeys.Add(GameAction.Hold);
             if (Keyboard.GetState().IsKeyDown(_keyRotateCw))
                 currentKeys.Add(GameAction.RotateCw);
             if (Keyboard.GetState().IsKeyDown(_keyRotateCcw))
@@ -117,8 +124,6 @@ namespace MonoStacker.Source.Interface.Input
                 currentKeys.Add(GameAction.HardDrop);
             if (Keyboard.GetState().IsKeyDown(_keySoftDrop))
                 currentKeys.Add(GameAction.SoftDrop);
-            if (Keyboard.GetState().IsKeyDown(_keyHold))
-                currentKeys.Add(GameAction.Hold);
             if (Keyboard.GetState().IsKeyDown(_keyMovePieceRight))
                 currentKeys.Add(GameAction.MovePieceRight);
             if (Keyboard.GetState().IsKeyDown(_keyMovePieceLeft))
@@ -133,14 +138,10 @@ namespace MonoStacker.Source.Interface.Input
         {
             Keys[] keys =
             [
-                _keyMovePieceLeft,
-                _keyMovePieceRight,
+                _keyHold,
                 _keyRotateCw,
                 _keyRotateCcw,
                 _keyRotate180,
-                _keyHold,
-                _keyHardDrop,
-                _keySoftDrop,
                 _keyRotateCwAlt,
                 _keyRotateCcwAlt
             ];

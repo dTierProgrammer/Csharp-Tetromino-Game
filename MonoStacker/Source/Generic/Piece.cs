@@ -12,8 +12,8 @@ namespace MonoStacker.Source.Generic
     {
         public readonly List<int[,]> rotations = new();
         public readonly List<int[,]> spinData = new();
-        public int[,] currentRotation { get; protected set; }
-        public int[,] requiredCorners { get; protected set; }
+        public int[,] currentRotation { get; private set; }
+        public int[,] requiredCorners { get; private set; }
         public int rotationId { get; protected set; } = 0;
         public static int offset { get; set; }
 

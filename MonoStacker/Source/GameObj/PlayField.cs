@@ -66,7 +66,7 @@ namespace MonoStacker.Source.GameObj
         private bool _softDrop;
         private float _dropSpeed;
         public NextPreview nextPreview { get; private set; }
-        private readonly int _queueLength = 6;
+        private readonly int _queueLength = 3;
         private HoldPreview _holdBox;
         private bool _streakIsActive = false;
         private int _streak;
@@ -76,7 +76,8 @@ namespace MonoStacker.Source.GameObj
         private Texture2D _bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
 
         private readonly Dictionary<GameAction, float> _eventTimeStamps = [];
-        private List<GameAction> _lastEvents = [];
+        private List<GameAction> _currentInputEvents = []; //= _inputManager.GetKeyInput();
+        private List<GameAction> _lastInputEvents = [];
         
 
 #if DEBUG
@@ -92,10 +93,10 @@ namespace MonoStacker.Source.GameObj
             _pieceData = new SrsFactory();
             _pieceGenerator = new GuidelineRandGenerator();
             _softLockDelay = (.63f, .63f);
-            _lineClearDelay = (0, 0);
+            _lineClearDelay = (.5f, .5f);
             _stepReset = (15, 15);
             _rotateReset = (6, 6);
-            _arrivalDelay = (0, 0);
+            _arrivalDelay = (.11667f, .11667f);
             nextPreview = new NextPreview(new Vector2((_border.Width) + _offset.X - 2, _offset.Y - 1), _queueLength, _pieceData, _pieceGenerator);
             activePiece = nextPreview.GetNextPiece();
             activePiece.offsetY = 20;
@@ -222,6 +223,12 @@ namespace MonoStacker.Source.GameObj
             SfxBank.hardDrop.Play();
         }
 
+        private void FirmDrop()
+        {
+            if((int)activePiece.offsetY != CalculateGhostPiece())
+                activePiece.offsetY = CalculateGhostPiece();
+        }
+
         private void ClearFilledLines()
         {
             if (_lineClearDelay.timeLeftover != _lineClearDelay.max) return;
@@ -282,29 +289,28 @@ namespace MonoStacker.Source.GameObj
         private void ProcessBuffer()
         {
             var bufferedActions = _inputManager.GetBufferedActions();
+            var actionsStillHeld = _inputManager.GetKeyInput();
+            foreach (var item in bufferedActions) // super scuffed method of buffer priority
+            { // ensure that no matter what, hold (if buffered) is always executed first
+                if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(item.gameAction) &&
+                    item.hasBeenExecuted == false)
+                    if (_holdBox.ChangePiece()) SfxBank.holdBuffer.Play();
+            }
+            bufferedActions.RemoveAll(item => item.gameAction is GameAction.Hold);
+            
             foreach (var item in bufferedActions)
             {
-                var actionsStillHeld = _inputManager.GetKeyInput();
                 if (actionsStillHeld.Contains(item.gameAction) && item.hasBeenExecuted == false)
                 {
                     switch (item.gameAction)
                     {
                         case GameAction.RotateCcw: 
                             Rotate(RotationType.CounterClockwise);
-                            Console.WriteLine("ccw buffer");
                             SfxBank.rotateBuffer.Play();
                             break;
                         case GameAction.RotateCw:
                             Rotate(RotationType.Clockwise);
                             SfxBank.rotateBuffer.Play();
-                            Console.WriteLine("cw buffer");
-                            break;
-                        case GameAction.Hold: 
-                            if (_holdBox.ChangePiece()) SfxBank.holdBuffer.Play(); 
-                            Console.WriteLine("hold buffer");
-                            break;
-                        case GameAction.MovePieceLeft: case GameAction.MovePieceRight: 
-                            _eventTimeStamps.TryAdd(item.gameAction, item.timePressed);
                             break;
                     }
                 }
@@ -315,69 +321,87 @@ namespace MonoStacker.Source.GameObj
                 _inputManager.ClearBuffer(); 
         }
 
-        private void ProcessInput(GameTime gameTime)
+        private void ProcessButtonInput(GameTime gameTime)
         {
             List<GameAction> heldActions = _inputManager.GetKeyInput();
-            
-            if (heldActions.Contains(GameAction.MovePieceLeft))
-            {
-                if (!_lastEvents.Contains(GameAction.MovePieceLeft))
-                {
-                    _eventTimeStamps.TryAdd(GameAction.MovePieceLeft, (float)gameTime.TotalGameTime.TotalSeconds);
-                    MovePiece(-1);
-                }
-                if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceLeft))) MovePiece(-1);
-            }
-            else
-                _eventTimeStamps.Remove(GameAction.MovePieceLeft);
-
-
-            if (heldActions.Contains(GameAction.MovePieceRight))
-            {
-                if (!_lastEvents.Contains(GameAction.MovePieceRight))
-                { 
-                    _eventTimeStamps.TryAdd(GameAction.MovePieceRight, (float)gameTime.TotalGameTime.TotalSeconds); 
-                    MovePiece(1);
-                }
-                if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceRight))) MovePiece(1);
-            }
-            else
-                _eventTimeStamps.Remove(GameAction.MovePieceRight);
-                        
             _softDrop = heldActions.Contains(GameAction.SoftDrop);
 
-            if (heldActions.Contains(GameAction.Hold) && !_lastEvents.Contains(GameAction.Hold)) 
+            if (heldActions.Contains(GameAction.Hold) && !_lastInputEvents.Contains(GameAction.Hold)) 
             {
                 if (_holdBox.ChangePiece())
+                {
                     SfxBank.hold.Play();
+                    _softLockDelay.timeLeftover = _softLockDelay.max;
+                }
             }
 
-            if (heldActions.Contains(GameAction.RotateCw) && !_lastEvents.Contains(GameAction.RotateCw)) 
+            if (heldActions.Contains(GameAction.RotateCw) && !_lastInputEvents.Contains(GameAction.RotateCw)) 
             {
                 Rotate(RotationType.Clockwise);
                 SfxBank.rotate.Play();
             }
 
-            if (heldActions.Contains(GameAction.RotateCcw) && !_lastEvents.Contains(GameAction.RotateCcw)) 
+            if (heldActions.Contains(GameAction.RotateCcw) && !_lastInputEvents.Contains(GameAction.RotateCcw)) 
             {
                 Rotate(RotationType.CounterClockwise);
                 SfxBank.rotate.Play();
             }
 
             if (!heldActions.Contains(GameAction.HardDrop) ||
-                _lastEvents.Contains(GameAction.HardDrop)) return;
+                _lastInputEvents.Contains(GameAction.HardDrop)) return;
             HardDrop();
+        }
+
+        private void ProcessDirectionalInput(GameTime gameTime)
+        {
+            List<GameAction> heldActions = _inputManager.GetKeyInput();
+            if (heldActions.Contains(GameAction.MovePieceLeft))
+            {
+                if (!_lastInputEvents.Contains(GameAction.MovePieceLeft))
+                {
+                    _eventTimeStamps.TryAdd(GameAction.MovePieceLeft, (float)gameTime.TotalGameTime.TotalSeconds);
+                    MovePiece(-1);
+                }
+                if (!(_eventTimeStamps.TryGetValue(GameAction.MovePieceRight, out var num)) ||
+                    (_eventTimeStamps.TryGetValue(GameAction.MovePieceRight, out num) && _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceLeft) > num))
+                {
+                    _eventTimeStamps.Remove(GameAction.MovePieceRight);
+                    if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceLeft)))
+                        MovePiece(-1);
+                }
+            }
+            else
+                _eventTimeStamps.Remove(GameAction.MovePieceLeft);
+            
+            if (heldActions.Contains(GameAction.MovePieceRight))
+            {
+                if (!_lastInputEvents.Contains(GameAction.MovePieceRight))
+                { 
+                    _eventTimeStamps.TryAdd(GameAction.MovePieceRight, (float)gameTime.TotalGameTime.TotalSeconds); 
+                    MovePiece(1);
+                }
+                if (!(_eventTimeStamps.TryGetValue(GameAction.MovePieceLeft, out var num)) ||
+                    (_eventTimeStamps.TryGetValue(GameAction.MovePieceLeft, out num) && _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceRight) > num))
+                {
+                    _eventTimeStamps.Remove(GameAction.MovePieceLeft);
+                    if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceRight)))
+                        MovePiece(1);
+                }
+            }
+            else
+                _eventTimeStamps.Remove(GameAction.MovePieceRight);
         }
 
         public void Update(GameTime gameTime) 
         {
             nextPreview.Update();
+            ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
             if(_currentBoardState != BoardState.Neutral)
                 _inputManager.BufferKeyInput(gameTime);
             switch (_currentBoardState) 
             {
                 case BoardState.Neutral:
-                    if (_inputManager.bufferQueue.Count > 0) ProcessBuffer(); else ProcessInput(gameTime);
+                    if (_inputManager.bufferQueue.Count > 0) ProcessBuffer(); else ProcessButtonInput(gameTime);
                     GravitySoftDrop(gameTime);
                     break;
                 case BoardState.LineClearWait:
@@ -397,7 +421,7 @@ namespace MonoStacker.Source.GameObj
                         GrabNextPiece();
                     break;
             }
-            _lastEvents = _inputManager.GetKeyInput();
+            _lastInputEvents = _inputManager.GetKeyInput();
 
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.T) && !_prevKbState.IsKeyDown(Keys.T))
@@ -431,8 +455,8 @@ namespace MonoStacker.Source.GameObj
                 {
                     if (piece.currentRotation[y, x] != 0)
                     {
-                        if(_showDebug)
-                            spriteBatch.Draw(_grid.ghostBlocks, new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (piece.offsetY * 8) + _offset.Y - 160), _grid.imageTiles[6], Color.White);
+                        //if(_showDebug)
+                            //spriteBatch.Draw(_grid.ghostBlocks, new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (piece.offsetY * 8) + _offset.Y - 160), _grid.imageTiles[6], Color.White);
                     }
                 }
             }

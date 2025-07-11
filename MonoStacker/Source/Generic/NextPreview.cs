@@ -20,24 +20,24 @@ namespace MonoStacker.Source.Generic
         protected static readonly List<Rectangle> QueueBgTiles = [];
         protected const int Tilesize = 8;
         protected const int Gridsize = 25;
-        private readonly List<Piece> _pieceQueue;
+        private readonly Queue<Piece> _pieceQueue;
         private readonly ITetrominoFactory _factory;
         private readonly IRandGenerator _generator;
 
         public NextPreview(Vector2 position, int queueLength, ITetrominoFactory factory, IRandGenerator generator) 
         {
             Offset = position;
-            this.QueueLength = queueLength;
+            QueueLength = queueLength;
             _pieceQueue = [];
-            _factory = new SrsFactory();
+            _factory = factory;
             _generator = generator;
             GetImageCuts();
 
             for(var i = 0; i < 7; i++)
-                _pieceQueue.Add(_generator.GetNextTetromino(_factory));
+                _pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
         }
 
-        public NextPreview(Vector2 position)
+        protected NextPreview(Vector2 position)
         {
             Offset = position;
             QueueLength = 1;
@@ -73,15 +73,13 @@ namespace MonoStacker.Source.Generic
 
         public Piece GetNextPiece() 
         {
-            Piece tetromino = _pieceQueue.ElementAt(0);
-            _pieceQueue.RemoveAt(0);
-            return tetromino;
+            return _pieceQueue.Dequeue();
         }
 
         public virtual void Update() 
         {
             if (_pieceQueue.Count < 7)
-                _pieceQueue.Add(_generator.GetNextTetromino(_factory));
+                _pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
         }
 
         protected virtual void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset)
@@ -105,7 +103,6 @@ namespace MonoStacker.Source.Generic
 
         private void DrawQueue(SpriteBatch spriteBatch) 
         {
-            //int buffer = 0;
             for (var i = 1; i <= 7; i++)
             {
                 if ((i - 1) < QueueLength) 
@@ -125,7 +122,6 @@ namespace MonoStacker.Source.Generic
                     
                     DrawPiece(spriteBatch, _pieceQueue.ElementAt(i - 1), new Vector2(Offset.X + buffer, ((i - 1) * Gridsize) + Offset.Y + bufferY));
                 }
-                    
             }
         }
 
