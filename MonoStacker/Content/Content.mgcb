@@ -175,6 +175,12 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/spin_double.wav
 
+#begin Audio/Sound/spin_generic.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/spin_generic.wav
+
 #begin Audio/Sound/spin_single.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -192,6 +198,24 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/step_hori.wav
+
+#begin Audio/Sound/twist0.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/twist0.wav
+
+#begin Audio/Sound/twist1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/twist1.wav
+
+#begin Audio/Sound/twist1m.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/twist1m.wav
 
 #begin Image/Background/bg_1080.png
 /importer:TextureImporter
@@ -312,6 +336,30 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Block/3.png
+
+#begin Image/Block/4.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Block/4.png
+
+#begin Image/Block/5.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Block/5.png
 
 #begin Image/Block/cenPt.png
 /importer:TextureImporter

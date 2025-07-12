@@ -64,9 +64,10 @@ namespace MonoStacker.Source.GameObj
         private readonly float _maxDasTime = .14f;
         
         private bool _softDrop;
+        private bool _softLock;
         private float _dropSpeed;
         public NextPreview nextPreview { get; private set; }
-        private readonly int _queueLength = 3;
+        private readonly int _queueLength = 5;
         private HoldPreview _holdBox;
         private bool _streakIsActive = false;
         private int _streak;
@@ -97,6 +98,7 @@ namespace MonoStacker.Source.GameObj
             _stepReset = (15, 15);
             _rotateReset = (6, 6);
             _arrivalDelay = (.11667f, .11667f);
+            _softLock = false;
             nextPreview = new NextPreview(new Vector2((_border.Width) + _offset.X - 2, _offset.Y - 1), _queueLength, _pieceData, _pieceGenerator);
             activePiece = nextPreview.GetNextPiece();
             activePiece.offsetY = 20;
@@ -136,6 +138,11 @@ namespace MonoStacker.Source.GameObj
                     SpinDenotation.TSpinOnly => activePiece.type is TetrominoType.T? _grid.CheckForSpin(activePiece): SpinType.None,
                     _ => SpinType.None
                 };
+
+                if (_currentSpinType is not SpinType.None)
+                    SfxBank.twist1m.Play();
+                else
+                    SfxBank.rotate.Play();
             }
             if((int)activePiece.offsetY == CalculateGhostPiece())
                 RotateReset();
@@ -167,6 +174,8 @@ namespace MonoStacker.Source.GameObj
             {
                 _currentBoardState = BoardState.PieceEntryWait;
                 _arrivalDelay.timeLeftover = _arrivalDelay.max;
+                if (_currentSpinType != SpinType.None)
+                    SfxBank.spinGeneric.Play();
             }
             _holdBox.canHold = true;
         }
@@ -201,10 +210,16 @@ namespace MonoStacker.Source.GameObj
 
             if ((int)activePiece.offsetY == CalculateGhostPiece())
             {
+                if (_softLock && _softDrop) 
+                {
+                    LockPiece();
+                    SfxBank.softLock.Play();
+                }
+                    
                 _softLockDelay.timeLeftover -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                 
                 var lockDelayLeft = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
-                _activePieceColor = Color.Lerp(new Color(90, 90, 90), Color.White, lockDelayLeft);
+                _activePieceColor = Color.Lerp(new Color(100, 100, 100), Color.White, lockDelayLeft);
 
                 if (_softLockDelay.timeLeftover <= 0)
                 {
@@ -234,21 +249,8 @@ namespace MonoStacker.Source.GameObj
             if (_lineClearDelay.timeLeftover != _lineClearDelay.max) return;
             PlayfieldEffects.LineClearFlash(Color.White, .5f, _grid, _offset);
             PlayfieldEffects.LineClearEffect(_grid, _offset);
-            switch (_grid.rowsToClear.Count) 
-            {
-                case 1:
-                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[0].Play();
-                    else SfxBank.clear[0].Play(); break;
-                case 2:
-                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[1].Play();
-                    else SfxBank.clear[1].Play(); break;
-                case 3:
-                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[2].Play();
-                    else SfxBank.clear[2].Play(); break;
-                default:
-                    if (_currentSpinType != SpinType.None) SfxBank.clearSpin[3].Play();
-                    else SfxBank.clear[3].Play(); break;
-            }
+            if (_currentSpinType != SpinType.None) SfxBank.clearSpin[_grid.rowsToClear.Count - 1].Play();
+            else SfxBank.clear[_grid.rowsToClear.Count - 1].Play();
 
             if (_currentSpinType != SpinType.None) // fake switch case
                 PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), _offset);
@@ -261,7 +263,7 @@ namespace MonoStacker.Source.GameObj
             }
             else
             {
-                if (_streakIsActive)
+                if (_streak > 1)
                 {
                     _streakIsActive = false;
                     _streak = 0;
@@ -336,16 +338,10 @@ namespace MonoStacker.Source.GameObj
             }
 
             if (heldActions.Contains(GameAction.RotateCw) && !_lastInputEvents.Contains(GameAction.RotateCw)) 
-            {
                 Rotate(RotationType.Clockwise);
-                SfxBank.rotate.Play();
-            }
 
             if (heldActions.Contains(GameAction.RotateCcw) && !_lastInputEvents.Contains(GameAction.RotateCcw)) 
-            {
                 Rotate(RotationType.CounterClockwise);
-                SfxBank.rotate.Play();
-            }
 
             if (!heldActions.Contains(GameAction.HardDrop) ||
                 _lastInputEvents.Contains(GameAction.HardDrop)) return;

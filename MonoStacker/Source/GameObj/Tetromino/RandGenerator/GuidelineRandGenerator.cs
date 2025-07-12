@@ -36,7 +36,7 @@ public class GuidelineRandGenerator: IRandGenerator
         
         piece.offsetY = _bag[nextTetromino] switch
         {
-            TetrominoType.O => 17,
+            TetrominoType.I => 17,
             _ => 18
         };
 

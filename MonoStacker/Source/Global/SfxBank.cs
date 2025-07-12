@@ -24,6 +24,7 @@ namespace MonoStacker.Source.Global
             GetContent.Load<SoundEffect>("Audio/Sound/spin_triple")
         };
 
+        public static SoundEffect spinGeneric = GetContent.Load<SoundEffect>("Audio/Sound/spin_generic");
         public static SoundEffect stepHori = GetContent.Load<SoundEffect>("Audio/Sound/step_hori");
         public static SoundEffect rotate = GetContent.Load<SoundEffect>("Audio/Sound/rotate");
         public static SoundEffect rotateBuffer = GetContent.Load<SoundEffect>("Audio/Sound/rotate_buffer");
@@ -34,5 +35,8 @@ namespace MonoStacker.Source.Global
         public static SoundEffect b2b = GetContent.Load<SoundEffect>("Audio/Sound/b2b_streak");
         public static SoundEffect b2bBreak = GetContent.Load<SoundEffect>("Audio/Sound/b2b_break");
         public static SoundEffect lineFall = GetContent.Load<SoundEffect>("Audio/Sound/linefall");
+        public static SoundEffect twist0 = GetContent.Load<SoundEffect>("Audio/Sound/twist0");
+        public static SoundEffect twist1m = GetContent.Load<SoundEffect>("Audio/Sound/twist1m");
+        public static SoundEffect twist1 = GetContent.Load<SoundEffect>("Audio/Sound/twist1");
     }
 }
