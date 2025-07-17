@@ -5,7 +5,7 @@ using MonoStacker.Source.Generic;
 
 namespace MonoStacker.Source.GameObj.Tetromino.RandGenerator;
 
-public class GuidelineRandGenerator: IRandGenerator
+public class SevenBagRandomizer: IRandGenerator
 {
     private readonly Random _rng = new ();
 

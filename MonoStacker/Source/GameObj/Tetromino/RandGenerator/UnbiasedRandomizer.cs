@@ -4,7 +4,7 @@ using MonoStacker.Source.Generic;
 
 namespace MonoStacker.Source.GameObj.Tetromino.RandGenerator;
 
-public class TrueRandGenerator: IRandGenerator
+public class UnbiasedRandomizer: IRandGenerator
 {
     private readonly Random _rng = new ();
     public Piece GetNextTetromino(ITetrominoFactory factory)

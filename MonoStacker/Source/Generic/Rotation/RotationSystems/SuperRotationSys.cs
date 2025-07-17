@@ -20,14 +20,13 @@ public class SuperRotationSys: IRotationSystem
                     (int)(piece.offsetX +
                           (piece.type is TetrominoType.I ? SRSData.DataI[testPt, i].X : SRSData.DataJlstz[testPt, i].X))))
             {
+                piece.offsetX += piece.type is TetrominoType.I ? SRSData.DataI[testPt, i].X : SRSData.DataJlstz[testPt, i].X;
+                piece.offsetY -= piece.type is TetrominoType.I ? SRSData.DataI[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y;
                 switch (rotationType)
                 {
                     case 0: piece.RotateCW(); break;
                     case (RotationType)1: piece.RotateCCW(); break;
                 }
-
-                piece.offsetX += piece.type is TetrominoType.I ? SRSData.DataI[testPt, i].X : SRSData.DataJlstz[testPt, i].X;
-                piece.offsetY -= piece.type is TetrominoType.I ? SRSData.DataI[testPt, i].Y : SRSData.DataJlstz[testPt, i].Y;
                 return true;
             }
         }

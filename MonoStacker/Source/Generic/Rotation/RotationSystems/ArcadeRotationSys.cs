@@ -22,12 +22,12 @@ public class ArcadeRotationSys: IRotationSystem
                     case RotationType.Clockwise: piece.RotateCW(); return true;
                     case RotationType.CounterClockwise: piece.RotateCCW(); return true;
                 }
-                Console.WriteLine("true");
+                Debug.WriteLine("true");
                 
                 return true;
             }
         }
-        Console.WriteLine("false");
+        Debug.WriteLine("false");
         return false;
     }
 }

@@ -33,7 +33,7 @@ namespace MonoStacker.Source.Generic
             _generator = generator;
             GetImageCuts();
 
-            for(var i = 0; i < 7; i++)
+            for(var i = 0; i < QueueLength; i++)
                 _pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
         }
 
@@ -43,6 +43,10 @@ namespace MonoStacker.Source.Generic
             QueueLength = 1;
             _pieceQueue = [];
             GetImageCuts();
+            _generator = new UnbiasedRandomizer();
+            _factory = new ArcadeFactory();
+            for(var i = 0; i < QueueLength; i++)
+                _pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
         }
 
         private static void GetImageCuts() 
@@ -78,7 +82,7 @@ namespace MonoStacker.Source.Generic
 
         public virtual void Update() 
         {
-            if (_pieceQueue.Count < 7)
+            if (_pieceQueue.Count < QueueLength)
                 _pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
         }
 
@@ -101,27 +105,42 @@ namespace MonoStacker.Source.Generic
             }
         }
 
+        protected bool CheckTopRow(Piece piece) 
+        {
+            for (int i = 0; i < piece.currentRotation.GetLength(1); i++) 
+            {
+                if (piece.currentRotation[0, 1] != 0)
+                    return true;
+            }
+            return false;
+        }
+
         private void DrawQueue(SpriteBatch spriteBatch) 
         {
-            for (var i = 1; i <= 7; i++)
+            for (var i = 0; i < _pieceQueue.Count; i++)
             {
-                if ((i - 1) < QueueLength) 
-                {
-                    var buffer = _pieceQueue.ElementAt(i - 1).type switch
+                    
+                    var buffer = _pieceQueue.ElementAt(i ).type switch
                     {
                         TetrominoType.O => 9,
                         TetrominoType.I => 1,
                         _ => 5
                     };
                     
-                    var bufferY = _pieceQueue.ElementAt(i - 1).type switch
+                    var bufferY = _pieceQueue.ElementAt(i ).type switch
                     {
                         TetrominoType.I => 1,
                         _ => 5
                     };
-                    
-                    DrawPiece(spriteBatch, _pieceQueue.ElementAt(i - 1), new Vector2(Offset.X + buffer, ((i - 1) * Gridsize) + Offset.Y + bufferY));
+                    var bufferYY = 0;
+                if (_factory is ArcadeFactory) 
+                {
+                    bufferYY = CheckTopRow(_pieceQueue.ElementAt(i)) ? 0 : -8;
+                    if (_pieceQueue.ElementAt(i).type is TetrominoType.I) bufferYY = 0;
                 }
+                        
+                 
+                    DrawPiece(spriteBatch, _pieceQueue.ElementAt(i ), new Vector2(Offset.X + buffer, ((i ) * Gridsize) + Offset.Y + bufferY + bufferYY));
             }
         }
 

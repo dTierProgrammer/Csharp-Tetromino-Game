@@ -6,6 +6,6 @@ public struct ARSData
 {
     public static Point[,] DataJlostz =
     {
-        {new(0, 0), new (1, 0), new (-1, 0)}
+        {new(0, 0), new (1, 0), new (-1, 0)} // so simple
     };
 }

@@ -1,6 +1,6 @@
 namespace MonoStacker.Source.Generic.Rotation.RotationSystems;
 
-public class BasicSys: IRotationSystem
+public class BasicRotationSys: IRotationSystem
 {
     public bool Rotate(Piece piece, Grid grid, RotationType rotationType)
     {

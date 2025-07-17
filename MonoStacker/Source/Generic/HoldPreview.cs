@@ -9,6 +9,7 @@ using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.GameObj;
 using MonoStacker.Source.GameObj.Tetromino;
+using MonoStacker.Source.GameObj.Tetromino.Factory;
 using MonoStacker.Source.Global;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
@@ -86,7 +87,7 @@ namespace MonoStacker.Source.Generic
             }
         }
 
-        public override void Draw(SpriteBatch spriteBatch) 
+        public void Draw(SpriteBatch spriteBatch, ITetrominoFactory factory) 
         {
             
             for (var i = 0; i < QueueLength; i++)
@@ -112,8 +113,16 @@ namespace MonoStacker.Source.Generic
                 TetrominoType.I => 1,
                 _ => 5
             };
-            
-            DrawPiece(spriteBatch, HoldBox.ElementAt(0), new Vector2(Offset.X + buffer, Offset.Y + bufferY));
+
+            var bufferYY = 0;
+            if (_playField._pieceData is ArcadeFactory) 
+            {
+                bufferYY = CheckTopRow(HoldBox.ElementAt(0)) ? 0 : -8;
+                if (HoldBox.ElementAt(0).type is TetrominoType.I) bufferYY = 0;
+            }
+              
+
+            DrawPiece(spriteBatch, HoldBox.ElementAt(0), new Vector2(Offset.X + buffer, Offset.Y + bufferY + bufferYY));
         }
     }
 }

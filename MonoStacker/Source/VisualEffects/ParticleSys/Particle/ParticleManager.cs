@@ -49,7 +49,7 @@ public class ParticleManager
         UpdateParticles();
         UpdateEmitters();
         _emitters.RemoveAll(emitter => emitter._emissionType == EmissionType.Burst && emitter._timeLeft <= 0);
-        Debug.WriteLine(_particles.Count);
+        //Debug.WriteLine(_particles.Count);
     }
 
     public static void Draw(SpriteBatch spriteBatch)

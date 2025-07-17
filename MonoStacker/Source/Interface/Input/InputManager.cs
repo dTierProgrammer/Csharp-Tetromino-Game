@@ -75,9 +75,9 @@ namespace MonoStacker.Source.Interface.Input
 
         private void AddToBuffer(InputEvent item) 
         {
-            if (bufferQueue.Count() < bufferCapacity)
+            if (bufferQueue.Count < bufferCapacity)
             {
-                switch (bufferQueue.Count())
+                switch (bufferQueue.Count)
                 {
                     case 0: bufferQueue.Enqueue(item); break;
                     default: if (!CheckForAction(item.gameAction)) { bufferQueue.Enqueue(item); } break;
