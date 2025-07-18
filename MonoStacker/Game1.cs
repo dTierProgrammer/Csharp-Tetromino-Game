@@ -31,10 +31,10 @@ namespace MonoStacker
             uGameTime = new GameTime();
 
 #if DEBUG
-            _graphics.PreferredBackBufferWidth = 1920 / 2;
-            _graphics.PreferredBackBufferHeight = 1080 / 2;
+            _graphics.PreferredBackBufferWidth = 1920;
+            _graphics.PreferredBackBufferHeight = 1080;
             _graphics.ApplyChanges();
-            _scaledDisp = new RenderTarget2D(GraphicsDevice, (int)(GraphicsDevice.DisplayMode.Width / 2 ), (int)(GraphicsDevice.DisplayMode.Height / 2));
+            _scaledDisp = new RenderTarget2D(GraphicsDevice, (int)(GraphicsDevice.DisplayMode.Width / 4), (int)(GraphicsDevice.DisplayMode.Height / 4));
             _sceneManager = new SceneManager();
 
 # else
