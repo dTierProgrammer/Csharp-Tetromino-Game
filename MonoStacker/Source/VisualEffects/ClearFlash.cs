@@ -9,7 +9,7 @@ using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.VisualEffects
 {
-    public class ClearFlash: VisualEffect
+    public class ClearFlash: AnimatedEffect
     {
         Color tint;
         float rectWidth;

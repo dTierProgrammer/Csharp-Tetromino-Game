@@ -299,6 +299,17 @@ namespace MonoStacker.Source.Generic
             rowsToClear.Clear();
         }
 
+        public void ClearGrid() 
+        {
+            for (var y = 0; y < ROWS; y++) 
+            {
+                for (var x = 0; x < COLUMNS; x++) 
+                {
+                    _matrix[y][x] = 0;
+                }
+            }
+        }
+
         public void Draw(SpriteBatch spriteBatch) 
         {
             Rectangle sourceRect = imageTiles[0];
@@ -314,6 +325,7 @@ namespace MonoStacker.Source.Generic
                         color = Color.Black;
                     if (_matrix[y][x] > 0 && !rowsToClear.Contains(y)) 
                     {
+                        
                         spriteBatch.Draw
                                 (
                                 ImgBank.BlockTexture,
@@ -321,6 +333,7 @@ namespace MonoStacker.Source.Generic
                                 imageTiles[_matrix[y][x] - 1],
                                 color
                                 );
+                        
 
                         if (drawLines) 
                         {

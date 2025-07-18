@@ -25,7 +25,7 @@ namespace MonoStacker.Source.Scene.GameScenes
 
         public void Update(GameTime gameTime) 
         {
-            EffectManager.Update(gameTime);
+            AnimatedEffectManager.Update(gameTime);
             playfield.Update(gameTime);
         }
 
@@ -35,7 +35,7 @@ namespace MonoStacker.Source.Scene.GameScenes
           spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg_1080"), new Vector2(0, 0), Color.White);
           spriteBatch.End();
           playfield.Draw(spriteBatch);
-          EffectManager.Draw(spriteBatch);
+          AnimatedEffectManager.Draw(spriteBatch);
           ParticleManager.Draw(spriteBatch);
         }
     }

@@ -45,6 +45,20 @@ public class ArcadeFactory: ITetrominoFactory
                 });
                 break;
             case TetrominoType.J:
+                rotations.Add(new [,]
+                {
+                    { 0, 0, 0},
+                    { 2, 2, 2},
+                    { 0, 0, 2}
+                });
+                
+                rotations.Add(new [,]
+                {
+                    { 0, 2, 0},
+                    { 0, 2, 0},
+                    { 2, 2, 0}
+                });
+                
                 rotations.Add(new [,] 
                 {
                     { 0, 0, 0},
@@ -58,50 +72,52 @@ public class ArcadeFactory: ITetrominoFactory
                     { 0, 2, 0},
                     { 0, 2, 0}
                 });
-
-                rotations.Add(new [,]
-                {
-                    { 0, 0, 0},
-                    { 2, 2, 2},
-                    { 0, 0, 2}
-                });
-
-                rotations.Add(new [,]
-                {
-                    { 0, 2, 0},
-                    { 0, 2, 0},
-                    { 2, 2, 0}
-                });
-
-                spinData.Add(new [,]
-                {
-                    { 0, 2, 2},
-                    { 0, 3, 0},
-                    { 0, 0, 0}
-                });
-
-                spinData.Add(new [,]
-                {
-                    { 0, 0, 0},
-                    { 0, 3, 2},
-                    { 0, 0, 2}
-                });
-
+                
                 spinData.Add(new [,]
                 {
                     { 0, 0, 0},
                     { 0, 3, 0},
                     { 2, 2, 0}
                 });
-
+                
                 spinData.Add(new [,]
                 {
                     { 2, 0, 0},
                     { 2, 3, 0},
                     { 0, 0, 0}
                 });
+                
+                spinData.Add(new [,]
+                {
+                    { 0, 2, 2},
+                    { 0, 3, 0},
+                    { 0, 0, 0}
+                });
+        
+                spinData.Add(new [,]
+                {
+                    { 0, 0, 0},
+                    { 0, 3, 2},
+                    { 0, 0, 2}
+                });
                 break;
             case TetrominoType.L:
+                
+
+                rotations.Add(new [,] 
+                {
+                    { 0, 0, 0},
+                    { 3, 3, 3},
+                    { 3, 0, 0}
+                });
+
+                rotations.Add(new [,]
+                {
+                    { 3, 3, 0},
+                    { 0, 3, 0},
+                    { 0, 3, 0}
+                });
+                
                 rotations.Add(new[,]
                 {
                     { 0, 0, 0},
@@ -115,19 +131,19 @@ public class ArcadeFactory: ITetrominoFactory
                     { 0, 3, 0},
                     { 0, 3, 3}
                 });
-
-                rotations.Add(new [,]
+                
+                spinData.Add(new [,]
                 {
                     { 0, 0, 0},
-                    { 3, 3, 3},
-                    { 3, 0, 0}
+                    { 0, 3, 0},
+                    { 0, 2, 2}
                 });
 
-                rotations.Add(new [,]
+                spinData.Add(new [,]
                 {
-                    { 3, 3, 0},
-                    { 0, 3, 0},
-                    { 0, 3, 0}
+                    { 0, 0, 0},
+                    { 2, 3, 0},
+                    { 2, 0, 0}
                 });
 
                 spinData.Add(new [,]
@@ -143,20 +159,7 @@ public class ArcadeFactory: ITetrominoFactory
                     { 0, 3, 2},
                     { 0, 0, 0}
                 });
-
-                spinData.Add(new [,]
-                {
-                    { 0, 0, 0},
-                    { 0, 3, 0},
-                    { 0, 2, 2}
-                });
-
-                spinData.Add(new [,]
-                {
-                    { 0, 0, 0},
-                    { 2, 3, 0},
-                    { 2, 0, 0}
-                });
+                
                 break;
             case TetrominoType.O:
                 rotations.Add(new [,] 

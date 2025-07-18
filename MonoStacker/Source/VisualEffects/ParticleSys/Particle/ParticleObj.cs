@@ -17,7 +17,7 @@ public enum ParticleOriginSetting
     TopRight = 9,
 }
 
-public class ParticleObj : VisualEffect
+public class ParticleObj : AnimatedEffect
 { // the particle itself
     private readonly ParticleData _data; // given data
     private Vector2 _position;

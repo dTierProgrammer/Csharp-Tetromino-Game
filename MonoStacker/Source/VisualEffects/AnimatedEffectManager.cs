@@ -4,16 +4,16 @@ using Microsoft.Xna.Framework.Graphics;
 
 namespace MonoStacker.Source.VisualEffects;
 
-public static class EffectManager // may try to merge with particle system
-{
-    private static readonly List<VisualEffect> _visualEffects = new();
+public static class AnimatedEffectManager // may try to merge with particle system
+{ // idea: layer class
+    private static readonly List<AnimatedEffect> _visualEffects = new();
 
-    public static void AddEffect(VisualEffect effect)
+    public static void AddEffect(AnimatedEffect effect)
     {
         _visualEffects.Add(effect);
     }
 
-    public static void AddEffects(List<VisualEffect> effects)
+    public static void AddEffects(List<AnimatedEffect> effects)
     {
         _visualEffects.AddRange(effects);
     }

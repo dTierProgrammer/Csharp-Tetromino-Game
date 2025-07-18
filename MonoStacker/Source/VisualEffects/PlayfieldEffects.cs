@@ -19,7 +19,7 @@ public static class PlayfieldEffects
             {
                 if (piece.currentRotation[y, x] != 0)
                 {
-                    EffectManager.AddEffect(new LockFlash(new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)pos.X, (y * 8) + ((int)piece.offsetY * 8) + (int)pos.Y - 160), color, timeDislplayed, distortFactor));
+                    AnimatedEffectManager.AddEffect(new LockFlash(new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)pos.X, (y * 8) + ((int)piece.offsetY * 8) + (int)pos.Y - 160), color, timeDislplayed, distortFactor));
                 }
             }
         }
@@ -33,7 +33,7 @@ public static class PlayfieldEffects
             {
                 if (piece.currentRotation[y, x] != 0) 
                 {
-                    EffectManager.AddEffect(new LockFlash(new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)pos.X, (y * 8) + ((int)piece.offsetY * 8) + (int)pos.Y - 160), color, timeDislplayed));
+                    AnimatedEffectManager.AddEffect(new LockFlash(new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)pos.X, (y * 8) + ((int)piece.offsetY * 8) + (int)pos.Y - 160), color, timeDislplayed));
                 }
             }
         }
@@ -45,7 +45,7 @@ public static class PlayfieldEffects
         {
             if (grid.rowsToClear.Contains(y))
             {
-                EffectManager.AddEffect(new ClearFlash(new Vector2(39 + pos.X, (int)(y * 8) + pos.Y - 155.5f), color, timeDisplayed, new Vector2(3, 0)));
+                AnimatedEffectManager.AddEffect(new ClearFlash(new Vector2(39 + pos.X, (int)(y * 8) + pos.Y - 155.5f), color, timeDisplayed, new Vector2(9, 0)));
             }
         }
     } // move to "effect manager" class

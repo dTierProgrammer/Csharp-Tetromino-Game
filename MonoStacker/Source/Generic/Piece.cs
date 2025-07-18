@@ -41,6 +41,40 @@ namespace MonoStacker.Source.Generic
         {
             rotationId = 0;
         }
+
+        public Vector2 GetPixelCenterOfRotation()
+        {
+            List<int> xlen = [];
+            List<int> ylen = [];
+            
+            for (var x = 0; x < currentRotation.GetLength(1); x++) // horizontal
+            {
+                for (var y = 0; y < currentRotation.GetLength(0); y++) // vertical
+                {
+                    if (currentRotation[y, x] > 0)
+                    {
+                        xlen.Add(currentRotation[y, x]);
+                        break;
+                    }
+                }
+            }
+
+            for (var y = 0; y < currentRotation.GetLength(0); y++) // vertical
+            {
+                for (var x = 0; x < currentRotation.GetLength(1); x++) // horizontal
+                {
+                    if (currentRotation[y, x] > 0)
+                    {
+                        ylen.Add(currentRotation[y, x]);
+                        break;
+                    }
+
+                    
+                }
+            }
+            return new Vector2((xlen.Count * 8) / 2, (ylen.Count * 8) / 2);
+        }
+
         public void RotateCW() 
         {
             rotationId++;

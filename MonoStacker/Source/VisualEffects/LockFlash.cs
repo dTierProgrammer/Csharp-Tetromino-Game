@@ -11,7 +11,7 @@ using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.VisualEffects
 {
-    public class LockFlash: VisualEffect
+    public class LockFlash: AnimatedEffect 
     {
         private Rectangle _sourceRect = new Rectangle(8, 8, 8, 8);
         private Texture2D _blocks = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect");
