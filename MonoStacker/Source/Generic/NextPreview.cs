@@ -4,7 +4,7 @@ using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.GameObj.Tetromino.Factory;
-using MonoStacker.Source.GameObj.Tetromino.RandGenerator;
+using MonoStacker.Source.GameObj.Tetromino.Randomizer;
 using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
@@ -22,9 +22,9 @@ namespace MonoStacker.Source.Generic
         protected const int Gridsize = 25;
         private readonly Queue<Piece> _pieceQueue;
         private readonly ITetrominoFactory _factory;
-        private readonly IRandGenerator _generator;
+        private readonly IRandomizer _generator;
 
-        public NextPreview(Vector2 position, int queueLength, ITetrominoFactory factory, IRandGenerator generator) 
+        public NextPreview(Vector2 position, int queueLength, ITetrominoFactory factory, IRandomizer generator) 
         {
             Offset = position;
             QueueLength = queueLength;

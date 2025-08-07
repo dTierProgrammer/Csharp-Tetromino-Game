@@ -2,9 +2,9 @@ using System;
 using MonoStacker.Source.GameObj.Tetromino.Factory;
 using MonoStacker.Source.Generic;
 
-namespace MonoStacker.Source.GameObj.Tetromino.RandGenerator;
+namespace MonoStacker.Source.GameObj.Tetromino.Randomizer;
 
-public class UnbiasedRandomizer: IRandGenerator
+public class UnbiasedRandomizer: IRandomizer
 {
     private readonly Random _rng = new ();
     public Piece GetNextTetromino(ITetrominoFactory factory)

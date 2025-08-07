@@ -493,6 +493,18 @@
 /processorParam:TextureFormat=Color
 /build:Image/Board/meter_bg.png
 
+#begin Image/Board/meter_hori.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/meter_hori.png
+
 #begin Image/Board/queue_bg.png
 /importer:TextureImporter
 /processor:TextureProcessor

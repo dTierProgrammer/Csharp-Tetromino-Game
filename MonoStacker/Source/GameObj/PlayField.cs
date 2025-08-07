@@ -9,7 +9,7 @@ using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.VisualEffects;
 using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.GameObj.Tetromino.Factory;
-using MonoStacker.Source.GameObj.Tetromino.RandGenerator;
+using MonoStacker.Source.GameObj.Tetromino.Randomizer;
 using MonoStacker.Source.Generic;
 using MonoStacker.Source.Global;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
@@ -44,7 +44,7 @@ namespace MonoStacker.Source.GameObj
     {
         private readonly Vector2 _offset;
         public readonly ITetrominoFactory _pieceData;
-        private readonly IRandGenerator _pieceGenerator;
+        private readonly IRandomizer _pieceGenerator;
         private readonly Grid _grid;
         private List<AnimatedEffect> _animatedEffects = new List<AnimatedEffect>();
 
@@ -58,6 +58,7 @@ namespace MonoStacker.Source.GameObj
         public Piece activePiece { get; set; }
         private Color _activePieceColor = Color.White;
         private readonly Texture2D _border = GetContent.Load<Texture2D>("Image/Board/border1");
+        private readonly Texture2D _lockDelayMeter = GetContent.Load<Texture2D>("Image/Board/meter_hori");
         private bool _showGhostPiece = true;
         private (float timeLeftover, float max) _lineClearDelay;
         private (float timeLeftover, float max) _arrivalDelay;
@@ -66,6 +67,7 @@ namespace MonoStacker.Source.GameObj
         private (int maxResets, int leftoverResets) _rotateReset;
         private bool _horiStepResetAllowed;
         private bool _vertStepResetAllowed;
+        private float _prevYOff;
         private bool _rotateResetAllowed;
 
         private readonly float _maxDasTime = .14f;
@@ -74,7 +76,7 @@ namespace MonoStacker.Source.GameObj
         private readonly bool _softLock;
         private float _dropSpeed;
         public NextPreview nextPreview { get; private set; }
-        private readonly int _queueLength = 5;
+        private readonly int _queueLength = 3;
         private HoldPreview _holdBox;
         private readonly bool _holdEnabled;
         private bool _streakIsActive = false;
@@ -90,6 +92,8 @@ namespace MonoStacker.Source.GameObj
         private float _apXCenter;
         private float _apYCenter;
 
+        private float _lockDelayAmount;
+
 #if DEBUG
         private bool _showDebug = false;
 #else
@@ -100,16 +104,16 @@ namespace MonoStacker.Source.GameObj
         {
             _offset = position;
             _grid = new Grid(_offset);
-            _pieceData = new ArcadeFactory();
-            _pieceGenerator = new SevenBagRandomizer();
-            _softLockDelay = (.63f, .63f);
-            _vertStepResetAllowed = true;
+            _pieceData = new SrsFactory();
+            _pieceGenerator = new TIRandomizer();
+            _softLockDelay = (.5f, .5f);
+            _vertStepResetAllowed = true; // bugged currently
             _lineClearDelay = (.5f, .5f);
             _horiStepReset = (15, 15);
-            _horiStepResetAllowed = false;
+            _horiStepResetAllowed = true;
             _rotateReset = (6, 6);
-            _rotateResetAllowed = false;
-            _arrivalDelay = (.5f, .5f);
+            _rotateResetAllowed = true;
+            _arrivalDelay = (0, 0);
             _holdEnabled = true;
             _softLock = false;
             nextPreview = new NextPreview(new Vector2((_border.Width) + _offset.X - 2, _offset.Y - 1), _queueLength, _pieceData, _pieceGenerator);
@@ -118,7 +122,7 @@ namespace MonoStacker.Source.GameObj
             _apYCenter = activePiece.currentRotation.GetLength(0) / 2;
             activePiece.offsetY = 20;
             activePiece.offsetX = 3;
-            _rotationSystem = new ArcadeRotationSys();
+            _rotationSystem = new SuperRotationSys();
             _inputManager = new InputManager();
         }
         
@@ -176,9 +180,6 @@ namespace MonoStacker.Source.GameObj
         private void LockPiece()
         {
             _activePieceColor = Color.White;
-            _softLockDelay.timeLeftover = _softLockDelay.max;
-            _horiStepReset.leftoverResets = _horiStepReset.maxResets;
-            _rotateReset.leftoverResets = _rotateReset.maxResets;
             _grid.LockPiece(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX);
             if (_grid.CheckForLines() > 0) 
             {
@@ -213,7 +214,7 @@ namespace MonoStacker.Source.GameObj
 
         private void GravitySoftDrop(GameTime gameTime) 
         {
-            _dropSpeed = _softDrop? 1f : .03f;
+            _dropSpeed = _softDrop? 1 : .05f;
 
             if (activePiece.offsetY + _dropSpeed <= CalculateGhostPiece())
             {
@@ -221,6 +222,7 @@ namespace MonoStacker.Source.GameObj
                 {
                     activePiece.offsetY += _dropSpeed;
                     if (!_vertStepResetAllowed) return;
+                    if((int)activePiece.offsetY != (int)_prevYOff)
                     _softLockDelay.timeLeftover = _softLockDelay.max;
                 }
             }
@@ -236,9 +238,7 @@ namespace MonoStacker.Source.GameObj
                 }
                     
                 _softLockDelay.timeLeftover -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-                
-                var lockDelayLeft = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
-                _activePieceColor = Color.Lerp(Color.DarkGray, Color.White, lockDelayLeft);
+               
 
                 if (_softLockDelay.timeLeftover <= 0)
                 {
@@ -248,6 +248,8 @@ namespace MonoStacker.Source.GameObj
             }
             else
                 _activePieceColor = Color.White;
+
+            
         }
 
         private void HardDrop()
@@ -283,11 +285,12 @@ namespace MonoStacker.Source.GameObj
             }
             else
             {
-                if (_streak > 1)
+                if (_streakIsActive)
                 {
                     _streakIsActive = false;
                     _streak = 0;
-                    SfxBank.b2bBreak.Play();
+                    if(_streak > 1)
+                        SfxBank.b2bBreak.Play();
                 }
             }
         }
@@ -306,7 +309,9 @@ namespace MonoStacker.Source.GameObj
             _currentBoardState = BoardState.Neutral;
             _arrivalDelay.timeLeftover = _arrivalDelay.max;
             _currentSpinType = SpinType.None;
-            
+            _softLockDelay.timeLeftover = _softLockDelay.max;
+            _horiStepReset.leftoverResets = _horiStepReset.maxResets;
+            _rotateReset.leftoverResets = _rotateReset.maxResets;
         }
 
         private void ProcessBuffer()
@@ -317,7 +322,7 @@ namespace MonoStacker.Source.GameObj
             { // ensure that no matter what, hold (if buffered) is always executed first
                 if (item.gameAction == GameAction.Hold && actionsStillHeld.Contains(item.gameAction) &&
                     item.hasBeenExecuted == false)
-                    if (_holdBox.ChangePiece()) SfxBank.holdBuffer.Play();
+                    if (_holdBox.ChangePiece()) { SfxBank.holdBuffer.Play(); _currentSpinType = SpinType.None; }
             }
             bufferedActions.RemoveAll(item => item.gameAction is GameAction.Hold);
             
@@ -354,6 +359,7 @@ namespace MonoStacker.Source.GameObj
                 {
                     SfxBank.hold.Play();
                     _softLockDelay.timeLeftover = _softLockDelay.max;
+                    _currentSpinType = SpinType.None;
                 }
             }
 
@@ -462,8 +468,12 @@ namespace MonoStacker.Source.GameObj
                     break;
             }
             ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
-            if(_currentBoardState is BoardState.Neutral)
+            if (_currentBoardState is BoardState.Neutral) 
+            {
                 GravitySoftDrop(gameTime);
+                _lockDelayAmount = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
+            }
+                
             _lastInputEvents = _inputManager.GetKeyInput();
 
 #if DEBUG
@@ -477,6 +487,7 @@ namespace MonoStacker.Source.GameObj
                 _prevKbState = Keyboard.GetState();
                 
             UpdateEffects((float)gameTime.ElapsedGameTime.TotalSeconds); // end of loop ?
+            _prevYOff = activePiece.offsetY;
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -489,7 +500,7 @@ namespace MonoStacker.Source.GameObj
                     {
                         if (_showGhostPiece)
                             spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (CalculateGhostPiece() * 8) + (int)_offset.Y - 160, 8, 8), _grid.imageTiles[7], Color.White * .35f);
-                        spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8), _grid.imageTiles[piece.currentRotation[y, x] - 1], _activePieceColor);
+                        spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)_offset.Y - 160, 8, 8), _grid.imageTiles[piece.currentRotation[y, x] - 1], Color.Lerp(Color.DarkGray, Color.White, MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1)));
                     }
                 }
             }
@@ -502,8 +513,8 @@ namespace MonoStacker.Source.GameObj
                 {
                     if (piece.currentRotation[y, x] != 0)
                     {
-                        //if(_showDebug)
-                            //spriteBatch.Draw(_grid.ghostBlocks, new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (piece.offsetY * 8) + _offset.Y - 160), _grid.imageTiles[6], Color.White);
+                        if(_showDebug)
+                            spriteBatch.Draw(_grid.ghostBlocks, new Vector2((x * 8) + ((int)piece.offsetX * 8) + (int)_offset.X, (y * 8) + (piece.offsetY * 8) + _offset.Y - 160), _grid.imageTiles[6], Color.White);
                     }
                 }
             }
@@ -545,6 +556,13 @@ namespace MonoStacker.Source.GameObj
             spriteBatch.Draw(ImgBank.GridBg, _offset, Color.White);
             _grid.Draw(spriteBatch);
             spriteBatch.Draw(_border, new Vector2(_offset.X - 5, _offset.Y - 4), Color.White);
+            spriteBatch.Draw(_lockDelayMeter, new Vector2(_offset.X - 5, _offset.Y + 165), Color.White);
+            spriteBatch.Draw
+            (
+                GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"),
+                new Rectangle((int)_offset.X - 2, (int)_offset.Y + 168, (int)MathHelper.Lerp(0, 84, _lockDelayAmount), 1),
+                Color.Lerp(new Color(255, 0, 0), new Color(0, 255, 0), _lockDelayAmount)
+            );
             DrawEffects(spriteBatch);
             if (_currentBoardState == BoardState.Neutral)
             {

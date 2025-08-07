@@ -28,6 +28,7 @@ public class DropEffect: AnimatedEffect
      - multiply everything by 8 to get sizes/distances in actual pixels
      */
 
+    // ts so chopped
     public DropEffect(Vector2 position, Piece piece, int endOffsetY, float timeDisplayed, Color tint): base(position)
     {
         _piece = piece;
@@ -81,7 +82,6 @@ public class DropEffect: AnimatedEffect
         TimeDisplayed -= deltaTime;
         _rectWidth += (int)_distortFactor;
         _tint *= TimeDisplayed / MaxTimeDisplayed;
-        
     }
 
     public override void Draw(SpriteBatch spriteBatch)
