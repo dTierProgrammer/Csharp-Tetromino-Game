@@ -12,7 +12,6 @@ public class TARandomizer: IRandomizer
     private readonly Random _rng = new();
     private readonly Queue<TetrominoType> _tetrominoHistory = [];
     private const int EntryLimit = 4;
-    private readonly Array _tetrominos = Enum.GetValues<TetrominoType>();
     private readonly TetrominoType[] _initTetrominos = // for initial roll
     {
         TetrominoType.I,
@@ -60,13 +59,11 @@ public class TARandomizer: IRandomizer
         };
         piece.initOffsetY = piece.offsetY;
 
-        
-        //Console.WriteLine("****");
+        /*
         foreach (var item in _tetrominoHistory)
-        {
            Debug.Write(item);
-        }
         Debug.WriteLine("");
+        */
 
         _totalRolls++;
         return piece;

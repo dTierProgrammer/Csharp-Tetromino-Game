@@ -60,14 +60,11 @@ public class MasterRandomizer : IRandomizer
         piece.initOffsetY = piece.offsetY;
 
         /*
-        //Console.WriteLine("****");
         foreach (var item in _tetrominoHistory)
-        {
             Console.Write(item);
-        }
+        Console.WriteLine();
         */
 
-        Console.WriteLine();
         _totalRolls++;
         return piece;
     }

@@ -23,15 +23,17 @@ namespace MonoStacker.Source.Generic
         public float initOffsetY { get; set; }
         public Color color { get; protected set; } = Color.White;
         public TetrominoType type { get; private set; }
+        public int[,] thumbnail;
 
         public Piece() { }
 
-        public Piece(TetrominoType type, List<int[,]> rotations, List<int[,]> spinData, Color color) 
+        public Piece(TetrominoType type, List<int[,]> rotations, List<int[,]> spinData, Color color, int[,] thumbnail) 
         { 
             this.type = type;
             this.rotations = rotations;
             this.spinData = spinData;
             this.color = color;
+            this.thumbnail = thumbnail;
             currentRotation = rotations[rotationId];
             requiredCorners = spinData[rotationId];
         }

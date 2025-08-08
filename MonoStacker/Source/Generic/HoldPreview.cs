@@ -43,7 +43,7 @@ namespace MonoStacker.Source.Generic
                 if (HoldBox.Count == 0)
                 {
                     HoldBox.Add(_playField.activePiece);
-                    _playField.activePiece = _playField.nextPreview.GetNextPiece();
+                    //_playField.activePiece = _playField.nextPreview.GetNextPiece();
                     ResetPiece(HoldBox.ElementAt(0));
                     canHold = false;
                     return true;

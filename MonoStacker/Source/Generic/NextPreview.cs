@@ -88,16 +88,16 @@ namespace MonoStacker.Source.Generic
 
         protected virtual void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset)
         {
-            for (var y = 0; y < piece.currentRotation.GetLength(0); y++) 
+            for (var y = 0; y < piece.thumbnail.GetLength(0); y++) 
             {
-                for (var x = 0; x < piece.currentRotation.GetLength(1); x++) 
+                for (var x = 0; x < piece.thumbnail.GetLength(1); x++) 
                 {
-                    if (piece.currentRotation[y, x] > 0) 
+                    if (piece.thumbnail[y, x] > 0) 
                     {
                         spriteBatch.Draw(
                             ImgBank.BlockTexture,
                             new Rectangle((int)(x * Tilesize + offset.X), (int)(y * Tilesize + offset.Y), Tilesize, Tilesize),
-                            QueuePieceTiles[piece.currentRotation[y, x] - 1],
+                            QueuePieceTiles[piece.thumbnail[y, x] - 1],
                             Color.White
                             );
                     }
@@ -133,14 +133,17 @@ namespace MonoStacker.Source.Generic
                         _ => 5
                     };
                     var bufferYY = 0;
+
+                /*
                 if (_factory is ArcadeFactory) 
                 {
                     bufferYY = CheckTopRow(_pieceQueue.ElementAt(i)) ? 0 : -8;
                     if (_pieceQueue.ElementAt(i).type is TetrominoType.I) bufferYY = 0;
                 }
+                */
                         
                  
-                    DrawPiece(spriteBatch, _pieceQueue.ElementAt(i ), new Vector2(Offset.X + buffer, ((i ) * Gridsize) + Offset.Y + bufferY + bufferYY));
+                    DrawPiece(spriteBatch, _pieceQueue.ElementAt(i ), new Vector2(Offset.X, ((i ) * Gridsize) + Offset.Y));
             }
         }
 

@@ -457,6 +457,18 @@
 /processorParam:TextureFormat=Color
 /build:Image/Board/border1.png
 
+#begin Image/Board/danger.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/danger.png
+
 #begin Image/Board/generic_border_0.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -552,6 +564,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Board/queue0.png
+
+#begin Image/Board/topqueue_1.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/topqueue_1.png
 
 #begin Image/Effect/clearEffect.png
 /importer:TextureImporter

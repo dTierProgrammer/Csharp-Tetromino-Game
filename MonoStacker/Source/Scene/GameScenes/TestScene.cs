@@ -17,7 +17,7 @@ namespace MonoStacker.Source.Scene.GameScenes
         PlayField playfield;
         public void Initialize() 
         {
-            playfield = new PlayField(new Vector2(86, 47));
+            playfield = new PlayField(new Vector2(86, 65));
             playfield.Initialize();
         }
 

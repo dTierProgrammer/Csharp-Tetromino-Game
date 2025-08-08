@@ -10,6 +10,7 @@ public class SrsFactory: ITetrominoFactory
     {
         List <int[,]> rotations = [];
         List <int[,]> spinData = [];
+
         switch (type)
         {
             case TetrominoType.I:
@@ -73,6 +74,7 @@ public class SrsFactory: ITetrominoFactory
                     { 0, 3, 0, 0 },
                     { 0, 0, 0, 0 }
                 });
+
                 break;
             case TetrominoType.J: 
                 rotations.Add(new [,] 
@@ -130,6 +132,7 @@ public class SrsFactory: ITetrominoFactory
                     { 2, 3, 0},
                     { 0, 0, 0}
                 });
+
                 break;
             case TetrominoType.L: 
                 rotations.Add(new[,]
@@ -187,6 +190,7 @@ public class SrsFactory: ITetrominoFactory
                     { 2, 3, 0},
                     { 2, 0, 0}
                 });
+
                 break;
             case TetrominoType.O: 
                 rotations.Add(new [,] 
@@ -200,6 +204,7 @@ public class SrsFactory: ITetrominoFactory
                     { 0, 3},
                     { 0, 0}
                 });
+
                 break;
             case TetrominoType.S: 
                 rotations.Add(new [,] 
@@ -257,6 +262,7 @@ public class SrsFactory: ITetrominoFactory
                     { 0, 3, 0},
                     { 2, 0, 0}
                 });
+
                 break;
             case TetrominoType.T: 
                 rotations.Add(new [,]
@@ -315,6 +321,7 @@ public class SrsFactory: ITetrominoFactory
                     {0, 3, 0},
                     {1, 0, 2}
                 });
+
                 break;
             case TetrominoType.Z: 
                 rotations.Add(new [,]
@@ -372,6 +379,7 @@ public class SrsFactory: ITetrominoFactory
                     { 0, 3, 0},
                     { 0, 2, 0}
                 });
+
                 break;
         }
 
@@ -387,7 +395,47 @@ public class SrsFactory: ITetrominoFactory
             _ => Color.White
         };
         Piece piece = new();
-        
-        return new Piece(type, rotations, spinData, color);
+
+        var thumbnail = type switch
+        {
+            TetrominoType.I => new int[,]
+                {
+                    { 1, 1, 1, 1 },
+                    { 0, 0, 0, 0 }
+                },
+            TetrominoType.J => new int[,]
+                {
+                    { 2, 0, 0},
+                    { 2, 2, 2}
+                },
+            TetrominoType.L => new int[,]
+                {
+                    { 0, 0, 3},
+                    { 3, 3, 3}
+                },
+            TetrominoType.O => new int[,]
+                {
+                    { 0, 4, 4, 0 },
+                    { 0, 4, 4, 0 }
+                },
+            TetrominoType.S => new int[,]
+                {
+                    { 0, 5, 5},
+                    { 5, 5, 0}
+                },
+            TetrominoType.T => new int[,]
+                {
+                    { 0, 6, 0},
+                    { 6, 6, 6}
+                },
+            TetrominoType.Z => new int[,]
+                {
+                    { 7, 7, 0},
+                    { 0, 7, 7}
+                },
+            _ => new int[,] { { 1 } }
+        };
+
+        return new Piece(type, rotations, spinData, color, thumbnail);
     }
 }
