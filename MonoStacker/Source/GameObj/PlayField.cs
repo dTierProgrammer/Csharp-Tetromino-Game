@@ -69,6 +69,8 @@ namespace MonoStacker.Source.GameObj
         private bool _vertStepResetAllowed;
         private float _prevYOff;
         private bool _rotateResetAllowed;
+        private bool _isInDanger;
+        private bool _spawnAreaObscured;
 
         private readonly float _maxDasTime = .14f;
         
@@ -88,7 +90,6 @@ namespace MonoStacker.Source.GameObj
         private readonly SpinDenotation _parsedSpins = SpinDenotation.TSpinOnly;
 
         private Texture2D _bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
-        private Texture2D _topQueueTest = GetContent.Load<Texture2D>("Image/Board/topqueue_1");
         
         private readonly Dictionary<GameAction, float> _eventTimeStamps = [];
         private List<GameAction> _currentInputEvents = []; //= _inputManager.GetKeyInput();
@@ -108,8 +109,16 @@ namespace MonoStacker.Source.GameObj
         {
             offset = position;
             _grid = new Grid(offset);
-            _pieceData = new SrsFactory();
-            _pieceGenerator = new SevenBagRandomizer();
+            _pieceManager = new
+                (
+                    new SrsFactory(),
+                    new Point(3, 18),
+                    new SevenBagRandomizer(),
+                    6,
+                    QueueType.Sides,
+                    true
+                );
+            _rotationSystem = new SuperRotationSys();
             _softLockDelay = (.5f, .5f);
             _vertStepResetAllowed = true;
             _lineClearDelay = (.5f, .5f);
@@ -118,17 +127,15 @@ namespace MonoStacker.Source.GameObj
             _rotateReset = (6, 6);
             _rotateResetAllowed = true;
             _arrivalDelay = (.5f, .5f);
-            _holdEnabled = true;
             _softLock = false;
-            
-            _rotationSystem = new SuperRotationSys();
+
             _inputManager = new InputManager();
         }
         
         public void Initialize() 
         {
-            _pieceManager = new(this, _pieceData, _pieceGenerator, _queueLength, _holdEnabled);
-            activePiece = _pieceManager.DealPiece();
+            _pieceManager.Initialize(this);
+            GrabNextPiece();
             _apXCenter = activePiece.currentRotation.GetLength(1) / 2;
             _apYCenter = activePiece.currentRotation.GetLength(0) / 2;
         }
@@ -324,6 +331,16 @@ namespace MonoStacker.Source.GameObj
             _rotateReset.leftoverResets = _rotateReset.maxResets;
         }
 
+        private bool IsSpawnObscured() 
+        {
+            /*
+            Todo: determine method to see if placing the active piece will obscure the spawn area
+            - Display the next piece in red x's in the draw method if so
+            */
+
+            return false;
+        }
+
         private void ProcessBuffer()
         {
             var bufferedActions = _inputManager.GetBufferedActions();
@@ -493,7 +510,11 @@ namespace MonoStacker.Source.GameObj
                 _grid.ClearGrid();
 #endif
                 _prevKbState = Keyboard.GetState();
-                
+
+            _isInDanger = _grid.GetNonEmptyRows() >= 16;
+
+            
+
             UpdateEffects((float)gameTime.ElapsedGameTime.TotalSeconds); // end of loop ?
             _prevYOff = activePiece.offsetY;
         }
@@ -563,9 +584,8 @@ namespace MonoStacker.Source.GameObj
             //spriteBatch.Draw(_bgTest, _offset, Color.White);
             spriteBatch.Draw(ImgBank.GridBg, offset, Color.White);
             _grid.Draw(spriteBatch);
-            spriteBatch.Draw(_border, new Vector2(offset.X - 5, offset.Y - 4), Color.White);
+            spriteBatch.Draw(_border, new Vector2(offset.X - 5, offset.Y - 4), !_isInDanger? Color.White: Color.Red);
             spriteBatch.Draw(_lockDelayMeter, new Vector2(offset.X - 5, offset.Y + 165), Color.White);
-            //spriteBatch.Draw(_topQueueTest, new Vector2(_offset.X - 5, _offset.Y - 43), Color.White);
             spriteBatch.Draw
             (
                 GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"),
@@ -581,8 +601,18 @@ namespace MonoStacker.Source.GameObj
                 #endif
             }
             _pieceManager.Draw(spriteBatch);
+
+# if DEBUG
+            for (var y = 0; y < _pieceManager.spawnArea.Length; y++) 
+            {
+                for (var x = 0; x < _pieceManager.spawnArea[y].Length; x++) 
+                {
+                    if(_showDebug) spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Block/spawnPt"), new Vector2(offset.X + (x * 8) + (_pieceManager.spawnAreaPosition.X * 8), offset.Y + (y * 8) + (_pieceManager.spawnAreaPosition.Y * 8) - 160), Color.White * .63f);
+                }
+            }
+#endif
             spriteBatch.End();
-            
+       
         }
     }
 }

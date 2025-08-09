@@ -10,7 +10,7 @@ using MonoStacker.Source.Global;
 namespace MonoStacker.Source.Generic
 {
     public class NextPreview
-    {
+    { // deprecated class
         protected Vector2 Offset;
         protected readonly int QueueLength;
         protected static readonly Texture2D BorderTexture = GetContent.Load<Texture2D>("Image/Board/queue0");

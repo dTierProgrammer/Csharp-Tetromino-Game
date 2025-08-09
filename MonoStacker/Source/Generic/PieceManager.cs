@@ -53,8 +53,10 @@ namespace MonoStacker.Source.Generic
         protected const int SmallTilesize = 6;
         protected const int Gridsize = 25;
         protected const int SmallGridsize = 17;
-        private readonly Queue<Piece> _pieceQueue;
+        public readonly Queue<Piece> pieceQueue;
         private readonly ITetrominoFactory _factory;
+        public readonly int[][] spawnArea;
+        public Point spawnAreaPosition;
         private readonly IRandomizer _generator;
         public readonly bool holdEnabled;
         public bool canHold;
@@ -97,29 +99,36 @@ namespace MonoStacker.Source.Generic
         private void LoadQueue() 
         {
             for (var i = 0; i < _queueLength; i++)
-                _pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
+                pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
         }
 
-        public PieceManager(PlayField playfield, ITetrominoFactory factory, IRandomizer generator, int queueLength, bool holdEnabled) 
+        public PieceManager(ITetrominoFactory factory, Point spawnAreaOffset, IRandomizer generator, int queueLength, QueueType queueDisplayType, bool holdEnabled) 
         {
             GetImageCuts();
-            _playfield = playfield;
             _factory = factory;
+            spawnArea = _factory.SpawnArea();
+            spawnAreaPosition = spawnAreaOffset;
             _generator = generator;
             _queueLength = queueLength;
             this.holdEnabled = holdEnabled;
-            _pieceQueue = new();
+            pieceQueue = new();
             _holdBox = new();
-            //_holdBox.Enqueue(_generator.GetNextTetromino(_factory));
-            _queueType = QueueType.Top;
+            _queueType = queueDisplayType;
             canHold = true;
             LoadQueue();
         }
 
+        public void Initialize(PlayField playfield) 
+        {
+            _playfield = playfield;
+        }
+
         public Piece DealPiece() 
         {
-            _pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
-            return _pieceQueue.Dequeue();
+            pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
+            Piece piece = pieceQueue.Dequeue();
+            SetPieceSpawn(piece);
+            return piece;
         }
 
         public Piece ChangePiece(Piece piece) 
@@ -141,10 +150,18 @@ namespace MonoStacker.Source.Generic
             }
         }
 
-        private static void ResetPiece(Piece piece) 
+        private void SetPieceSpawn(Piece piece) 
         {
-            piece.offsetX = piece.initOffsetX;
-            piece.offsetY = piece.initOffsetY;
+            piece.offsetX = spawnAreaPosition.X;
+            piece.offsetY = spawnAreaPosition.Y;
+            if (piece.type is TetrominoType.I) { piece.offsetX += _factory.SpawnOffset_I().X; piece.offsetY += _factory.SpawnOffset_I().Y; }
+            else if (piece.type is TetrominoType.O) { piece.offsetX += _factory.SpawnOffset_O().X; piece.offsetY += _factory.SpawnOffset_O().Y; }
+            else { piece.offsetX += _factory.SpawnOffset_Jlstz().X; piece.offsetY += _factory.SpawnOffset_Jlstz().Y; }
+        }
+
+        private void ResetPiece(Piece piece) 
+        {
+            SetPieceSpawn(piece);
             piece.ResetId();
             piece.Update();
         }
@@ -177,22 +194,22 @@ namespace MonoStacker.Source.Generic
                 spriteBatch.Draw(BgTexture, new Vector2(queueOffset.X, (i * Gridsize) + queueOffset.Y), QueueBgTiles[3], Color.White);
             }
 
-            for (var i = 0; i < _pieceQueue.Count; i++) 
+            for (var i = 0; i < pieceQueue.Count; i++) 
             {
-                var buffer = _pieceQueue.ElementAt(i).type switch
+                var buffer = pieceQueue.ElementAt(i).type switch
                 {
                     TetrominoType.O => 1,
                     TetrominoType.I => 1,
                     _ => 5
                 };
 
-                var bufferY = _pieceQueue.ElementAt(i).type switch
+                var bufferY = pieceQueue.ElementAt(i).type switch
                 {
                     TetrominoType.I => 9,
                     _ => 5
                 };
 
-                DrawPiece(spriteBatch, _pieceQueue.ElementAt(i), new Vector2(queueOffset.X + buffer, ((i) * Gridsize) + queueOffset.Y + bufferY), 8, false);
+                DrawPiece(spriteBatch, pieceQueue.ElementAt(i), new Vector2(queueOffset.X + buffer, ((i) * Gridsize) + queueOffset.Y + bufferY), 8, false);
             }
                
 
@@ -239,7 +256,7 @@ namespace MonoStacker.Source.Generic
             spriteBatch.Draw(BgTexture, new Vector2(offset.X + 4, offset.Y + 4), QueueBgTiles[4], Color.White);
             spriteBatch.Draw(BorderTexture, new Vector2(offset.X, offset.Y), QueueBorderTiles[5], Color.White);
             spriteBatch.Draw(BorderTexture, new Vector2(offset.X + 4, offset.Y - 8), QueueBorderTiles[4], Color.White);
-            DrawPiece(spriteBatch, _pieceQueue.ElementAt(0), new Vector2(offset.X + 6, offset.Y + 6), 8, false);
+            DrawPiece(spriteBatch, pieceQueue.ElementAt(0), new Vector2(offset.X + 6, offset.Y + 6), 8, false);
 
             if (_queueLength > 1) 
             {
@@ -247,19 +264,16 @@ namespace MonoStacker.Source.Generic
                 spriteBatch.Draw(BgTexture, new Vector2(offset.X + 44, offset.Y + 4), QueueBgTiles[6], Color.White);
                 var bound = _queueLength <= 3 ? _queueLength - 1 : 2;
                 for (var i = 0; i < bound; i++)
-                    DrawPiece(spriteBatch, _pieceQueue.ElementAt(i + 1), new Vector2((i * SmallGridsize) + offset.X + 41, offset.Y + 6), 4, false);
+                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i + 1), new Vector2((i * SmallGridsize) + offset.X + 41, offset.Y + 6), 4, false);
             }
 
             if (_queueLength > 3) 
             {
                 for (var i = 0; i < _queueLength - 3; i++) 
                 {
-                    DrawPiece(spriteBatch, _pieceQueue.ElementAt(i + 3), new Vector2(offset.X + 67, (i * 13) + offset.Y + 20), 4, false);
+                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i + 3), new Vector2(offset.X + 67, (i * 13) + offset.Y + 20), 4, false);
                 }
             }
-            
-            
-            
         }
 
         private void DrawTopHoldQueue(SpriteBatch spriteBatch, Vector2 offset) 

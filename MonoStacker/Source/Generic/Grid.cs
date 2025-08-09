@@ -15,7 +15,7 @@ using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
 {
-    public class Grid // TODO: Refactor to jagged int array
+    public class Grid // TODO: Refactor to jagged int array (I did this months ago, actually)
     {
         private Microsoft.Xna.Framework.Vector2 _offset;
         
@@ -61,13 +61,13 @@ namespace MonoStacker.Source.Generic
 
         private void GetImageCuts() 
         {
-            imageTiles.Add(new Rectangle(0, 0, TILESIZE, TILESIZE)); // I
-            imageTiles.Add(new Rectangle(TILESIZE, 0, TILESIZE, TILESIZE)); // J
-            imageTiles.Add(new Rectangle(TILESIZE * 2, 0, TILESIZE, TILESIZE)); // L
-            imageTiles.Add(new Rectangle(TILESIZE * 3, 0, TILESIZE, TILESIZE)); // O
-            imageTiles.Add(new Rectangle(TILESIZE * 4, 0, TILESIZE, TILESIZE)); // S
-            imageTiles.Add(new Rectangle(TILESIZE * 5, 0, TILESIZE,  TILESIZE)); // T
-            imageTiles.Add(new Rectangle(TILESIZE * 6, 0, TILESIZE, TILESIZE)); // Z
+            imageTiles.Add(new Rectangle(0, 0, TILESIZE, TILESIZE)); // Cyan
+            imageTiles.Add(new Rectangle(TILESIZE, 0, TILESIZE, TILESIZE)); // Blue
+            imageTiles.Add(new Rectangle(TILESIZE * 2, 0, TILESIZE, TILESIZE)); // Orange
+            imageTiles.Add(new Rectangle(TILESIZE * 3, 0, TILESIZE, TILESIZE)); // Yellow
+            imageTiles.Add(new Rectangle(TILESIZE * 4, 0, TILESIZE, TILESIZE)); // Green
+            imageTiles.Add(new Rectangle(TILESIZE * 5, 0, TILESIZE,  TILESIZE)); // Purple/Magenta/Pink
+            imageTiles.Add(new Rectangle(TILESIZE * 6, 0, TILESIZE, TILESIZE)); // Red
             imageTiles.Add(new Rectangle(0, TILESIZE, TILESIZE, TILESIZE));
             imageTiles.Add(new Rectangle(TILESIZE, TILESIZE, TILESIZE, TILESIZE));
             imageTiles.Add(new Rectangle(TILESIZE * 2, TILESIZE, TILESIZE, TILESIZE));

@@ -16,7 +16,7 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 namespace MonoStacker.Source.Generic
 {
     public class HoldPreview: NextPreview
-    {
+    { // deprecated class
         PlayField _playField;
         public bool canHold;
         List<Piece> HoldBox;

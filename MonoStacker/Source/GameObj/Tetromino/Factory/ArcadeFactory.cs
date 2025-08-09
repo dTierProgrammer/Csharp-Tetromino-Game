@@ -342,4 +342,36 @@ public class ArcadeFactory: ITetrominoFactory
         
         return new Piece(type, rotations, spinData, color, thumbnail);
     }
+
+    public int[][] SpawnArea()
+    {
+        var area = new int[2][];
+        for (int i = 0; i < 2; i++)
+        {
+            var length = i switch
+            {
+                1 => 3,
+                _ => 4
+            };
+
+            area[i] = new int[length];
+        }
+
+        return area;
+    }
+
+    public Point SpawnOffset_Jlstz()
+    {
+        return new Point(0, -1);
+    }
+
+    public Point SpawnOffset_O()
+    {
+        return new Point(1, 0);
+    }
+
+    public Point SpawnOffset_I()
+    {
+        return new Point(0, -1);
+    }
 }
