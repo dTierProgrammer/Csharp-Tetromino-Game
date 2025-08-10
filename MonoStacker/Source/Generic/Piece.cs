@@ -77,6 +77,81 @@ namespace MonoStacker.Source.Generic
             return new Vector2((xlen.Count * 8) / 2, (ylen.Count * 8) / 2);
         }
 
+        public int GetNonEmptyColumns() 
+        {
+            int count = 0;
+            for (var x = 0; x < currentRotation.GetLength(1); x++) 
+            {
+                for (var y = 0; y < currentRotation.GetLength(1); y++) 
+                {
+                    if (currentRotation[y, x] > 0) 
+                    {
+                        count++;
+                        break;
+                    }
+                }
+            }
+            return count;
+        }
+
+        public int GetEmptyColumns() 
+        {
+            int count = 0;
+            for (var x = 0; x < currentRotation.GetLength(1); x++)
+            {
+                var isEmpty = true;
+                for (var y = 0; y < currentRotation.GetLength(1); y++)
+                {
+                    if (currentRotation[y, x] > 0)
+                    {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+                if (isEmpty) count++;
+                else break;
+            }
+            return count;
+        }
+
+        public int GetNonEmptyRows() 
+        {
+            int count = 0;
+
+            for (var y = 0; y < currentRotation.GetLength(0); y++) 
+            {
+                for (var x = 0; x < currentRotation.GetLength(0); x++) 
+                {
+                    if (currentRotation[y, x] > 0) 
+                    {
+                        count++;
+                        break;
+                    }
+                }
+            }
+            return count;
+        }
+
+        public int GetEmptyRows() 
+        {
+            int count = 0;
+            for(var y = 0; y < currentRotation.GetLength(0); y++) 
+            {
+                var isEmpty = true;
+                for (var x = 0; x < currentRotation.GetLength(1); x++) 
+                {
+                    if (currentRotation[y, x] > 0) 
+                    {
+                        isEmpty = false;
+                        break;
+                    }
+                }
+                if (isEmpty) count++;
+                else break;
+            }
+            return count;
+        }
+
         public void RotateCW() 
         {
             rotationId++;

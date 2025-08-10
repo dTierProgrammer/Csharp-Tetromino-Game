@@ -26,9 +26,9 @@ public class AnimatedEffectLayer
 
     public  void Draw(SpriteBatch spriteBatch)
     {
-        spriteBatch.Begin();
+        //spriteBatch.Begin();
         foreach (var effect in _visualEffects)
             effect.Draw(spriteBatch);
-        spriteBatch.End();
+        //spriteBatch.End();
     }
 }

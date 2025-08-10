@@ -386,8 +386,8 @@ public class SrsFactory: ITetrominoFactory
         Color color = type switch
         {
             TetrominoType.I => Color.Cyan,
-            TetrominoType.J => Color.Orange,
-            TetrominoType.L => Color.RoyalBlue,
+            TetrominoType.J => Color.RoyalBlue,
+            TetrominoType.L => Color.Orange,
             TetrominoType.O => Color.Yellow,
             TetrominoType.S => new Color(0, 255, 0),
             TetrominoType.T => Color.Magenta,

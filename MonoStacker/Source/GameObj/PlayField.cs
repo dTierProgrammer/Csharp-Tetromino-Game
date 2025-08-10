@@ -46,6 +46,7 @@ namespace MonoStacker.Source.GameObj
         public readonly Vector2 offset;
         private readonly Grid _grid;
         private List<AnimatedEffect> _animatedEffects = new List<AnimatedEffect>();
+        private AnimatedEffectLayer _aeLayer = new();
 
         private KeyboardState _prevKbState;
         private readonly InputManager _inputManager;
@@ -107,16 +108,17 @@ namespace MonoStacker.Source.GameObj
 
         public PlayField(Vector2 position)
         {
+            _aeLayer = new();
             offset = position;
             _grid = new Grid(offset);
             _pieceManager = new
                 (
                     new SrsFactory(),
                     new Point(3, 18),
-                    new SevenBagRandomizer(),
-                    1,
+                    new TIRandomizer(),
+                    3,
                     QueueType.Top,
-                    false
+                    true
                 );
             _rotationSystem = new SuperRotationSys();
             _softLockDelay = (.5f, .5f);
@@ -266,12 +268,16 @@ namespace MonoStacker.Source.GameObj
             else
                 _activePieceColor = Color.White;
 
-            
+            if (_softDrop) 
+            {
+                if ((int)activePiece.offsetY != (int)_prevYOff)
+                    PlayfieldEffects.FlashPiece(activePiece, activePiece.color * .5f, 1f, offset, _aeLayer);
+            }
         }
 
         private void HardDrop()
         {
-            //_animatedEffects.Add(new DropEffect(_offset, activePiece, CalculateGhostPiece(), 3f, Color.Red));
+            _aeLayer.AddEffect(new DropEffect(offset, 1f, activePiece, ((int)CalculateGhostPiece(activePiece) - (int)activePiece.offsetY), activePiece.color));
             activePiece.offsetY = CalculateGhostPiece(activePiece);
             LockPiece();
             SfxBank.hardDrop.Play();
@@ -548,18 +554,16 @@ namespace MonoStacker.Source.GameObj
 #endif
                 _prevKbState = Keyboard.GetState();
 
-          
-            UpdateEffects((float)gameTime.ElapsedGameTime.TotalSeconds); // end of loop ?
+
+            //UpdateEffects((float)gameTime.ElapsedGameTime.TotalSeconds); // end of loop ?
+            _aeLayer.Update(gameTime);
             _prevYOff = activePiece.offsetY;
 
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
 
             //if (IsSpawnObscured()) Debug.WriteLine("ggg");
             //if (WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())) Debug.WriteLine("fff");
-
-
-            Debug.WriteLine((int)time);
-
+            //Debug.WriteLine(CalculateGhostPiece(activePiece));
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -628,7 +632,11 @@ namespace MonoStacker.Source.GameObj
                         3 => GetContent.Load<Texture2D>("Image/Block/cenPt"),
                         _ => null
                     };
-                    
+                    if (piece.requiredCorners[y, x] != 0)
+                    {
+                        
+                            spriteBatch.Draw(cornerImg, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)offset.Y - 160, 8, 8), Color.White);
+                    }
                 }
             }
             
@@ -651,6 +659,7 @@ namespace MonoStacker.Source.GameObj
             spriteBatch.Begin();
             //spriteBatch.Draw(_bgTest, _offset, Color.White);
             spriteBatch.Draw(ImgBank.GridBg, offset, Color.White);
+            _aeLayer.Draw(spriteBatch);
             _grid.Draw(spriteBatch);
             spriteBatch.Draw(_border, new Vector2(offset.X - 5, offset.Y - 4), !_isInDanger? Color.White: Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)));
             spriteBatch.Draw(_lockDelayMeter, new Vector2(offset.X - 5, offset.Y + 165), Color.White);
@@ -660,7 +669,7 @@ namespace MonoStacker.Source.GameObj
                 new Rectangle((int)offset.X - 2, (int)offset.Y + 168, (int)MathHelper.Lerp(0, 84, _lockDelayAmount), 1),
                 Color.Lerp(new Color(255, 0, 0), new Color(0, 255, 0), _lockDelayAmount)
             );
-            DrawEffects(spriteBatch);
+            
             if (_isInDanger) 
             {
                 float alpha = (float)(Math.Sin(time * 2.0f) * .5f + .5f);

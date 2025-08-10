@@ -289,8 +289,8 @@ public class ArcadeFactory: ITetrominoFactory
         Color color = type switch
         {
             TetrominoType.I => Color.Red,
-            TetrominoType.J => Color.Orange,
-            TetrominoType.L => Color.RoyalBlue,
+            TetrominoType.J => Color.RoyalBlue,
+            TetrominoType.L => Color.Orange,
             TetrominoType.O => Color.Yellow,
             TetrominoType.S => Color.Magenta,
             TetrominoType.T => Color.Cyan,

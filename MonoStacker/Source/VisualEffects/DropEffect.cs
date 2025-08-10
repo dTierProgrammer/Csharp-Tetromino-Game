@@ -10,98 +10,53 @@ namespace MonoStacker.Source.VisualEffects;
 public class DropEffect: AnimatedEffect
 {
     private Texture2D _effect = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect");
-    private Piece _piece; // grab offset values from here
-    private float _distortFactor;
-    private float _rectWidth;
-    private int widthBuffer;
-    private int _rectHeight;
-    private int _offsetX;
-    private int _startOffsetY;
-    private int _endOffset;
-    Color _tint = Color.White;
+    private Piece piece;
+    private Color _tint;
 
-    /*
-     - iterate column by colum through piece's current rotation
-        - break loop whenever filled data cell is reached, iterate counter (get width of effect)
-        - another time, break at first filled cell (get offset of effect)
-     - difference of endOffset and pieceY offset is the height of effect
-     - multiply everything by 8 to get sizes/distances in actual pixels
-     */
+    private int _rowOffset; // piece y offset
+    private int _subRowOffset; // account for empty spaces in piece data (y)
+    private float _rowsLength; // dist between column and ghost piece
 
+    private int _columnOffset; // piece x offset
+    private int _subColumnOffset; // account for empty spaces in piece data (x)
+    private int _columnsLength; // length of piece data (filled)
+
+    // remember rows count downwards
     // ts so chopped
-    public DropEffect(Vector2 position, Piece piece, int endOffsetY, float timeDisplayed, Color tint): base(position)
+    public DropEffect(Vector2 position, float timeDisplayed,  Piece piece, int length, Color tint): base(position)
     {
-        _piece = piece;
-        _endOffset = endOffsetY;
-        _distortFactor = 0;
-        TimeDisplayed = timeDisplayed;
-        MaxTimeDisplayed = timeDisplayed;
+        _rowOffset = (int)piece.offsetY;
+        _subRowOffset = piece.GetEmptyRows();
+        _rowsLength = length + 1;
+        _columnOffset = (int)piece.offsetX;
+        _subColumnOffset = piece.GetEmptyColumns();
+        _columnsLength = piece.GetNonEmptyColumns();
         _tint = tint;
-        _rectWidth = GetWidthFromData();
-        widthBuffer = GetWidthFromData();
-        _rectHeight = 50; //(int)((_endOffset - _piece.offsetY) * 8);
+        MaxTimeDisplayed = timeDisplayed;
+        TimeDisplayed = timeDisplayed;
     }
 
-    private int GetWidthFromData()
-    {
-        int units = 0;
-        for (var x = 0; x < _piece.currentRotation.GetLength(1); x++) // row
-        {
-            for (var y = 0; y < _piece.currentRotation.GetLength(0); y++)
-            {
-                if (_piece.currentRotation[y, x] != 0)
-                {
-                    units++;
-                    break;
-                }
-            }
-        }
-
-        return units * 8;
-    }
-
-    private Point GetPlacementFromData()
-    {
-        for (var x = 0; x < _piece.currentRotation.GetLength(1); x++) // row
-        {
-            for (var y = 0; y < _piece.currentRotation.GetLength(0); y++)
-            {
-                if (_piece.currentRotation[y, x] != 0)
-                {
-                    return new Point(x * 8, y * 8);
-                }
-            }
-        } 
-        return new Point(0, 0);
-    }
-
+   
     public override void Update(float deltaTime)
     {
-        if (TimeDisplayed == MaxTimeDisplayed)
-            Console.WriteLine((_endOffset - (int)_piece.offsetY * 8));
         TimeDisplayed -= deltaTime;
-        _rectWidth += (int)_distortFactor;
-        _tint *= TimeDisplayed / MaxTimeDisplayed;
+        _tint *= (TimeDisplayed / (MaxTimeDisplayed));
+        //Debug.WriteLine(_rowsLength);
     }
 
     public override void Draw(SpriteBatch spriteBatch)
     {
         spriteBatch.Draw
-        (
-            _effect,
-            new Rectangle
             (
-                (_piece.currentRotation.GetLength(1) * 8 ) / 2 + (int)position.X,
-                (int)(_piece.offsetY * 8) + (int)position.Y - 160,
-                (int)_rectWidth, // get width
-                (_endOffset - (int)_piece.offsetY * 8) * -1
-            ),
-            null,
-            _tint,
-            0,
-            new Vector2(0 ,0),
-            SpriteEffects.None,
-            1
-        );
+                _effect,
+                new Rectangle
+                (
+                    (int)(position.X) + (_columnOffset * 8) + (_subColumnOffset * 8),
+                    (int)(position.Y) + (_rowOffset * 8) - 160 + (_subRowOffset * 8),
+                    _columnsLength * 8,
+                    (int)_rowsLength * 8
+                ),
+                _tint * .5f
+            );
     }
 }
