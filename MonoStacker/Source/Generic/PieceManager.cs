@@ -54,7 +54,7 @@ namespace MonoStacker.Source.Generic
         protected const int Gridsize = 25;
         protected const int SmallGridsize = 17;
         public readonly Queue<Piece> pieceQueue;
-        private readonly ITetrominoFactory _factory;
+        public readonly ITetrominoFactory _factory;
         public readonly int[][] spawnArea;
         public Point spawnAreaPosition;
         private readonly IRandomizer _generator;

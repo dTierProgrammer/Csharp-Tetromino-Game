@@ -22,9 +22,9 @@ namespace MonoStacker.Source.Generic
         public List<Rectangle> imageTiles = new();
         private const int TILESIZE = 8;
 
-        private const int ROWS = 40; // y
+        public const int ROWS = 40; // y
         // Higher than needed to account for pieces not covering death zone but above accessible field (guideline compliant)
-        private const int COLUMNS = 10; // x
+        public const int COLUMNS = 10; // x
         public int[][] _matrix { get; private set; }
 
         public List<int> rowsToClear { get; private set; }

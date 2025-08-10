@@ -23,7 +23,6 @@ public class TIRandomizer: IRandomizer
     */
 
     private readonly Random _rng = new Random();
-    private readonly TetrominoType[] _tetrominos = Enum.GetValues<TetrominoType>();
     private readonly TetrominoType[] _initTetrominos = // for initial roll
     { 
         TetrominoType.I,
@@ -41,7 +40,7 @@ public class TIRandomizer: IRandomizer
         if (!_pool.Any())
         {
             for (var i = 0; i < 5; i++)
-                _pool.AddRange(new List<TetrominoType>(_tetrominos));
+                _pool.AddRange(Enum.GetValues<TetrominoType>());
         }
 
         if (!_history.Any()) 
@@ -66,23 +65,8 @@ public class TIRandomizer: IRandomizer
         }
         AddToHistory(nextTetromino);
 
-        var piece = factory.NewPiece(nextTetromino);
-        piece.offsetX = nextTetromino switch
-        {
-            TetrominoType.O => 4,
-            _ => 3
-        };
-        piece.initOffsetX = piece.offsetX;
-
-        piece.offsetY = nextTetromino switch
-        {
-            TetrominoType.I => 17,
-            _ => 17
-        };
-        piece.initOffsetY = piece.offsetY;
-
         _totalRolls++;
-        return piece;
+        return factory.NewPiece(nextTetromino);
     }
 
     private void AddToHistory(TetrominoType tetromino) 

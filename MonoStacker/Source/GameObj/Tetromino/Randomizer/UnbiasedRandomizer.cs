@@ -11,22 +11,7 @@ public class UnbiasedRandomizer: IRandomizer
     {
         Array tetrominos = Enum.GetValues<TetrominoType>();
         var nextTetromino = (TetrominoType)_rng.Next(0, tetrominos.Length);
-        var piece = factory.NewPiece(nextTetromino);
         
-        piece.offsetX = nextTetromino switch
-        {
-            TetrominoType.O => 4,
-            _ => 3
-        };
-        piece.initOffsetX = piece.offsetX;
-        
-        piece.offsetY = nextTetromino switch
-        {
-            TetrominoType.O => 17,
-            _ => 18
-        };
-        piece.initOffsetY = piece.offsetY;
-        
-        return piece;
+        return factory.NewPiece(nextTetromino);
     }
 }

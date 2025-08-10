@@ -115,11 +115,13 @@ namespace MonoStacker.Source.Generic
             };
 
             var bufferYY = 0;
+            /*
             if (_playField._pieceData is ArcadeFactory) 
             {
                 bufferYY = CheckTopRow(HoldBox.ElementAt(0)) ? 0 : -8;
                 if (HoldBox.ElementAt(0).type is TetrominoType.I) bufferYY = 0;
             }
+            */
               
 
             DrawPiece(spriteBatch, HoldBox.ElementAt(0), new Vector2(Offset.X + buffer, Offset.Y + bufferY + bufferYY));

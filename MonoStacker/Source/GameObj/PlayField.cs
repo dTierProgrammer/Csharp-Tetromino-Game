@@ -16,6 +16,7 @@ using Vector2 = Microsoft.Xna.Framework.Vector2;
 using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Generic.Rotation.RotationSystems;
 using MonoStacker.Source.Interface.Input;
+using System.Diagnostics;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -43,8 +44,6 @@ namespace MonoStacker.Source.GameObj
     public class PlayField
     {
         public readonly Vector2 offset;
-        public readonly ITetrominoFactory _pieceData;
-        private readonly IRandomizer _pieceGenerator;
         private readonly Grid _grid;
         private List<AnimatedEffect> _animatedEffects = new List<AnimatedEffect>();
 
@@ -79,7 +78,8 @@ namespace MonoStacker.Source.GameObj
         private float _dropSpeed;
         private readonly int _queueLength = 3;
         private readonly bool _holdEnabled;
-
+        float time = 0;
+        int buffer = 1;
 
         private PieceManager _pieceManager;
 
@@ -114,19 +114,19 @@ namespace MonoStacker.Source.GameObj
                     new SrsFactory(),
                     new Point(3, 18),
                     new SevenBagRandomizer(),
-                    6,
-                    QueueType.Sides,
-                    true
+                    1,
+                    QueueType.Top,
+                    false
                 );
             _rotationSystem = new SuperRotationSys();
             _softLockDelay = (.5f, .5f);
             _vertStepResetAllowed = true;
-            _lineClearDelay = (.5f, .5f);
+            _lineClearDelay = (0, 0);
             _horiStepReset = (15, 15);
             _horiStepResetAllowed = true;
             _rotateReset = (6, 6);
             _rotateResetAllowed = true;
-            _arrivalDelay = (.5f, .5f);
+            _arrivalDelay = (0, 0);
             _softLock = false;
 
             _inputManager = new InputManager();
@@ -147,7 +147,7 @@ namespace MonoStacker.Source.GameObj
                 return;
             activePiece.offsetX += movementAmt;
             SfxBank.stepHori.Play();
-            if ((int)activePiece.offsetY == CalculateGhostPiece() && _horiStepResetAllowed)
+            if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && _horiStepResetAllowed)
                 StepReset();
         }
 
@@ -170,21 +170,30 @@ namespace MonoStacker.Source.GameObj
                 if (_currentSpinType is not SpinType.None) SfxBank.twist1m.Play();
                 else SfxBank.rotate.Play();
             }
-            if((int)activePiece.offsetY == CalculateGhostPiece() && _rotateResetAllowed)
+            if((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && _rotateResetAllowed)
                 RotateReset();
             activePiece.Update();
             _apXCenter = (activePiece.currentRotation.GetLength(1) * 8) / 2;
             return true;
         } 
 
-        private int CalculateGhostPiece()
+        private int CalculateGhostPiece(Piece piece)
         {
-            var xOff = (int)activePiece.offsetX;
-            var yOff = (int)activePiece.offsetY;
-            while (_grid.IsPlacementValid(activePiece, yOff + 1, xOff))
+            var xOff = (int)piece.offsetX;
+            var yOff = (int)piece.offsetY;
+            while (_grid.IsPlacementValid(piece, yOff + 1, xOff))
                 yOff++;
             return yOff;
-        } 
+        }
+
+        private int CalculateGhostPiece(Piece piece, int offsetX, int offsetY)
+        {
+            var xOff = offsetX;
+            var yOff = offsetY;
+            while (_grid.IsPlacementValid(piece, yOff + 1, xOff))
+                yOff++;
+            return yOff;
+        }
 
         private void LockPiece()
         {
@@ -222,9 +231,9 @@ namespace MonoStacker.Source.GameObj
 
         private void GravitySoftDrop(GameTime gameTime) 
         {
-            _dropSpeed = _softDrop? 1 : 0;
+            _dropSpeed = _softDrop? 1 : .03f;
 
-            if (activePiece.offsetY + _dropSpeed <= CalculateGhostPiece())
+            if (activePiece.offsetY + _dropSpeed <= CalculateGhostPiece(activePiece))
             {
                 if (_grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + _dropSpeed), (int)activePiece.offsetX)) 
                 {
@@ -235,9 +244,9 @@ namespace MonoStacker.Source.GameObj
                 }
             }
             else
-                activePiece.offsetY = CalculateGhostPiece();
+                activePiece.offsetY = CalculateGhostPiece(activePiece);
 
-            if ((int)activePiece.offsetY == CalculateGhostPiece())
+            if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece))
             {
                 if (_softLock && _softDrop) 
                 {
@@ -263,15 +272,15 @@ namespace MonoStacker.Source.GameObj
         private void HardDrop()
         {
             //_animatedEffects.Add(new DropEffect(_offset, activePiece, CalculateGhostPiece(), 3f, Color.Red));
-            activePiece.offsetY = CalculateGhostPiece();
+            activePiece.offsetY = CalculateGhostPiece(activePiece);
             LockPiece();
             SfxBank.hardDrop.Play();
         }
 
         private void FirmDrop()
         {
-            if((int)activePiece.offsetY != CalculateGhostPiece())
-                activePiece.offsetY = CalculateGhostPiece();
+            if((int)activePiece.offsetY != CalculateGhostPiece(activePiece))
+                activePiece.offsetY = CalculateGhostPiece(activePiece);
         }
 
         private void ClearFilledLines()
@@ -329,16 +338,44 @@ namespace MonoStacker.Source.GameObj
             _softLockDelay.timeLeftover = _softLockDelay.max;
             _horiStepReset.leftoverResets = _horiStepReset.maxResets;
             _rotateReset.leftoverResets = _rotateReset.maxResets;
+
+            _spawnAreaObscured = ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())));
+            _isInDanger = _grid.GetNonEmptyRows() >= 18;
         }
 
-        private bool IsSpawnObscured() 
+        private bool IsSpawnObscured()
         {
             /*
             Todo: determine method to see if placing the active piece will obscure the spawn area
             - Display the next piece in red x's in the draw method if so
             */
 
-            return false;
+            for (var y = 0; y < _pieceManager.spawnArea.Length; y++)
+            {
+                for (var x = 0; x < _pieceManager.spawnArea[y].Length; x++)
+                {
+                    if (_grid._matrix[y + _pieceManager.spawnAreaPosition.Y][x + _pieceManager.spawnAreaPosition.X] > 0) 
+                    {
+                        return true;
+                    }
+                }
+            }
+            return false; 
+        }
+
+        private bool WillPieceObscureSpawn(Piece piece) 
+        {
+            var buffer = _pieceManager.pieceQueue.Peek().type switch
+            {
+                TetrominoType.I => _pieceManager._factory.SpawnOffset_I(),
+                TetrominoType.O => _pieceManager._factory.SpawnOffset_O(),
+                _ => _pieceManager._factory.SpawnOffset_Jlstz()
+            };
+
+            if (CalculateGhostPiece(piece, _pieceManager.spawnAreaPosition.X + buffer.X, _pieceManager.spawnAreaPosition.Y + buffer.Y) <= _pieceManager.spawnAreaPosition.Y)
+                return true;
+            else
+                return false;
         }
 
         private void ProcessBuffer()
@@ -511,12 +548,18 @@ namespace MonoStacker.Source.GameObj
 #endif
                 _prevKbState = Keyboard.GetState();
 
-            _isInDanger = _grid.GetNonEmptyRows() >= 16;
-
-            
-
+          
             UpdateEffects((float)gameTime.ElapsedGameTime.TotalSeconds); // end of loop ?
             _prevYOff = activePiece.offsetY;
+
+            time += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+            //if (IsSpawnObscured()) Debug.WriteLine("ggg");
+            //if (WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())) Debug.WriteLine("fff");
+
+
+            Debug.WriteLine((int)time);
+
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -528,12 +571,37 @@ namespace MonoStacker.Source.GameObj
                     if (piece.currentRotation[y, x] != 0)
                     {
                         if (_showGhostPiece)
-                            spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)offset.X, (y * 8) + (CalculateGhostPiece() * 8) + (int)offset.Y - 160, 8, 8), _grid.imageTiles[7], Color.White * .35f);
+                            spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)offset.X, (y * 8) + (CalculateGhostPiece(activePiece) * 8) + (int)offset.Y - 160, 8, 8), _grid.imageTiles[7], Color.White * .35f);
                         spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + ((int)piece.offsetX * 8) + (int)offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)offset.Y - 160, 8, 8), _grid.imageTiles[piece.currentRotation[y, x] - 1], Color.Lerp(Color.DarkGray, Color.White, MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1)));
                     }
                 }
             }
         }
+
+        private void DrawPieceDanger(SpriteBatch spriteBatch, Piece piece) // super lazy reduntant methods yayaya
+        {
+            var buffer = _pieceManager.pieceQueue.Peek().type switch
+            {
+                TetrominoType.I => _pieceManager._factory.SpawnOffset_I(),
+                TetrominoType.O => _pieceManager._factory.SpawnOffset_O(),
+                _ => _pieceManager._factory.SpawnOffset_Jlstz()
+            };
+
+            for (var y = 0; y < piece.currentRotation.GetLength(0); y++)
+            {
+                for (var x = 0; x < piece.currentRotation.GetLength(1); x++)
+                {
+                    if (piece.currentRotation[y, x] != 0)
+                    {
+                        spriteBatch.Draw
+                            (GetContent.Load<Texture2D>("Image/Block/spawnPt"), 
+                            new Rectangle((x * 8) + ((int)_pieceManager.spawnAreaPosition.X * 8) + (buffer.X * 8) + (int)offset.X, (y * 8) + ((int)_pieceManager.spawnAreaPosition.Y * 8) + (buffer.Y * 8) + (int)offset.Y - 160, 8, 8), 
+                            Color.White);
+                    }
+                }
+            }
+        }
+
         private void DrawPieceDB(SpriteBatch spriteBatch, Piece piece) 
         {
             for (var y = 0; y < piece.currentRotation.GetLength(0); y++) 
@@ -584,7 +652,7 @@ namespace MonoStacker.Source.GameObj
             //spriteBatch.Draw(_bgTest, _offset, Color.White);
             spriteBatch.Draw(ImgBank.GridBg, offset, Color.White);
             _grid.Draw(spriteBatch);
-            spriteBatch.Draw(_border, new Vector2(offset.X - 5, offset.Y - 4), !_isInDanger? Color.White: Color.Red);
+            spriteBatch.Draw(_border, new Vector2(offset.X - 5, offset.Y - 4), !_isInDanger? Color.White: Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)));
             spriteBatch.Draw(_lockDelayMeter, new Vector2(offset.X - 5, offset.Y + 165), Color.White);
             spriteBatch.Draw
             (
@@ -593,14 +661,27 @@ namespace MonoStacker.Source.GameObj
                 Color.Lerp(new Color(255, 0, 0), new Color(0, 255, 0), _lockDelayAmount)
             );
             DrawEffects(spriteBatch);
+            if (_isInDanger) 
+            {
+                float alpha = (float)(Math.Sin(time * 2.0f) * .5f + .5f);
+                spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Board/bg_top_gradient"), offset, Color.Red * alpha * .45f);
+            }
+                
             if (_currentBoardState == BoardState.Neutral)
             {
+                
                 DrawPiece(spriteBatch, activePiece);
                 # if DEBUG
                 DrawPieceDB(spriteBatch, activePiece);
                 #endif
             }
             _pieceManager.Draw(spriteBatch);
+
+            //if ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())))
+            
+            if(_spawnAreaObscured)
+                DrawPieceDanger(spriteBatch, _pieceManager.pieceQueue.Peek());
+
 
 # if DEBUG
             for (var y = 0; y < _pieceManager.spawnArea.Length; y++) 

@@ -44,29 +44,8 @@ public class MasterRandomizer : IRandomizer
         }
         AddToHistory(nextTetromino);
 
-        var piece = factory.NewPiece(nextTetromino);
-        piece.offsetX = nextTetromino switch
-        {
-            TetrominoType.O => 4,
-            _ => 3
-        };
-        piece.initOffsetX = piece.offsetX;
-
-        piece.offsetY = nextTetromino switch
-        {
-            TetrominoType.O => 16,
-            _ => 17
-        };
-        piece.initOffsetY = piece.offsetY;
-
-        /*
-        foreach (var item in _tetrominoHistory)
-            Console.Write(item);
-        Console.WriteLine();
-        */
-
         _totalRolls++;
-        return piece;
+        return factory.NewPiece(nextTetromino);
     }
 
     private void AddToHistory(TetrominoType tetromino)
