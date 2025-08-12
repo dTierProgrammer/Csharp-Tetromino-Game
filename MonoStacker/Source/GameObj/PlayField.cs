@@ -72,8 +72,9 @@ namespace MonoStacker.Source.GameObj
         private bool _isInDanger;
         private bool _spawnAreaObscured;
 
-        private readonly float _maxDasTime = .14f;
-        
+        private readonly float _maxDasTime = .15f;
+
+        private (float timer, float interval) _autoRepeatRate;
         private bool _softDrop;
         private readonly bool _softLock;
         private float _dropSpeed;
@@ -117,7 +118,7 @@ namespace MonoStacker.Source.GameObj
                 (
                     new SrsFactory(),
                     new Point(3, 18),
-                    new TIRandomizer(),
+                    new SevenBagRandomizer(),
                     4,
                     QueueType.Top,
                     true
@@ -125,15 +126,17 @@ namespace MonoStacker.Source.GameObj
             _rotationSystem = new SuperRotationSys();
             _softLockDelay = (.5f, .5f);
             _vertStepResetAllowed = true;
-            _lineClearDelay = (0, 0);
+            _lineClearDelay = (.683f, .683f);
             _horiStepReset = (15, 15);
             _horiStepResetAllowed = true;
             _rotateReset = (6, 6);
             _rotateResetAllowed = true;
-            _arrivalDelay = (0, 0);
+            _arrivalDelay = (.11667f, .11667f);
             _softLock = false;
             _dropSpeed = .03f;
             _softDropFactor = 40;
+            _autoRepeatRate = (0, .05f);
+            _maxDasTime = .15f;
 
             _inputManager = new InputManager();
         }
@@ -144,7 +147,7 @@ namespace MonoStacker.Source.GameObj
             GrabNextPiece();
         }
 
-        private void MovePiece(float movementAmt)
+        private void MovePiece(float movementAmt) // to add: timer based ARR
         {
             if (!_grid.IsPlacementValid(activePiece, (int)activePiece.offsetY,
                     (int)(activePiece.offsetX + movementAmt)))
@@ -153,6 +156,30 @@ namespace MonoStacker.Source.GameObj
             SfxBank.stepHori.Play();
             if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && _horiStepResetAllowed)
                 StepReset();
+        }
+
+        private void AutoRepeatMovement(GameTime gameTime, int movementAmt) 
+        {
+            if (_autoRepeatRate.interval >= 0)
+            {
+                _autoRepeatRate.timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                if (_autoRepeatRate.timer >= _autoRepeatRate.interval)
+                {
+                    MovePiece(movementAmt);
+                    _autoRepeatRate.timer = 0;
+                }
+            }
+            else 
+            {
+                while (true) 
+                {
+                    if (!_grid.IsPlacementValid(activePiece, (int)activePiece.offsetY,
+                    (int)(activePiece.offsetX + movementAmt))) break;
+                    MovePiece(movementAmt);
+                }
+            }
+
+                Debug.WriteLine(_autoRepeatRate.timer);
         }
 
         private bool CanDas(GameTime gameTime, float timeStamp)
@@ -293,11 +320,6 @@ namespace MonoStacker.Source.GameObj
 
         private void ClearFilledLines()
         {
-            
-            
-
-            
-
             if (_grid.rowsToClear.Count == 4 || ((_currentSpinType == SpinType.FullSpin || _currentSpinType == SpinType.MiniSpin)))
             {
                 _streakIsActive = true;
@@ -343,6 +365,8 @@ namespace MonoStacker.Source.GameObj
 
         private void GrabNextPiece()
         {
+            //_inputManager.ClearBuffer();
+            //_currentInputEvents.Clear();
             if (IsSpawnObscured())
             {
                 _isInDanger = false;
@@ -476,11 +500,22 @@ namespace MonoStacker.Source.GameObj
                 {
                     _eventTimeStamps.Remove(GameAction.MovePieceRight);
                     if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceLeft)))
-                        MovePiece(-1);
+                    {
+                        _autoRepeatRate.timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        if (_autoRepeatRate.timer >= _autoRepeatRate.interval)
+                        {
+                            AutoRepeatMovement(gameTime, -1);
+
+                        }
+                    }
                 }
             }
-            else
+            else 
+            {
                 _eventTimeStamps.Remove(GameAction.MovePieceLeft);
+                //_autoRepeatRate.timer = 0;
+            }
+                
             
             if (heldActions.Contains(GameAction.MovePieceRight))
             {
@@ -493,12 +528,23 @@ namespace MonoStacker.Source.GameObj
                     (_eventTimeStamps.TryGetValue(GameAction.MovePieceLeft, out num) && _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceRight) > num))
                 {
                     _eventTimeStamps.Remove(GameAction.MovePieceLeft);
-                    if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceRight)))
-                        MovePiece(1);
+                    if (CanDas(gameTime, _eventTimeStamps.GetValueOrDefault(GameAction.MovePieceRight))) 
+                    {
+                        _autoRepeatRate.timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        if (_autoRepeatRate.timer >= _autoRepeatRate.interval)
+                        {
+                            AutoRepeatMovement(gameTime, 1);
+                        }
+                    }
+                        
                 }
             }
-            else
+            else 
+            {
                 _eventTimeStamps.Remove(GameAction.MovePieceRight);
+                //_autoRepeatRate.timer = 0;
+            }
+                
         }
 
         public void Update(GameTime gameTime) 
@@ -513,6 +559,7 @@ namespace MonoStacker.Source.GameObj
                     if (_inputManager.bufferQueue.Count > 0) ProcessBuffer(); else ProcessButtonInput(gameTime);
                     break;
                 case BoardState.LineClearWait:
+                    _inputManager.BufferKeyInput(gameTime);
                     if (_lineClearDelay.timeLeftover == _lineClearDelay.max) // marked
                         ClearFilledLines(); //_lcDelay.min = _lcDelay.max;
                     
@@ -525,9 +572,9 @@ namespace MonoStacker.Source.GameObj
                         _arrivalDelay.timeLeftover = _arrivalDelay.max;
                        
                     }
-                   
                     break;
                 case BoardState.PieceEntryWait:
+                    _inputManager.BufferKeyInput(gameTime);
                     if ((_arrivalDelay.timeLeftover == _arrivalDelay.max)) // marked
                     {
                         if(_previousBoardState is not BoardState.LineClearWait)
@@ -553,29 +600,32 @@ namespace MonoStacker.Source.GameObj
                     break;
             }
             ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
-            if (_currentBoardState is BoardState.Neutral) 
+            if (_currentBoardState is BoardState.Neutral)
             {
                 GravitySoftDrop(gameTime);
                 _lockDelayAmount = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
             }
-                
+
             _lastInputEvents = _inputManager.GetKeyInput();
 
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.T) && !_prevKbState.IsKeyDown(Keys.T))
                 _showDebug = !_showDebug;
             if (Keyboard.GetState().IsKeyDown(Keys.Y) && !_prevKbState.IsKeyDown(Keys.Y))
-                        _showGhostPiece = !_showGhostPiece;
+                _showGhostPiece = !_showGhostPiece;
             if (Keyboard.GetState().IsKeyDown(Keys.R) && !_prevKbState.IsKeyDown(Keys.R))
                 _grid.ClearGrid();
 #endif
-                _prevKbState = Keyboard.GetState();
+            _prevKbState = Keyboard.GetState();
 
 
             _aeLayer.Update(gameTime);
             _prevYOff = activePiece.offsetY;
 
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+
+
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
