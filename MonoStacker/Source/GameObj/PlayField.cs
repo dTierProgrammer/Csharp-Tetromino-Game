@@ -606,7 +606,6 @@ namespace MonoStacker.Source.GameObj
                 _lockDelayAmount = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
             }
 
-            _lastInputEvents = _inputManager.GetKeyInput();
 
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.T) && !_prevKbState.IsKeyDown(Keys.T))
