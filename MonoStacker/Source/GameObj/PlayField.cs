@@ -599,24 +599,24 @@ namespace MonoStacker.Source.GameObj
                         
                     break;
             }
-            ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
-            if (_currentBoardState is BoardState.Neutral)
+           ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
+            if (_currentBoardState is BoardState.Neutral) 
             {
                 GravitySoftDrop(gameTime);
                 _lockDelayAmount = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
             }
-
+                
             _lastInputEvents = _inputManager.GetKeyInput();
 
 #if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.T) && !_prevKbState.IsKeyDown(Keys.T))
                 _showDebug = !_showDebug;
             if (Keyboard.GetState().IsKeyDown(Keys.Y) && !_prevKbState.IsKeyDown(Keys.Y))
-                _showGhostPiece = !_showGhostPiece;
+                        _showGhostPiece = !_showGhostPiece;
             if (Keyboard.GetState().IsKeyDown(Keys.R) && !_prevKbState.IsKeyDown(Keys.R))
                 _grid.ClearGrid();
 #endif
-            _prevKbState = Keyboard.GetState();
+                _prevKbState = Keyboard.GetState();
 
 
             _aeLayer.Update(gameTime);
