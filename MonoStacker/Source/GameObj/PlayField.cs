@@ -81,7 +81,8 @@ namespace MonoStacker.Source.GameObj
         private readonly int _queueLength = 3;
         private readonly bool _holdEnabled;
         float time = 0;
-        int buffer = 1;
+        float rowTime = 0;
+        int buffer = 39;
 
         private PieceManager _pieceManager;
 
@@ -141,8 +142,6 @@ namespace MonoStacker.Source.GameObj
         {
             _pieceManager.Initialize(this);
             GrabNextPiece();
-            _apXCenter = activePiece.currentRotation.GetLength(1) / 2;
-            _apYCenter = activePiece.currentRotation.GetLength(0) / 2;
         }
 
         private void MovePiece(float movementAmt)
@@ -344,17 +343,28 @@ namespace MonoStacker.Source.GameObj
 
         private void GrabNextPiece()
         {
-            _pieceManager.canHold = true;
-            activePiece = _pieceManager.DealPiece();
-            _currentBoardState = BoardState.Neutral;
-            _arrivalDelay.timeLeftover = _arrivalDelay.max;
-            _currentSpinType = SpinType.None;
-            _softLockDelay.timeLeftover = _softLockDelay.max;
-            _horiStepReset.leftoverResets = _horiStepReset.maxResets;
-            _rotateReset.leftoverResets = _rotateReset.maxResets;
+            if (IsSpawnObscured())
+            {
+                _isInDanger = false;
+                _currentBoardState = BoardState.GameEnd;
+            }
+            else 
+            {
+                _currentBoardState = BoardState.Neutral;
+                _pieceManager.canHold = true;
+                _softDrop = false;
+                activePiece = _pieceManager.DealPiece();
 
-            _spawnAreaObscured = ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())));
-            _isInDanger = _grid.GetNonEmptyRows() >= 18;
+                _arrivalDelay.timeLeftover = _arrivalDelay.max;
+                _currentSpinType = SpinType.None;
+                _softLockDelay.timeLeftover = _softLockDelay.max;
+                _horiStepReset.leftoverResets = _horiStepReset.maxResets;
+                _rotateReset.leftoverResets = _rotateReset.maxResets;
+
+                _spawnAreaObscured = ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())));
+                _isInDanger = _grid.GetNonEmptyRows() >= 18;
+            }
+            
         }
 
         private bool IsSpawnObscured()
@@ -386,7 +396,7 @@ namespace MonoStacker.Source.GameObj
                 _ => _pieceManager._factory.SpawnOffset_Jlstz()
             };
 
-            if (CalculateGhostPiece(piece, _pieceManager.spawnAreaPosition.X + buffer.X, _pieceManager.spawnAreaPosition.Y + buffer.Y) <= _pieceManager.spawnAreaPosition.Y)
+            if (CalculateGhostPiece(piece, _pieceManager.spawnAreaPosition.X + buffer.X, _pieceManager.spawnAreaPosition.Y + buffer.Y) <= _pieceManager.spawnAreaPosition.Y + 1)
                 return true;
             else
                 return false;
@@ -529,6 +539,18 @@ namespace MonoStacker.Source.GameObj
                     if (_arrivalDelay.timeLeftover <= 0) 
                         GrabNextPiece();
                     break;
+                case BoardState.GameEnd:
+                    var interval = .1f;
+                    rowTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    _grid.SetDrawMode();
+                    if (buffer > 0 && rowTime >= interval) 
+                    {
+                        rowTime = 0;
+                        _grid.ColorRow(buffer, 8);
+                        buffer--;
+                    }
+                        
+                    break;
             }
             ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
             if (_currentBoardState is BoardState.Neutral) 
@@ -629,19 +651,6 @@ namespace MonoStacker.Source.GameObj
                     }
                 }
             }
-            
-            spriteBatch.Draw
-            (
-                GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"),
-                new Rectangle
-                (
-                    (int)activePiece.GetPixelCenterOfRotation().X + ((int)activePiece.offsetX * 8) + (int)offset.X,
-                    (int)activePiece.GetPixelCenterOfRotation().Y + ((int)activePiece.offsetY * 8) + (int)offset.Y - 160,
-                    1,
-                    1
-                ),
-                Color.Magenta
-            );
         }
 
         public void Draw(SpriteBatch spriteBatch) 
@@ -678,7 +687,7 @@ namespace MonoStacker.Source.GameObj
 
             //if ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())))
             
-            if(_spawnAreaObscured)
+            if(_currentBoardState is BoardState.Neutral && _spawnAreaObscured)
                 DrawPieceDanger(spriteBatch, _pieceManager.pieceQueue.Peek());
 
 

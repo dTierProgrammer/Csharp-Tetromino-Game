@@ -15,10 +15,16 @@ using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
 {
+    enum DrawMode 
+    {
+        Playing,
+        GameEnd
+    }
     public class Grid // TODO: Refactor to jagged int array (I did this months ago, actually)
     {
         private Microsoft.Xna.Framework.Vector2 _offset;
-        
+        private DrawMode _drawMode = DrawMode.Playing;
+
         public List<Rectangle> imageTiles = new();
         private const int TILESIZE = 8;
 
@@ -71,6 +77,12 @@ namespace MonoStacker.Source.Generic
             imageTiles.Add(new Rectangle(0, TILESIZE, TILESIZE, TILESIZE));
             imageTiles.Add(new Rectangle(TILESIZE, TILESIZE, TILESIZE, TILESIZE));
             imageTiles.Add(new Rectangle(TILESIZE * 2, TILESIZE, TILESIZE, TILESIZE));
+        }
+
+        public void SetDrawMode() 
+        {
+            if(_drawMode != DrawMode.GameEnd)
+                _drawMode = DrawMode.GameEnd;
         }
 
         public void LockPiece(Piece piece, int rowOffset, int columnOffset) 
@@ -281,6 +293,15 @@ namespace MonoStacker.Source.Generic
             }
         }
 
+        public void ColorRow(int rowIndex, int colorId) 
+        {
+            for (int i = 0; i < COLUMNS; i++) 
+            {
+                if (_matrix[rowIndex][i] != 0)
+                    _matrix[rowIndex][i] = colorId;
+            }
+        }
+
         public void ClearLines() 
         {
             int clearedLines = 0;
@@ -331,11 +352,11 @@ namespace MonoStacker.Source.Generic
                                 ImgBank.BlockTexture,
                                 new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
                                 imageTiles[_matrix[y][x] - 1],
-                                color
+                                _drawMode is DrawMode.Playing? color: Color.White
                                 );
                         
 
-                        if (drawLines) 
+                        if (drawLines && _drawMode is DrawMode.Playing) 
                         {
                             if (y >= 19 && !(x - 1 < 0) && (_matrix[y][x - 1] == 0) ||
                                 (y <= 19 && x == 0) ||

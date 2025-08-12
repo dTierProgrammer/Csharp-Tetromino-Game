@@ -11,10 +11,11 @@ public class DropEffect: AnimatedEffect
 {
     private Texture2D _effect = GetContent.Load<Texture2D>("Image/Effect/dropEffect");
     private Color _tint;
+    new Vector2 position;
 
     private int _rowOffset; // piece y offset
     private int _subRowOffset; // account for empty spaces in piece data (y)
-    private float _rowsLength; // dist between column and ghost piece
+    private int _rowsLength; // dist between column and ghost piece
 
     private int _columnOffset; // piece x offset
     private int _subColumnOffset; // account for empty spaces in piece data (x)
@@ -28,6 +29,7 @@ public class DropEffect: AnimatedEffect
     // ts so chopped (not anymore twin)
     public DropEffect(Vector2 position, float timeDisplayed,  Piece piece, int length, Color tint): base(position)
     {
+        this.position = position;
         _rowOffset = (int)piece.offsetY;
         _subRowOffset = piece.GetEmptyRows();
         _rowsLength = length;
@@ -53,8 +55,6 @@ public class DropEffect: AnimatedEffect
     {
         TimeDisplayed -= deltaTime;
         _tint *= (TimeDisplayed / (MaxTimeDisplayed));
-        //Debug.WriteLine(_rowsLength);
-        //Debug.WriteLine(_lowestFilledColumn);
     }
 
     public override void Draw(SpriteBatch spriteBatch)
@@ -67,7 +67,7 @@ public class DropEffect: AnimatedEffect
                     (int)(position.X) + (_columnOffset * 8) + (_subColumnOffset * 8),
                     (int)(position.Y) + (_rowOffset * 8) - 160 + (_subRowOffset * 8) + (exOffset * 8),
                     _columnsLength * 8,
-                    (int)_rowsLength * 8
+                    _rowsLength * 8
                 ),
                 _tint * .5f
             );
