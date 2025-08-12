@@ -1,5 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
+using System.Diagnostics;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -77,9 +80,10 @@ namespace MonoStacker.Source.Generic
             return new Vector2((xlen.Count * 8) / 2, (ylen.Count * 8) / 2);
         }
 
-        public int GetNonEmptyColumns() 
+        public List<int> GetNonEmptyColumns() 
         {
             int count = 0;
+            List<int> columns = [];
             for (var x = 0; x < currentRotation.GetLength(1); x++) 
             {
                 for (var y = 0; y < currentRotation.GetLength(1); y++) 
@@ -87,11 +91,12 @@ namespace MonoStacker.Source.Generic
                     if (currentRotation[y, x] > 0) 
                     {
                         count++;
+                        columns.Add(x);
                         break;
                     }
                 }
             }
-            return count;
+            return columns;
         }
 
         public int GetEmptyColumns() 
@@ -150,6 +155,54 @@ namespace MonoStacker.Source.Generic
                 else break;
             }
             return count;
+        }
+
+        public Point GetCenterPtOffset() 
+        {
+            int Xoff = 0;
+            int Yoff = 0;
+            for (var y = 0; y < requiredCorners.GetLength(0); y++) 
+            {
+                
+                for (var x = 0; x < requiredCorners.GetLength(1); x++) 
+                {
+                    Xoff = x;
+                    if (requiredCorners[y, x] == 3)
+                        break;
+                }
+                Yoff = y;
+                Xoff = 0;
+            }
+            return new Point(0, Yoff);
+        }
+
+        public int GetLowestPoint(int columnOffset) 
+        {
+            int Yoff = 0;
+            for (var y = 0; y < requiredCorners.GetLength(0); y++) 
+            {
+                if (currentRotation[y, columnOffset] > 0) break;
+                Yoff++;
+            }
+            return Yoff;
+        }
+
+        public (int row, int rowLength) GetLongestRow() // if this doesn't work im killing myself
+        {
+            List<int> rows = [];
+            (int row, int rowLength) longestRow = (0, int.MinValue);
+            for (var y = 0; y < currentRotation.GetLength(0); y++) 
+            {
+                var counter = 0;
+                for (var x = 0; x < currentRotation.GetLength(1); x++) 
+                {
+                    if (currentRotation[y, x] > 0)
+                        counter++;
+                }
+                if (counter > longestRow.rowLength)
+                    longestRow = (y, counter);
+            }
+            return longestRow;
         }
 
         public void RotateCW() 

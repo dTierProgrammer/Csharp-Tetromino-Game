@@ -77,6 +77,7 @@ namespace MonoStacker.Source.GameObj
         private bool _softDrop;
         private readonly bool _softLock;
         private float _dropSpeed;
+        private float _softDropFactor;
         private readonly int _queueLength = 3;
         private readonly bool _holdEnabled;
         float time = 0;
@@ -116,7 +117,7 @@ namespace MonoStacker.Source.GameObj
                     new SrsFactory(),
                     new Point(3, 18),
                     new TIRandomizer(),
-                    3,
+                    4,
                     QueueType.Top,
                     true
                 );
@@ -130,6 +131,8 @@ namespace MonoStacker.Source.GameObj
             _rotateResetAllowed = true;
             _arrivalDelay = (0, 0);
             _softLock = false;
+            _dropSpeed = .03f;
+            _softDropFactor = 40;
 
             _inputManager = new InputManager();
         }
@@ -233,13 +236,13 @@ namespace MonoStacker.Source.GameObj
 
         private void GravitySoftDrop(GameTime gameTime) 
         {
-            _dropSpeed = _softDrop? 1 : .03f;
-
-            if (activePiece.offsetY + _dropSpeed <= CalculateGhostPiece(activePiece))
+            
+            var speed = _softDrop ? _dropSpeed * _softDropFactor : _dropSpeed;
+            if (activePiece.offsetY + speed <= CalculateGhostPiece(activePiece))
             {
-                if (_grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + _dropSpeed), (int)activePiece.offsetX)) 
+                if (_grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + speed), (int)activePiece.offsetX)) 
                 {
-                    activePiece.offsetY += _dropSpeed;
+                    activePiece.offsetY += speed;
                     if (!_vertStepResetAllowed) return;
                     if((int)activePiece.offsetY != (int)_prevYOff)
                     _softLockDelay.timeLeftover = _softLockDelay.max;
@@ -268,7 +271,7 @@ namespace MonoStacker.Source.GameObj
             else
                 _activePieceColor = Color.White;
 
-            if (_softDrop) 
+            if (_softDrop) // issues at certain soft drop factors
             {
                 if ((int)activePiece.offsetY != (int)_prevYOff)
                     PlayfieldEffects.FlashPiece(activePiece, activePiece.color * .5f, 1f, offset, _aeLayer);
@@ -291,14 +294,10 @@ namespace MonoStacker.Source.GameObj
 
         private void ClearFilledLines()
         {
-            if (_lineClearDelay.timeLeftover != _lineClearDelay.max) return;
-            PlayfieldEffects.LineClearFlash(Color.White, .5f, _grid, offset);
-            PlayfieldEffects.LineClearEffect(_grid, offset);
-            if (_currentSpinType != SpinType.None) SfxBank.clearSpin[_grid.rowsToClear.Count - 1].Play();
-            else SfxBank.clear[_grid.rowsToClear.Count - 1].Play();
+            
+            
 
-            if (_currentSpinType != SpinType.None)
-                PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), offset);
+            
 
             if (_grid.rowsToClear.Count == 4 || ((_currentSpinType == SpinType.FullSpin || _currentSpinType == SpinType.MiniSpin)))
             {
@@ -316,14 +315,23 @@ namespace MonoStacker.Source.GameObj
                         SfxBank.b2bBreak.Play();
                 }
             }
+
+            if (_currentSpinType != SpinType.None) SfxBank.clearSpin[_grid.rowsToClear.Count - 1].Play();
+            else SfxBank.clear[_grid.rowsToClear.Count - 1].Play();
+
+            if (_lineClearDelay.timeLeftover != _lineClearDelay.max) return;
+            PlayfieldEffects.LineClearFlash(Color.White, .5f, _grid, offset);
+            PlayfieldEffects.LineClearEffect(_grid, offset);
+
+            if (_currentSpinType != SpinType.None)
+                PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), offset);
         }
 
         private void DropLines()
         {
             _grid.ClearLines();
             if (_grid.GetNonEmptyRows() > 0) SfxBank.lineFall.Play();
-            //GrabNextPiece();
-            //_currentSpinType = SpinType.None;
+            
         }
 
         private Piece HoldPiece() 
@@ -483,19 +491,6 @@ namespace MonoStacker.Source.GameObj
                 _eventTimeStamps.Remove(GameAction.MovePieceRight);
         }
 
-        private void UpdateEffects(float deltaTime)
-        {
-            foreach (var effect in _animatedEffects)
-                effect.Update(deltaTime);
-            _animatedEffects.RemoveAll(effect => effect.TimeDisplayed <= 0);
-        }
-
-        private void DrawEffects(SpriteBatch spriteBatch)
-        {
-            foreach(var effect in _animatedEffects)
-                effect.Draw(spriteBatch);
-        }
-
         public void Update(GameTime gameTime) 
         {
             _apXCenter = (activePiece.currentRotation.GetLength(1) * 8) / 2;
@@ -555,15 +550,10 @@ namespace MonoStacker.Source.GameObj
                 _prevKbState = Keyboard.GetState();
 
 
-            //UpdateEffects((float)gameTime.ElapsedGameTime.TotalSeconds); // end of loop ?
             _aeLayer.Update(gameTime);
             _prevYOff = activePiece.offsetY;
 
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
-
-            //if (IsSpawnObscured()) Debug.WriteLine("ggg");
-            //if (WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())) Debug.WriteLine("fff");
-            //Debug.WriteLine(CalculateGhostPiece(activePiece));
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 

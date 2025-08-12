@@ -94,7 +94,7 @@ public class ParticleObj : AnimatedEffect
         }
     }
 
-    public void Update(GameTime gameTime)
+    public void Update(GameTime gameTime) 
     {
         activeTimeLeft -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         _activeTimeAmount = MathHelper.Clamp(activeTimeLeft / _data.activeTime, 0, 1);

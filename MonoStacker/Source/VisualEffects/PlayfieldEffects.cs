@@ -59,7 +59,7 @@ public static class PlayfieldEffects
         {
             if (grid.rowsToClear.Contains(y))
             {
-                AnimatedEffectManager.AddEffect(new ClearFlash(new Vector2(39 + pos.X, (int)(y * 8) + pos.Y - 155.5f), color, timeDisplayed, new Vector2(9, 0)));
+                AnimatedEffectManager.AddEffect(new ClearFlash(new Vector2(39 + pos.X, (int)(y * 8) + pos.Y - 155.5f), color, timeDisplayed, new Vector2(3, 0)));
             }
         }
     } // move to "effect manager" class

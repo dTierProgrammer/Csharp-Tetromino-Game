@@ -18,10 +18,11 @@ public class AnimatedEffectLayer
         _visualEffects.AddRange(effects);
     }
 
-    public  void Update(GameTime gameTime)
+    public void Update(GameTime gameTime)
     {
         foreach (var effect in _visualEffects)
             effect.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+        _visualEffects.RemoveAll(effect => effect.TimeDisplayed <= 0);
     }
 
     public  void Draw(SpriteBatch spriteBatch)

@@ -22,6 +22,7 @@ public static class AnimatedEffectManager // may try to merge with particle syst
     {
         foreach (var effect in _visualEffects)
             effect.Update((float)gameTime.ElapsedGameTime.TotalSeconds);
+        _visualEffects.RemoveAll(effect => effect.TimeDisplayed <= 0);
     }
 
     public static void Draw(SpriteBatch spriteBatch)
