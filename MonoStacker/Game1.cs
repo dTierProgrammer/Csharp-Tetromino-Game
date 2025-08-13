@@ -23,6 +23,27 @@ namespace MonoStacker
         private StaticEmissionSource _testStaticSource = new(new(50, 50));
         private StaticEmissionSources _testStaticSources = new(new List<GroupPartData>());
         
+        /*
+        TODO:
+        - Implement Combo
+        - Revise piece spin detection
+        - Text rendering system (for action text)
+        - Garbage system
+        - Revise effects
+
+        TEST:
+        - Seperating sub grid movement from physical piece location
+        
+        FUTURE:
+        - Menu system
+        - New (hopefully better) sounds
+        - Music?
+        - Guideline compliant modes (Marathon (150l/Endless), 40l sprint, Ultra)
+        - Classic arcade modes (Sega Marathon, TGM1 Master)
+        - Freeplay mode
+        - Better customizeable ARR
+        - JSON support (for saving scores, times)
+        */
 
         public Game1()
         {
@@ -58,8 +79,6 @@ namespace MonoStacker
             _testScene = new TestScene();
 
             _sceneManager.EnterScene(_testScene);
-
-            // yall do not underSTAND i NEEDA see bbw ms accord
 
             EmitterData testData = new()
             {

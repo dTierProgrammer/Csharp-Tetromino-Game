@@ -41,6 +41,18 @@ namespace MonoStacker.Source.GameObj
         GameEnd
     }
 
+    public enum PreRrotationType 
+    {
+        IRS,
+        Buffer
+    }
+
+    public enum ControllerType 
+    {
+        Keyboard,
+        Gamepad
+    }
+
     public class PlayField
     {
         public readonly Vector2 offset;
@@ -96,7 +108,7 @@ namespace MonoStacker.Source.GameObj
         private Texture2D _bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
         
         private readonly Dictionary<GameAction, float> _eventTimeStamps = [];
-        private List<GameAction> _currentInputEvents = []; //= _inputManager.GetKeyInput();
+        private readonly List<GameAction> _currentInputEvents = []; //= _inputManager.GetKeyInput();
         private List<GameAction> _lastInputEvents = [];
         private float _apXCenter;
         private float _apYCenter;
@@ -116,14 +128,14 @@ namespace MonoStacker.Source.GameObj
             _grid = new Grid(offset);
             _pieceManager = new
                 (
-                    new SrsFactory(),
+                    new ArcadeFactory(),
                     new Point(3, 18),
-                    new SevenBagRandomizer(),
-                    4,
-                    QueueType.Top,
+                    new TIRandomizer(),
+                    5,
+                    QueueType.Sides,
                     true
                 );
-            _rotationSystem = new SuperRotationSys();
+            _rotationSystem = new ArcadeRotationSys();
             _softLockDelay = (.5f, .5f);
             _vertStepResetAllowed = true;
             _lineClearDelay = (.683f, .683f);
@@ -487,7 +499,7 @@ namespace MonoStacker.Source.GameObj
 
         private void ProcessDirectionalInput(GameTime gameTime)
         {
-            List<GameAction> heldActions = _inputManager.GetKeyInput();
+            List<GameAction> heldActions = _inputManager.GetKeyInputSelection(new Keys[] { Keys.Left, Keys.Right});
             if (heldActions.Contains(GameAction.MovePieceLeft))
             {
                 if (!_lastInputEvents.Contains(GameAction.MovePieceLeft))
@@ -599,7 +611,8 @@ namespace MonoStacker.Source.GameObj
                         
                     break;
             }
-           ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
+            if(_currentBoardState is not BoardState.GameEnd)
+                ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
             if (_currentBoardState is BoardState.Neutral) 
             {
                 GravitySoftDrop(gameTime);
@@ -737,7 +750,7 @@ namespace MonoStacker.Source.GameObj
 
             //if ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())))
             
-            if(_currentBoardState is BoardState.Neutral && _spawnAreaObscured)
+            if(_currentBoardState is not BoardState.GameEnd && _spawnAreaObscured)
                 DrawPieceDanger(spriteBatch, _pieceManager.pieceQueue.Peek());
 
 

@@ -38,7 +38,7 @@ namespace MonoStacker.Source.Interface.Input
         private readonly Keys _keySoftDrop = Keys.Down;
         private readonly Keys _keyHold = Keys.LeftShift;
         private readonly Keys _keyRotateCwAlt;
-        public readonly Keys _keyRotateCcwAlt;
+        private readonly Keys _keyRotateCcwAlt;
         private KeyboardState _priorKbState;
         
         private readonly Buttons _btnMovePieceLeft = Buttons.DPadLeft;
@@ -54,6 +54,8 @@ namespace MonoStacker.Source.Interface.Input
         private readonly Buttons _btnRotateCcwAlt;
         private GamePadState _priorPadState;
 
+        public readonly Dictionary<GameAction, float> eventTimeStamps = [];
+
         public Queue<InputEvent> bufferQueue { get; private set; } = [];
         
         public int bufferCapacity { get; set; } = 10;
@@ -63,7 +65,7 @@ namespace MonoStacker.Source.Interface.Input
             bufferQueue.Clear();
         }
 
-        private bool CheckForAction(GameAction action)
+        private bool CheckForAction(GameAction action) // checks for if an action is already in the buffer
         {
             foreach (var item in bufferQueue) 
             {
@@ -73,7 +75,7 @@ namespace MonoStacker.Source.Interface.Input
             return false;
         }
 
-        private void AddToBuffer(InputEvent item) 
+        private void AddToBuffer(InputEvent item) // enqueue an action to the buffer
         {
             if (bufferQueue.Count < bufferCapacity)
             {
@@ -90,7 +92,7 @@ namespace MonoStacker.Source.Interface.Input
             }
         }
 
-        public List<InputEvent> GetBufferedActions() 
+        public List<InputEvent> GetBufferedActions() // returns all currently buffered items as a list
         {
             List < InputEvent > returnValue = [];
             foreach (var item in bufferQueue)
@@ -104,37 +106,70 @@ namespace MonoStacker.Source.Interface.Input
             return returnValue;
         }
 
-        public InputEvent GetFirstBufferedAction() 
+        public InputEvent GetFirstBufferedAction() // returns the first item in the buffer
         {
             return bufferQueue.Dequeue();
         }
 
-       
+        public void AddTimeStamp(GameTime gameTime, GameAction action) // add or update a timestamp for a specific action
+        {
+            if (eventTimeStamps.ContainsKey(action))
+                eventTimeStamps[action] = (float)gameTime.ElapsedGameTime.TotalSeconds;
+            else
+                eventTimeStamps.TryAdd(action, (float)gameTime.ElapsedGameTime.TotalSeconds);
+        }
 
-        public List<GameAction> GetKeyInput() 
+        public void CleanOpposingTimestamps(GameAction item1, GameAction item2) // compare 2 opposing timestamps, clear the older one
+        {
+            if (eventTimeStamps.ContainsKey(item1) && eventTimeStamps.ContainsKey(item2))
+            {
+                if (eventTimeStamps[item1] > eventTimeStamps[item2])
+                    eventTimeStamps.Remove(item2);
+                else
+                    eventTimeStamps.Remove(item1);
+            }
+        }
+
+        public List<GameAction> GetKeyInput() // returns a list of game actions corresponding to the bound keys
         {
             List<GameAction> currentKeys = new();
-            if (Keyboard.GetState().IsKeyDown(_keyHold))
-                currentKeys.Add(GameAction.Hold);
-            if (Keyboard.GetState().IsKeyDown(_keyRotateCw))
-                currentKeys.Add(GameAction.RotateCw);
-            if (Keyboard.GetState().IsKeyDown(_keyRotateCcw))
-                currentKeys.Add(GameAction.RotateCcw);
-            if (Keyboard.GetState().IsKeyDown(_keyHardDrop))
-                currentKeys.Add(GameAction.HardDrop);
-            if (Keyboard.GetState().IsKeyDown(_keySoftDrop))
-                currentKeys.Add(GameAction.SoftDrop);
-            if (Keyboard.GetState().IsKeyDown(_keyMovePieceRight))
-                currentKeys.Add(GameAction.MovePieceRight);
-            if (Keyboard.GetState().IsKeyDown(_keyMovePieceLeft))
-                currentKeys.Add(GameAction.MovePieceLeft);
-            if(Keyboard.GetState().IsKeyDown(_keySoftDrop))
-                currentKeys.Add(GameAction.SoftDrop);
+
+            Keys[] keys =
+            [
+                _keyHold,
+                _keyRotateCw,
+                _keyRotateCcw,
+                _keyRotate180,
+                _keyHardDrop,
+                _keyFirmDrop,
+                _keySoftDrop,
+                _keyMovePieceRight,
+                _keyMovePieceLeft,
+                _keyRotateCwAlt,
+                _keyRotateCcwAlt
+            ];
+
+            foreach (var key in keys)
+            {
+                if (Keyboard.GetState().IsKeyDown(key))
+                    currentKeys.Add(ConvKeyToAction(key));
+            }
 
             return currentKeys;
         }
 
-        public void BufferKeyInput(GameTime gameTime) 
+        public List<GameAction> GetKeyInputSelection(Array keys) // only return keys from a specific selection
+        {
+            List<GameAction> currentKeys = [];
+            foreach (Keys key in keys)
+            {
+                if (Keyboard.GetState().IsKeyDown(key))
+                    currentKeys.Add(ConvKeyToAction(key));
+            }
+            return currentKeys;
+        }
+
+        public void BufferKeyInput(GameTime gameTime) // enqueue game actions based on bound key presses
         {
             Keys[] keys =
             [
@@ -154,7 +189,17 @@ namespace MonoStacker.Source.Interface.Input
             _priorKbState = Keyboard.GetState();
         }
 
-        private GameAction ConvKeyToAction(Keys item) 
+        public void BufferKeySelection(GameTime gameTime, Array keys) // only buffer keys from a specific selection
+        {
+            foreach (Keys key in keys)
+            {
+                if (Keyboard.GetState().IsKeyDown(key) && !_priorKbState.IsKeyDown(key)) 
+                    AddToBuffer(new InputEvent { gameAction = ConvKeyToAction(key), timePressed = (float)gameTime.TotalGameTime.TotalSeconds });
+            }
+            _priorKbState = Keyboard.GetState();
+        }
+
+        private GameAction ConvKeyToAction(Keys item) // convert a key to its corresponding game action
         {
             if (item == _keyMovePieceLeft) return GameAction.MovePieceLeft;
             if (item == _keyMovePieceRight) return GameAction.MovePieceRight;
@@ -170,28 +215,43 @@ namespace MonoStacker.Source.Interface.Input
             return GameAction.None;
         }
         
-        public List<GameAction> GetButtonInput()
+        public List<GameAction> GetButtonInput(PlayerIndex playerIndex) // returns a list of game actions corresponding to the bound buttons
         {
             List<GameAction> currentButtons = new();
-            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(_btnRotateCw))
-                currentButtons.Add(GameAction.RotateCw);
-            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(_btnRotateCcw))
-                currentButtons.Add(GameAction.RotateCcw);
-            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(_btnHardDrop))
-                currentButtons.Add(GameAction.HardDrop);
-            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(_btnSoftDrop))
-                currentButtons.Add(GameAction.SoftDrop);
-            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(_btnHold))
-                currentButtons.Add(GameAction.Hold);
-            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(_btnMovePieceRight))
-                currentButtons.Add(GameAction.MovePieceRight);
-            if(GamePad.GetState(PlayerIndex.One).IsButtonDown(_btnMovePieceLeft))
-                currentButtons.Add(GameAction.MovePieceLeft);
-            
+            Buttons[] buttons =
+            [
+                _btnMovePieceLeft,
+                _btnMovePieceLeft,
+                _btnRotateCw,
+                _btnRotateCcw,
+                _btnRotate180,
+                _btnHold,
+                _btnHardDrop,
+                _btnSoftDrop,
+                _btnRotateCwAlt,
+                _btnRotateCcwAlt
+            ];
+            foreach (var button in buttons)
+            {
+                if (GamePad.GetState(playerIndex).IsButtonDown(button))
+                    currentButtons.Add(ConvButtonToAction(button));
+            }
+
             return currentButtons;
         }
-        
-        public void BufferButtonInput(GameTime gameTime) 
+
+        public List<GameAction> GetButtonInputSelection(Array buttons, PlayerIndex playerIndex) // only return buttons from a specific selection
+        {
+            List<GameAction> currentButtons = [];
+            foreach (Buttons button in buttons)
+            {
+                if (GamePad.GetState(playerIndex).IsButtonDown(button))
+                    currentButtons.Add(ConvButtonToAction(button));
+            }
+            return currentButtons;
+        }
+
+        public void BufferButtonInput(GameTime gameTime, PlayerIndex playerIndex) // enqueue game actions based on bound button presses
         {
             Buttons[] buttons =
             [
@@ -209,14 +269,24 @@ namespace MonoStacker.Source.Interface.Input
 
             foreach (var button in buttons)
             {
-                if (GamePad.GetState(0).IsButtonDown(button) && !_priorPadState.IsButtonDown(button)) 
+                if (GamePad.GetState(playerIndex).IsButtonDown(button) && !_priorPadState.IsButtonDown(button)) 
                     AddToBuffer(new InputEvent { gameAction = ConvButtonToAction(button), timePressed = (float)gameTime.TotalGameTime.TotalSeconds });
             }
-            _priorPadState = GamePad.GetState(0);
+            _priorPadState = GamePad.GetState(playerIndex);
         }
-        
-        private GameAction ConvButtonToAction(Buttons item) 
+
+        public void BufferButtonSelection(GameTime gameTime, Array buttons, PlayerIndex playerIndex) // only buffer buttons from a specific selection 
         {
+            foreach (Buttons button in buttons)
+            {
+                if (GamePad.GetState(playerIndex).IsButtonDown(button) && !_priorPadState.IsButtonDown(button)) 
+                    AddToBuffer(new InputEvent { gameAction = ConvButtonToAction(button), timePressed = (float)gameTime.TotalGameTime.TotalSeconds });
+            }
+            _priorPadState = GamePad.GetState(playerIndex);
+        }
+
+        private GameAction ConvButtonToAction(Buttons item) // convert a button to its corresponding game action
+        {   
             if (item == _btnMovePieceLeft) return GameAction.MovePieceLeft;
             if (item == _btnMovePieceRight) return GameAction.MovePieceRight;
             if (item == _btnRotateCw) return GameAction.RotateCw;
