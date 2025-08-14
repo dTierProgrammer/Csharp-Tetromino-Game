@@ -67,9 +67,9 @@ public static class PlayfieldEffects
     public static void LineClearEffect(Grid grid, Vector2 pos)
     {
         StaticEmissionSources sources = new(new());
-        for (int y = 0; y < 40; y++)
+        for (int y = 0; y < Grid.ROWS; y++)
         {
-            for (int x = 0; x < 10; x++)
+            for (int x = 0; x < Grid.COLUMNS; x++)
             {
                 if (grid.rowsToClear.Contains(y))
                 {
@@ -109,5 +109,42 @@ public static class PlayfieldEffects
         }
         GroupEmitterObj clear = new(sources, EmissionType.Burst);
         ParticleManager.AddEmitter(clear);
+    }
+
+    public static void DropSparkle(Piece piece, Vector2 pos) 
+    {
+        StaticEmissionSources sources = new(new());
+        for (var y = 0; y < piece.currentRotation.GetLength(0); y++) 
+        {
+            for (var x = 0; x < piece.currentRotation.GetLength(1); x++) 
+            {
+                if (piece.currentRotation[y, x] != 0) 
+                {
+                    sources.Members.Add(new GroupPartData()
+                    {
+                        Position = new Vector2((x * 8) + pos.X + ((int)piece.offsetX * 8) + 4, (y * 8) + (pos.Y) + ((int)(piece.offsetY * 8) - 160) + 4),
+                        Data = new EmitterData 
+                        {
+                            emissionInterval = 1f,
+                            density = 3,
+                            angleVarianceMax = 3,
+                            particleActiveTime = (.01f, .5f),
+                            speed = (50, 200),
+                            particleData = new ParticleData() 
+                            {
+                                texture = GetContent.Load<Texture2D>("Image/Effect/Particle/starLarge"),
+                                rotationSpeed = .05f,
+                                colorTimeLine = (Color.White, Color.White),
+                                scaleTimeLine = new (5, 7),
+                                opacityTimeLine = new (1, 0)
+                            }
+                        }
+                    });
+                }
+                
+            }
+        }
+        GroupEmitterObj drop = new(sources, EmissionType.Burst);
+        ParticleManager.AddEmitter(drop);
     }
 }

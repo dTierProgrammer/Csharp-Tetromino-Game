@@ -38,5 +38,6 @@ namespace MonoStacker.Source.Global
         public static SoundEffect twist0 = GetContent.Load<SoundEffect>("Audio/Sound/twist0");
         public static SoundEffect twist1m = GetContent.Load<SoundEffect>("Audio/Sound/twist1m");
         public static SoundEffect twist1 = GetContent.Load<SoundEffect>("Audio/Sound/twist1");
+        public static SoundEffect stackHit = GetContent.Load<SoundEffect>("Audio/Sound/stack_hit");
     }
 }

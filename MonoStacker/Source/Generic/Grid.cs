@@ -43,12 +43,15 @@ namespace MonoStacker.Source.Generic
         public Texture2D debugCO = GetContent.Load<Texture2D>("Image/Block/cornerOptional");
         private Texture2D draw = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect");
 
+        public readonly Stack<int[]> overflowRows;
+
         bool drawLines = true;
 
         public Grid(Microsoft.Xna.Framework.Vector2 Position) 
         {
             rowsToClear = new();
             _offset = Position;
+            overflowRows = new();
 
             GetImageCuts();
 
@@ -288,11 +291,20 @@ namespace MonoStacker.Source.Generic
         {
             for (int i = 0; i < COLUMNS; i++) 
             {
+                if (rowIndex + offset >= 40 || rowIndex + offset < 0) return;
                 _matrix[rowIndex + offset][i] = _matrix[rowIndex][i];
                 _matrix[rowIndex][i] = 0;
             }
         }
 
+        public void CopyRow(int rowIndex, int offset)
+        {
+            for (int i = 0; i < COLUMNS; i++)
+            {
+                if (rowIndex + offset >= 40 || rowIndex + offset < 0) return;
+                _matrix[rowIndex + offset][i] = _matrix[rowIndex][i];
+            }
+        }
         public void ColorRow(int rowIndex, int colorId) 
         {
             for (int i = 0; i < COLUMNS; i++) 
@@ -313,9 +325,7 @@ namespace MonoStacker.Source.Generic
                     clearedLines++;
                 }
                 else if (clearedLines > 0) 
-                {
                     MoveRow(y, clearedLines);
-                }
             }
             rowsToClear.Clear();
         }
@@ -328,6 +338,26 @@ namespace MonoStacker.Source.Generic
                 {
                     _matrix[y][x] = 0;
                 }
+            }
+        }
+
+        public void AddGarbageLine(int hole) 
+        {
+            if (GetNonEmptyRows() == ROWS - 1)
+            {
+                overflowRows.Push(_matrix[0]);
+                ClearLine(0);
+            }
+
+            for (var y = 0; y < ROWS; y++)
+            {
+                MoveRow(y, -1);
+                Debug.WriteLine("row");
+            }
+            for (var x = 0; x < COLUMNS; x++)
+            {
+                if (x != hole)
+                    _matrix[ROWS - 1][x] = 8;
             }
         }
 
@@ -357,7 +387,7 @@ namespace MonoStacker.Source.Generic
                         
 
                         if (drawLines && _drawMode is DrawMode.Playing) 
-                        {
+                        { // chopped ahh hell
                             if (y >= 19 && !(x - 1 < 0) && (_matrix[y][x - 1] == 0) ||
                                 (y <= 19 && x == 0) ||
                                 (y <= 19 && x > 0 && (_matrix[y][x - 1] == 0)))

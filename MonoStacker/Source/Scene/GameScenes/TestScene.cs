@@ -9,19 +9,24 @@ using System.Text;
 using System.Threading.Tasks;
 using MonoStacker.Source.VisualEffects;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
+using RasterFontLibrary.Source;
 
 namespace MonoStacker.Source.Scene.GameScenes
 {
     public class TestScene: IScene
     {
         PlayField playfield;
+        private RasterFont _rasterFont;
+
         public void Initialize() 
         {
             playfield = new PlayField(new Vector2(86, 65));
             playfield.Initialize();
         }
-
-        public void Load() { }
+        public void Load() 
+        {
+            _rasterFont = new(GetContent.Load<Texture2D>("Image/Font/small_outline_1"), 1, 1, -1);
+        }
 
         public void Update(GameTime gameTime) 
         {
@@ -33,6 +38,7 @@ namespace MonoStacker.Source.Scene.GameScenes
         {
           spriteBatch.Begin();
           spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg_1080"), new Vector2(0, 0), Color.White);
+            _rasterFont.RenderString(spriteBatch, Vector2.One, "monostacker alpha", Color.Lime);
           spriteBatch.End();
           playfield.Draw(spriteBatch);
           AnimatedEffectManager.Draw(spriteBatch);

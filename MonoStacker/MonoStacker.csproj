@@ -30,6 +30,11 @@
     <Folder Include="Source\Interface\Menu\" />
     <Folder Include="Source\VisualEffects\ParticleSys\Emitter\EmitterPresets\" />
   </ItemGroup>
+  <ItemGroup>
+    <Reference Include="RasterFontLibrary">
+      <HintPath>lib\RasterFontLibrary.dll</HintPath>
+    </Reference>
+  </ItemGroup>
   <Target Name="RestoreDotnetTools" BeforeTargets="Restore">
     <Message Text="Restoring dotnet tools" Importance="High" />
     <Exec Command="dotnet tool restore" />

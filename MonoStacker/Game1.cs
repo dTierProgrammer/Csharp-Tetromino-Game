@@ -9,6 +9,7 @@ using MonoStacker.Source.VisualEffects.ParticleSys;
 using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
 using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
+using RasterFontLibrary.Source;
 
 namespace MonoStacker
 {
@@ -22,14 +23,17 @@ namespace MonoStacker
         public static GameTime uGameTime;
         private StaticEmissionSource _testStaticSource = new(new(50, 50));
         private StaticEmissionSources _testStaticSources = new(new List<GroupPartData>());
+        private RasterFont _rasterFont;
         
         /*
         TODO:
-        - Implement Combo
         - Revise piece spin detection
         - Text rendering system (for action text)
         - Garbage system
+            - basic line garbage line addition system (o)
         - Revise effects
+            - drop particle effect (o)
+            - piece hit stack effect (x)
 
         TEST:
         - Seperating sub grid movement from physical piece location
@@ -176,6 +180,8 @@ namespace MonoStacker
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
+            
+
             // TODO: use this.Content to load your game content here
             
         }
