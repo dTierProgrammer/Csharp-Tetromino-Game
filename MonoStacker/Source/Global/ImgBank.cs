@@ -7,7 +7,7 @@ namespace MonoStacker.Source.Global;
 
 public struct ImgBank
 {
-    public static readonly Texture2D BlockTexture = GetContent.Load<Texture2D>("Image/Block/0");
+    public static readonly Texture2D BlockTexture = GetContent.Load<Texture2D>("Image/Block/1");
     public static Dictionary<int, Rectangle> BlockCuts = new();
     
     public static readonly Texture2D GhostBlockTexture = GetContent.Load<Texture2D>("Image/Block/0gp");

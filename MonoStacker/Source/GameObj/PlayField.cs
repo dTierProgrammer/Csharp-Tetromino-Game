@@ -107,6 +107,7 @@ namespace MonoStacker.Source.GameObj
         private readonly SpinDenotation _parsedSpins = SpinDenotation.TSpinOnly;
         private int _combo = -1;
         private Color comboColor = Color.White;
+        private List<(string text, float timeDisplayed, Color color)> _actionText;
 
         private Texture2D _bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
         
@@ -154,6 +155,7 @@ namespace MonoStacker.Source.GameObj
             _softDropFactor = 40;
             _autoRepeatRate = (0, 0);
             _maxDasTime = .15f;
+            _actionText = new();
 
             _inputManager = new InputManager();
         }
@@ -359,6 +361,15 @@ namespace MonoStacker.Source.GameObj
                     _streak = -1;
                 }
             }
+            
+
+            _actionText.Add(_grid.rowsToClear.Count switch 
+            { // rewrite this lol
+                1 => (_currentSpinType is SpinType.None? "Single": _currentSpinType is SpinType.FullSpin? "T-Spin Single": "Mini T-Spin Single", 2, _currentSpinType is SpinType.None ? Color.LightBlue: Color.Magenta),
+                2 => (_currentSpinType is SpinType.None ? "Double" : "T-Spin Double", 2, _currentSpinType is SpinType.None ? Color.Yellow : Color.Magenta),
+                3 => (_currentSpinType is SpinType.None ? "Triple" : "T-Spin Triple", 2, _currentSpinType is SpinType.None ? Color.Orange : Color.Magenta),
+                4 => ("Quadruple", 2, Color.LightBlue)
+            });
 
             if (_currentSpinType != SpinType.None) SfxBank.clearSpin[_grid.rowsToClear.Count - 1].Play();
             else SfxBank.clear[_grid.rowsToClear.Count - 1].Play();
@@ -563,6 +574,37 @@ namespace MonoStacker.Source.GameObj
                 
         }
 
+        private void UpdateActionText(GameTime gameTime)
+        {
+            if (streakColor != Color.Cyan)
+            {
+                colorTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                streakColor = Color.Lerp(streakColor, Color.Cyan, colorTime / 2);
+            }
+            else
+                colorTime = 0;
+
+            if (comboColor != Color.Orange)
+            {
+                colorTime2 += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                comboColor = Color.Lerp(comboColor, Color.Orange, time / 2);
+            }
+            else
+                colorTime2 = 0;
+            if (_actionText.Count > 0) 
+            {
+                for (int x = 0; x < _actionText.Count; x++)
+                {
+                    var action = _actionText[x];
+                    action.timeDisplayed -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    
+                    action.color = action.color * .994f;
+                    _actionText[x] = action;
+                }
+            }
+            _actionText.RemoveAll(item => item.timeDisplayed <= 0);
+        }
+
         public void Update(GameTime gameTime) 
         {
             _apXCenter = (activePiece.currentRotation.GetLength(1) * 8) / 2;
@@ -651,23 +693,8 @@ namespace MonoStacker.Source.GameObj
             
 
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            
-            if (streakColor != Color.Cyan)
-            {
-                colorTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                streakColor = Color.Lerp(streakColor, Color.Cyan, colorTime / 2);
-            }
-            else 
-                colorTime = 0;
-
-
-            if (comboColor != Color.Orange)
-            {
-                colorTime2 += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                comboColor = Color.Lerp(comboColor, Color.Orange, time / 2);
-            }
-            else
-                colorTime2 = 0;
+            UpdateActionText(gameTime);
+            Debug.WriteLine(_actionText.Count);
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -797,6 +824,19 @@ namespace MonoStacker.Source.GameObj
                 Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(offset.X - 6, offset.Y + 41), $"Combo *{_combo}", comboColor , OriginSetting.BottomRight);
             if (_currentBoardState is not BoardState.GameEnd && _streak > 0)
                 Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(offset.X - 6, offset.Y + 49), $"B2B *{_streak}", streakColor, OriginSetting.BottomRight);
+            if (_actionText.Count > 0)
+            {
+                for (var i = 0; i < _actionText.Count; i++)
+                {
+                    Font.DefaultSmallOutlineGradient.RenderString(
+                        spriteBatch,
+                        new Vector2(offset.X - 6, offset.Y + 57 + (i * 8)),
+                        _actionText[i].text,
+                        _actionText[i].color,
+                        OriginSetting.BottomRight
+                    );
+                }
+            }
 
             spriteBatch.End();
        
