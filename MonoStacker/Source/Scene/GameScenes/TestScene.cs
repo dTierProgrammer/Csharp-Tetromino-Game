@@ -21,7 +21,6 @@ namespace MonoStacker.Source.Scene.GameScenes
         public void Initialize() 
         {
             playfield = new PlayField(new Vector2(86, 65));
-            playfield.Initialize();
         }
         public void Load() 
         {
@@ -38,7 +37,7 @@ namespace MonoStacker.Source.Scene.GameScenes
         {
           spriteBatch.Begin();
           spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg_1080"), new Vector2(0, 0), Color.White);
-            _rasterFont.RenderString(spriteBatch, Vector2.One, "monostacker alpha", Color.Lime);
+            _rasterFont.RenderString(spriteBatch, Vector2.One, "Monostacker Alpha Build", Color.Yellow);
           spriteBatch.End();
           playfield.Draw(spriteBatch);
           AnimatedEffectManager.Draw(spriteBatch);

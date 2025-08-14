@@ -17,6 +17,7 @@ using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Generic.Rotation.RotationSystems;
 using MonoStacker.Source.Interface.Input;
 using System.Diagnostics;
+using RasterFontLibrary.Source;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -92,16 +93,20 @@ namespace MonoStacker.Source.GameObj
         private readonly int _queueLength = 3;
         private readonly bool _holdEnabled;
         float time = 0;
+        float colorTime = 0;
+        float colorTime2 = 0;
         float rowTime = 0;
         int buffer = Grid.ROWS - 1;
 
         private PieceManager _pieceManager;
 
         private bool _streakIsActive = false;
-        private int _streak;
+        private int _streak = -1;
+        private Color streakColor;
         private SpinType _currentSpinType = SpinType.None;
         private readonly SpinDenotation _parsedSpins = SpinDenotation.TSpinOnly;
         private int _combo = -1;
+        private Color comboColor = Color.White;
 
         private Texture2D _bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
         
@@ -133,15 +138,17 @@ namespace MonoStacker.Source.GameObj
                     QueueType.Sides,
                     true
                 );
+            _pieceManager.Initialize(this);
+            GrabNextPiece();
             _rotationSystem = new SuperRotationSys();
             _softLockDelay = (.5f, .5f);
-            _vertStepResetAllowed = true;
-            _lineClearDelay = (.683f, .683f);
+            _vertStepResetAllowed = false;
+            _lineClearDelay = (0, 0);
             _horiStepReset = (15, 15);
             _horiStepResetAllowed = true;
             _rotateReset = (6, 6);
             _rotateResetAllowed = true;
-            _arrivalDelay = (.11667f, .11667f);
+            _arrivalDelay = (0, 0);
             _softLock = false;
             _dropSpeed = .03f;
             _softDropFactor = 40;
@@ -149,12 +156,6 @@ namespace MonoStacker.Source.GameObj
             _maxDasTime = .15f;
 
             _inputManager = new InputManager();
-        }
-        
-        public void Initialize() // method to initialize piecemanager class instance (can't pass self in constructor) 
-        {
-            _pieceManager.Initialize(this);
-            GrabNextPiece();
         }
 
         private void MovePiece(float movementAmt) // move the piece a given amount 
@@ -241,6 +242,7 @@ namespace MonoStacker.Source.GameObj
             if (_grid.CheckForLines() > 0) 
             {
                 _combo++;
+                comboColor = Color.White;
                 Debug.WriteLine(_combo);
                 _currentBoardState = BoardState.LineClearWait;
                 _lineClearDelay.timeLeftover = _lineClearDelay.max;
@@ -344,16 +346,17 @@ namespace MonoStacker.Source.GameObj
             {
                 _streakIsActive = true;
                 _streak = _streakIsActive ? _streak += 1 : 0;
-                if(_streak > 1) SfxBank.b2b.Play();
+                if(_streak > 0) SfxBank.b2b.Play();
+                streakColor = Color.White;
             }
             else
             {
                 if (_streakIsActive)
                 {
                     _streakIsActive = false;
-                    _streak = 0;
-                    if(_streak > 1)
+                    if(_streak > 0)
                         SfxBank.b2bBreak.Play();
+                    _streak = -1;
                 }
             }
 
@@ -645,10 +648,26 @@ namespace MonoStacker.Source.GameObj
             _aeLayer.Update(gameTime);
             _prevYOff = activePiece.offsetY;
 
+            
+
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
+            
+            if (streakColor != Color.Cyan)
+            {
+                colorTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                streakColor = Color.Lerp(streakColor, Color.Cyan, colorTime / 2);
+            }
+            else 
+                colorTime = 0;
 
 
-
+            if (comboColor != Color.Orange)
+            {
+                colorTime2 += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                comboColor = Color.Lerp(comboColor, Color.Orange, time / 2);
+            }
+            else
+                colorTime2 = 0;
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -773,6 +792,12 @@ namespace MonoStacker.Source.GameObj
                 }
             }
 #endif
+
+            if (_currentBoardState is not BoardState.GameEnd && _combo > 0) 
+                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(offset.X - 6, offset.Y + 41), $"Combo *{_combo}", comboColor , OriginSetting.BottomRight);
+            if (_currentBoardState is not BoardState.GameEnd && _streak > 0)
+                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(offset.X - 6, offset.Y + 49), $"B2B *{_streak}", streakColor, OriginSetting.BottomRight);
+
             spriteBatch.End();
        
         }

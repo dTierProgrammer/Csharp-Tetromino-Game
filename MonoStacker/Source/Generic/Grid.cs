@@ -350,10 +350,7 @@ namespace MonoStacker.Source.Generic
             }
 
             for (var y = 0; y < ROWS; y++)
-            {
                 MoveRow(y, -1);
-                Debug.WriteLine("row");
-            }
             for (var x = 0; x < COLUMNS; x++)
             {
                 if (x != hole)
