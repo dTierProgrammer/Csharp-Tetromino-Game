@@ -37,9 +37,12 @@ namespace MonoStacker.Source.Scene.GameScenes
         {
           spriteBatch.Begin();
           spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg_1080"), new Vector2(0, 0), Color.White);
-            _rasterFont.RenderString(spriteBatch, Vector2.One, "Monostacker Alpha Build", Color.Yellow);
+           
           spriteBatch.End();
           playfield.Draw(spriteBatch);
+            spriteBatch.Begin();
+          _rasterFont.RenderString(spriteBatch, Vector2.One, "IJLOSTZ", Color.Yellow);
+            spriteBatch.End();
           AnimatedEffectManager.Draw(spriteBatch);
           ParticleManager.Draw(spriteBatch);
         }

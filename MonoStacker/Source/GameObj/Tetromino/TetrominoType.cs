@@ -2,11 +2,11 @@ namespace MonoStacker.Source.GameObj.Tetromino;
 
 public enum TetrominoType 
 {
-    I,
-    J,
-    L,
-    O,
-    S,
-    T,
-    Z
+    I = 'I',
+    J = 'J',
+    L = 'L',
+    O = 'O',
+    S = 'S',
+    T = 'T',
+    Z = 'Z'
 }

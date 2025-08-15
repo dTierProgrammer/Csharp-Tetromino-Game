@@ -18,6 +18,8 @@ using MonoStacker.Source.Generic.Rotation.RotationSystems;
 using MonoStacker.Source.Interface.Input;
 using System.Diagnostics;
 using RasterFontLibrary.Source;
+using MonoStacker.Source.Interface;
+using MonoStacker.Source.VisualEffects.Text;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -58,6 +60,7 @@ namespace MonoStacker.Source.GameObj
         private readonly Grid _grid;
         private List<AnimatedEffect> _animatedEffects = new List<AnimatedEffect>();
         private AnimatedEffectLayer _aeLayer = new();
+        private ActionTextSystem _atSys;
 
         private KeyboardState _prevKbState;
         private readonly InputManager _inputManager;
@@ -101,11 +104,13 @@ namespace MonoStacker.Source.GameObj
         private PieceManager _pieceManager;
 
         private bool _streakIsActive = false;
-        private int _streak = -1;
+        public int _streak { get; private set; } = -1;
+        CounterFlair _streakCounter;
         private Color streakColor;
         private SpinType _currentSpinType = SpinType.None;
         private readonly SpinDenotation _parsedSpins = SpinDenotation.TSpinOnly;
-        private int _combo = -1;
+        public int _combo { get; private set; } = -1;
+        CounterFlair _comboCounter;
         private Color comboColor = Color.White;
         private List<(string text, float timeDisplayed, Color color)> _actionText;
 
@@ -156,6 +161,10 @@ namespace MonoStacker.Source.GameObj
             _autoRepeatRate = (0, 0);
             _maxDasTime = .15f;
             _actionText = new();
+            _atSys = new(new(offset.X - 6, offset.Y + 41));
+            _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange);
+            _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan);
+            
 
             _inputManager = new InputManager();
         }
@@ -244,6 +253,7 @@ namespace MonoStacker.Source.GameObj
             if (_grid.CheckForLines() > 0) 
             {
                 _combo++;
+                _comboCounter.Ping(1);
                 comboColor = Color.White;
                 Debug.WriteLine(_combo);
                 _currentBoardState = BoardState.LineClearWait;
@@ -254,6 +264,7 @@ namespace MonoStacker.Source.GameObj
                 if (_combo > -1) 
                 {
                     _combo = -1;
+                    _comboCounter.Kill();
                     Debug.WriteLine("combo break, reset to -1");
                 }
                 
@@ -262,6 +273,8 @@ namespace MonoStacker.Source.GameObj
                 if (_currentSpinType != SpinType.None)
                     SfxBank.spinGeneric.Play();
             }
+           
+            //_atSys.Ping(ExtendedMath.Rng.Next().ToString(), Color.Orange, Color.Red, 3, .5f);
         }
 
         private bool RotateReset() // reset lock delay when the piece rotates while touching the stack
@@ -349,6 +362,7 @@ namespace MonoStacker.Source.GameObj
                 _streakIsActive = true;
                 _streak = _streakIsActive ? _streak += 1 : 0;
                 if(_streak > 0) SfxBank.b2b.Play();
+                _streakCounter.Ping(1);
                 streakColor = Color.White;
             }
             else
@@ -359,17 +373,37 @@ namespace MonoStacker.Source.GameObj
                     if(_streak > 0)
                         SfxBank.b2bBreak.Play();
                     _streak = -1;
+                    _streakCounter.Kill();
                 }
             }
-            
 
-            _actionText.Add(_grid.rowsToClear.Count switch 
-            { // rewrite this lol
-                1 => (_currentSpinType is SpinType.None? "Single": _currentSpinType is SpinType.FullSpin? "T-Spin Single": "Mini T-Spin Single", 2, _currentSpinType is SpinType.None ? Color.LightBlue: Color.Magenta),
-                2 => (_currentSpinType is SpinType.None ? "Double" : "T-Spin Double", 2, _currentSpinType is SpinType.None ? Color.Yellow : Color.Magenta),
-                3 => (_currentSpinType is SpinType.None ? "Triple" : "T-Spin Triple", 2, _currentSpinType is SpinType.None ? Color.Orange : Color.Magenta),
-                4 => ("Quadruple", 2, Color.LightBlue)
-            });
+            string lineClearTitle = _grid.rowsToClear.Count switch 
+            {
+                1 => "single!",
+                2 => "Double!!",
+                3 => "triple!!!",
+                4 => "Quadruple!!!!",
+                _ => "super Move!!!!!"
+            };
+
+            string spinTitle = _currentSpinType switch 
+            {
+                SpinType.None => "",
+                SpinType.MiniSpin => $"Mini {(char)activePiece.type}-spin",
+                SpinType.FullSpin => $"{(char)activePiece.type}-spin"
+            };
+
+            (Color color1, Color color2) lineClearColor = _grid.rowsToClear.Count switch 
+            {
+                1 => (Color.Lime, Color.Yellow),
+                2 => (Color.Yellow, Color.Orange),
+                3 => (Color.Orange, Color.OrangeRed),
+                4 => (Color.OrangeRed, Color.Red),
+                _ => (Color.LightBlue, Color.Blue)
+            };
+
+            _atSys.Ping($"{spinTitle} {lineClearTitle}", _currentSpinType is SpinType.None? lineClearColor.color1: activePiece.color, _currentSpinType is SpinType.None ? lineClearColor.color2: Color.White, 3f, .5f);
+            
 
             if (_currentSpinType != SpinType.None) SfxBank.clearSpin[_grid.rowsToClear.Count - 1].Play();
             else SfxBank.clear[_grid.rowsToClear.Count - 1].Play();
@@ -403,6 +437,8 @@ namespace MonoStacker.Source.GameObj
             {
                 _isInDanger = false;
                 _currentBoardState = BoardState.GameEnd;
+                _comboCounter.Reset();
+                _streakCounter.Reset();
             }
             else 
             {
@@ -676,7 +712,7 @@ namespace MonoStacker.Source.GameObj
                 _grid.ClearGrid();
             if (Keyboard.GetState().IsKeyDown(Keys.G) && !_prevKbState.IsKeyDown(Keys.G)) 
             {
-                if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece)) 
+                if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && activePiece.offsetY > -1) 
                 {
                     activePiece.offsetY--;
                 }
@@ -689,12 +725,15 @@ namespace MonoStacker.Source.GameObj
 
             _aeLayer.Update(gameTime);
             _prevYOff = activePiece.offsetY;
+            _atSys.Update(gameTime, this);
+            _comboCounter.Update(gameTime);
+            _streakCounter.Update(gameTime);
 
             
 
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
             UpdateActionText(gameTime);
-            Debug.WriteLine(_actionText.Count);
+            //Debug.WriteLine(_actionText.Count);
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -819,7 +858,7 @@ namespace MonoStacker.Source.GameObj
                 }
             }
 #endif
-
+            /*
             if (_currentBoardState is not BoardState.GameEnd && _combo > 0) 
                 Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(offset.X - 6, offset.Y + 41), $"Combo *{_combo}", comboColor , OriginSetting.BottomRight);
             if (_currentBoardState is not BoardState.GameEnd && _streak > 0)
@@ -837,6 +876,10 @@ namespace MonoStacker.Source.GameObj
                     );
                 }
             }
+            */
+            _streakCounter.Draw(spriteBatch, new Vector2(offset.X - 6, offset.Y + 41));
+            _comboCounter.Draw(spriteBatch, new Vector2(offset.X - 6, offset.Y + 49));
+            _atSys.Draw(spriteBatch, this);
 
             spriteBatch.End();
        
