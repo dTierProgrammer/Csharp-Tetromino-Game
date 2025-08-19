@@ -84,7 +84,7 @@ namespace MonoStacker
             GetContent.Initialize(this);
             _testScene = new TestScene();
 
-            _sceneManager.EnterScene(new TestScene());
+            _sceneManager.EnterScene(new MarathonMode());
             // init any custom classes above base method call
             base.Initialize();
         }
@@ -100,6 +100,7 @@ namespace MonoStacker
 
         protected override void Update(GameTime gameTime)
         {
+            GetFps.Update(gameTime);
             uGameTime.ElapsedGameTime = gameTime.ElapsedGameTime;
             uGameTime.TotalGameTime = gameTime.TotalGameTime;
             
@@ -121,7 +122,9 @@ namespace MonoStacker
             _sceneManager.CurrentScene().Draw(_spriteBatch);
             AnimatedEffectManager.Draw(_spriteBatch);
             ParticleManager.Draw(_spriteBatch);
-
+            _spriteBatch.Begin();
+            Font.DefaultSmallOutlineGradient.RenderString(_spriteBatch, new Vector2(479, 0), $"{GetFps.fps:F0}", Color.Yellow, OriginSetting.TopRight);
+            _spriteBatch.End();
 
 
             // TODO: Add your drawing code here

@@ -35,7 +35,7 @@ namespace MonoStacker.Source.Generic
         - Deal pieces
         - Hold pieces if needed
          */
-
+        // add functionality that adds any held inputs to the buffer (prevents dropped inputs if presses just miss buffer window)
         private PlayField _playfield;
         private QueueType _queueType;
         private Vector2 _sideQueueOffset;
@@ -299,7 +299,7 @@ namespace MonoStacker.Source.Generic
                     break;
                 case QueueType.Sides:
                     DrawSideNextQueue(spriteBatch, new Vector2(_playfield.offset.X + 88, _playfield.offset.Y - 1));
-                    DrawSideHoldQueue(spriteBatch, new Vector2(_playfield.offset.X - 42, _playfield.offset.Y - 1));
+                    DrawSideHoldQueue(spriteBatch, new Vector2(_playfield.displaySetting is BoardDisplaySetting.BoardOnly? _playfield.offset.X - 42 : _playfield.offset.X - 48, _playfield.offset.Y - 1));
                     break;
             }
         }

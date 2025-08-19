@@ -20,10 +20,10 @@ namespace MonoStacker.Source.Generic
         public int rotationId { get; protected set; } = 0;
         public static int offset { get; set; }
 
-        public float offsetX { get; set; }
-        public float offsetY { get; set; }
-        public float initOffsetX { get; set; }
-        public float initOffsetY { get; set; }
+        public int offsetX { get; set; }
+        public int offsetY { get; set; }
+        public int initOffsetX { get; set; }
+        public int initOffsetY { get; set; }
         public Color color { get; protected set; } = Color.White;
         public TetrominoType type { get; private set; }
         public int[,] thumbnail;
