@@ -97,7 +97,7 @@ public static class PlayfieldEffects
                             speed = (50, 100),
                             particleData = new ParticleData()
                             {
-                                texture = GetContent.Load<Texture2D>("Image/Effect/Particle/default"),
+                                texture = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"),
                                 colorTimeLine = (color, color),
                                 scaleTimeLine = new(3, 1),
                                 opacityTimeLine = new(1, 1)

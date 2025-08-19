@@ -1,15 +1,17 @@
-﻿using System.Collections.Generic;
-using Microsoft.Xna.Framework;
+﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.Scene;
+using MonoStacker.Source.Scene.GameMode;
 using MonoStacker.Source.Scene.GameScenes;
+using MonoStacker.Source.VisualEffects;
 using MonoStacker.Source.VisualEffects.ParticleSys;
 using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
 using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 using RasterFontLibrary.Source;
+using System.Collections.Generic;
 
 namespace MonoStacker
 {
@@ -74,7 +76,7 @@ namespace MonoStacker
             
 
             IsMouseVisible = true;
-        }
+        }   
 
         protected override void Initialize()
         {
@@ -82,101 +84,7 @@ namespace MonoStacker
             GetContent.Initialize(this);
             _testScene = new TestScene();
 
-            _sceneManager.EnterScene(_testScene);
-
-            /*
-            EmitterData testData = new()
-            {
-                emissionInterval = 1f,
-                density = 100,
-                angleVarianceMax = 360,
-                particleActiveTime = (2, 2f),
-                speed = (250f, 250f),
-                particleData = new ParticleData()
-                {
-                    texture = GetContent.Load<Texture2D>("Image/Effect/Particle/default"),
-                    colorTimeLine = (Color.Yellow, Color.Red),
-                    scaleTimeLine = new(2, 1),
-                    
-                }
-
-            };
-            */
-
-            //EmitterObj test = new(_testStaticSource, testData, EmissionType.Continuous);
-            //ParticleManager.AddEmitter(test);
-            
-            /*
-            _testStaticSources.Positions.Add(new(20, 20));
-            _testStaticSources.Positions.Add(new(40, 40));
-            _testStaticSources.Positions.Add(new(60, 60));
-            _testStaticSources.Positions.Add(new(80, 80));
-            */
-
-            /*
-            EmitterData testData2 = new()
-            {
-                emissionInterval = 1f,
-                density = 100,
-                angleVarianceMax = 180,
-                particleActiveTime = (.01f, 3f),
-                speed = (50, 100),
-                particleData = new ParticleData()
-                {
-                    texture = GetContent.Load<Texture2D>("Image/Effect/Particle/particle_3"),
-                    colorTimeLine = (Color.Yellow, Color.Red),
-                    scaleTimeLine = new(4, 1),
-                    opacityTimeLine = new(1, 0)
-                }
-
-            };
-
-            //GroupEmitterObj test2 = new(_testStaticSources, testData2, EmissionType.Continuous);
-            //ParticleManager.AddEmitter(test2);
-            
-            _testStaticSources.Members.Add(new GroupPartData 
-            {
-                Position = new(40, 40),
-                Data = new EmitterData()
-                {
-                    emissionInterval = 1f,
-                    density = 50,
-                    angleVarianceMax = 180,
-                    particleActiveTime = (.01f, 2f),
-                    speed = (50, 100),
-                    particleData = new ParticleData()
-                    {
-                        texture = GetContent.Load<Texture2D>("Image/Effect/Particle/particle_3"),
-                        colorTimeLine = (Color.Magenta, Color.White),
-                        scaleTimeLine = new(2, 1),
-                        opacityTimeLine = new(1, 0)
-                    }
-                }
-            });
-
-            _testStaticSources.Members.Add(new GroupPartData 
-            {
-                Position = new(60, 60),
-                Data = new EmitterData()
-                {
-                    emissionInterval = 1f,
-                    density = 50,
-                    angleVarianceMax = 180,
-                    particleActiveTime = (.01f, 2f),
-                    speed = (50, 100),
-                    particleData = new ParticleData()
-                    {
-                        texture = GetContent.Load<Texture2D>("Image/Effect/Particle/particle_3"),
-                        colorTimeLine = (Color.Yellow, Color.White),
-                        scaleTimeLine = new(2, 1),
-                        opacityTimeLine = new(1, 0)
-                    }
-                }
-            });
-
-            //GroupEmitterObj test2 = new(_testStaticSources, EmissionType.Continuous);
-            //ParticleManager.AddEmitter(test);
-            */
+            _sceneManager.EnterScene(new TestScene());
             // init any custom classes above base method call
             base.Initialize();
         }
@@ -200,6 +108,7 @@ namespace MonoStacker
 
             // TODO: Add your update logic here
             _sceneManager.CurrentScene().Update(gameTime);
+            AnimatedEffectManager.Update(gameTime);
             ParticleManager.Update(gameTime);
 
             base.Update(gameTime);
@@ -210,8 +119,9 @@ namespace MonoStacker
             GraphicsDevice.SetRenderTarget(_scaledDisp);
             GraphicsDevice.Clear(Color.Black);
             _sceneManager.CurrentScene().Draw(_spriteBatch);
+            AnimatedEffectManager.Draw(_spriteBatch);
+            ParticleManager.Draw(_spriteBatch);
 
-            
 
 
             // TODO: Add your drawing code here
@@ -219,6 +129,7 @@ namespace MonoStacker
             _spriteBatch.Begin(samplerState: SamplerState.PointClamp);
             _spriteBatch.Draw(_scaledDisp, new Rectangle(0, 0, GraphicsDevice.DisplayMode.Width, GraphicsDevice.DisplayMode.Height), Color.White);
             _spriteBatch.End();
+            
             base.Draw(gameTime);
         }
     }

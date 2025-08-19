@@ -23,6 +23,7 @@ using MonoStacker.Source.VisualEffects.Text;
 using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
+using MonoStacker.Source.Data;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -37,40 +38,94 @@ namespace MonoStacker.Source.GameObj
 
     public enum BoardState 
     {
-        GameStart,
-        Neutral,
-        LineClearWait,
-        PieceEntryWait,
-        DamageReeling,
-        GameEnd
+        PreGame,
+        Playing,
+        LineClearDelay,
+        ArrivalDelay,
+        RecieveDamage,
+        TopOut
+    }
+
+    public enum TopOutRule 
+    {
+        BlockOut,
+        LockOut,
+        PartialLockOut
     }
 
     public enum PreRrotationType 
     {
         IRS,
+        Buffer,
+        None
+    }
+
+    public enum PreHoldType 
+    {
+        IHS,
+        Buffer,
+        None
+    }
+
+    public enum DASChargeType 
+    {
+        Constant,
         Buffer
     }
 
-    
+    public enum InitialGarbageSystem // make into bools bro
+    {
+        Meter,
+        Visualizer,
+        Both,
+        Disable
+    }
+
+    public enum ComboType 
+    {
+        Conventional,
+        Arcade,
+        Disable
+    }
+
+    public enum StreakType 
+    {
+        Flat,
+        Incremental,
+        Disable
+    }
+
+    public enum HardDropType // make into bools maybe
+    {
+        HardDrop,
+        FirmDrop,
+        Both,
+        Disable
+    }
+
+    public enum RotationsAllowed 
+    {
+        CwOnly,
+        CcwOnly,
+        Both
+    }
 
     public class PlayField
     {
         public readonly Vector2 offset;
         private readonly Grid _grid;
         private List<AnimatedEffect> _animatedEffects = new List<AnimatedEffect>();
+        private ParticleLayer _particleLayer;
         private AnimatedEffectLayer _aeLayer = new();
-        private ActionTextSystem _atSys;
 
         private KeyboardState _prevKbState;
         private readonly InputManager _inputManager;
         private InputDevice _inputDevice = InputDevice.Keyboard;
 
-        private BoardState _currentBoardState = BoardState.Neutral;
+        private BoardState _currentBoardState = BoardState.Playing;
         private BoardState _previousBoardState;
-        //BoardState[] noDrawStates = { BoardState.LineClearWait, BoardState.PieceEntryWait, BoardState.GameEnd};
         private readonly IRotationSystem _rotationSystem;
-        public Piece activePiece { get; set; }
-        private Color _activePieceColor = Color.White;
+        public Piece? activePiece { get; set; }
         private readonly Texture2D _border = GetContent.Load<Texture2D>("Image/Board/border1");
         private readonly Texture2D _lockDelayMeter = GetContent.Load<Texture2D>("Image/Board/meter_hori");
         private bool _showGhostPiece = true;
@@ -105,14 +160,11 @@ namespace MonoStacker.Source.GameObj
         private bool _bravo;
 
         public int _streak { get; private set; } = -1;
-        CounterFlair _streakCounter;
-        private Color streakColor;
         private SpinType _currentSpinType = SpinType.None;
         private readonly SpinDenotation _parsedSpins = SpinDenotation.TSpinOnly;
         public int _combo { get; private set; } = -1;
-        CounterFlair _comboCounter;
-        private Color comboColor = Color.White;
-        private List<(string text, float timeDisplayed, Color color)> _actionText;
+        private readonly ComboType _comboType;
+        private bool _singlesBreakCombo;
 
         private Texture2D _bgTest = GetContent.Load<Texture2D>("Image/Background/custombg_example_megurineluka");
         
@@ -121,7 +173,7 @@ namespace MonoStacker.Source.GameObj
         private List<GameAction> _lastInputEvents = [];
 
         private float _lockDelayAmount;
-        private ParticleLayer _particleLayer;
+        
 
 
         private EmitterObj _comboEffect;
@@ -133,69 +185,41 @@ namespace MonoStacker.Source.GameObj
         private bool _showDebug = false;
 #endif
 
-        public PlayField(Vector2 position)
+        public PlayField(Vector2 position, PlayFieldData data, InputBinds binds)
         {
             _aeLayer = new();
+            _particleLayer = new();
             offset = position;
             _grid = new Grid(offset);
             _pieceManager = new
                 (
-                    new SrsFactory(),
-                    new Point(3, 18),
-                    new SevenBagRandomizer(),
-                    5,
-                    QueueType.Sides,
-                    true
+                    data.factory,
+                    data.spawnAreaOffset,
+                    data.randomizer,
+                    data.queueLength,
+                    data.queueType,
+                    data.holdEnabled
                 );
+            _rotationSystem = data.rotationSystem;
             _pieceManager.Initialize(this);
             GrabNextPiece();
-            _rotationSystem = new SuperRotationSys();
-            _softLockDelay = (.5f, .5f);
-            _vertStepResetAllowed = false;
-            _lineClearDelay = (0, 0);
-            _horiStepReset = (15, 15);
-            _horiStepResetAllowed = true;
-            _rotateReset = (6, 6);
-            _rotateResetAllowed = true;
-            _arrivalDelay = (0, 0);
-            _softLock = false;
-            _dropSpeed = .03f;
-            _softDropFactor = 40;
-            _autoRepeatRate = (.0f, .0f);
-            _maxDasTime = .15f;
-            _actionText = new();
-            _atSys = new(new(offset.X - 6, offset.Y + 41));
-            _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new Vector2(offset.X - 6, offset.Y + 49));
-            _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new Vector2(offset.X - 6, offset.Y + 41));
-            _comboEffect = new
-                (
-                new StaticEmissionSource(Vector2.One),
-                new EmitterData
-                {
-                    emissionInterval = .05f,
-                    density = 3,
-                    angleVarianceMax = 3,
-                    particleActiveTime = (.01f, .5f),
-                    speed = (50, 200),
-                    particleData = new ParticleData()
-                    {
-                        texture = GetContent.Load<Texture2D>("Image/Effect/Particle/starLarge"),
-                        rotationSpeed = .05f,
-                        colorTimeLine = (Color.Red, Color.Red),
-                        scaleTimeLine = new(100, 100),
-                        opacityTimeLine = new(1, 1)
-                    }
-                },
-                EmissionType.Continuous,
-                true
-                );
-            _streakEffect = new();
-            //ParticleManager.AddEmitter(_comboEffect);
-           
+            _softLockDelay = (data.softLockDelay, data.softLockDelay);
+            _vertStepResetAllowed = data.vertStepResetAllowed;
+            _lineClearDelay = (data.lineClearDelay, data.lineClearDelay);
+            _horiStepReset = (data.horiStepResets, data.horiStepResets);
+            _horiStepResetAllowed = data.horiStepResetAllowed;
+            _rotateReset = (data.rotateResets, data.rotateResets);
+            _rotateResetAllowed = data.rotateResetAllowed;
+            _arrivalDelay = (data.arrivalDelay, data.arrivalDelay);
+            _softLock = data.softDropLocks;
+            _dropSpeed = data.gravity;
+            _softDropFactor = data.softDropFactor;
+            _autoRepeatRate = (data.autoshiftRepeatRate, data.autoshiftRepeatRate);
+            _maxDasTime = data.autoshiftDelay;
+            _comboType = data.comboType;
+          
+            _inputManager = new InputManager(binds);
             
-
-            _inputManager = new InputManager();
-            _particleLayer = new();
         }
 
         private void MovePiece(float movementAmt) // move the piece a given amount 
@@ -277,33 +301,29 @@ namespace MonoStacker.Source.GameObj
 
         private void LockPiece() // lock piece onto the grid
         {
-            _activePieceColor = Color.White;
             _grid.LockPiece(activePiece, (int)activePiece.offsetY, (int)activePiece.offsetX);
             if (_grid.CheckForLines() > 0) 
             {
-                _combo++;
-                _comboCounter.Ping(1);
-                comboColor = Color.White;
-                Debug.WriteLine(_combo);
-                _currentBoardState = BoardState.LineClearWait;
+                _combo = _comboType switch 
+                {
+                    ComboType.Conventional => _combo++,
+                    ComboType.Arcade => _grid.CheckForLines() > 1? _combo++: (_singlesBreakCombo ? -1: _combo),
+                    _ => _combo
+                };
+                _currentBoardState = BoardState.LineClearDelay;
                 _lineClearDelay.timeLeftover = _lineClearDelay.max;
             }
             else
             {
                 if (_combo > -1) 
-                {
                     _combo = -1;
-                    _comboCounter.Kill();
-                    Debug.WriteLine("combo break, reset to -1");
-                }
                 
-                _currentBoardState = BoardState.PieceEntryWait;
+                _currentBoardState = BoardState.ArrivalDelay;
                 _arrivalDelay.timeLeftover = _arrivalDelay.max;
                 if (_currentSpinType != SpinType.None)
                     SfxBank.spinGeneric.Play();
             }
            
-            //_atSys.Ping(ExtendedMath.Rng.Next().ToString(), Color.Orange, Color.Red, 3, .5f);
         }
 
         private bool RotateReset() // reset lock delay when the piece rotates while touching the stack
@@ -359,8 +379,6 @@ namespace MonoStacker.Source.GameObj
                     SfxBank.softLock.Play();
                 }
             }
-            else
-                _activePieceColor = Color.White;
 
             if (_softDrop) // issues at certain soft drop factors
             {
@@ -391,8 +409,6 @@ namespace MonoStacker.Source.GameObj
                 _streakIsActive = true;
                 _streak = _streakIsActive ? _streak += 1 : 0;
                 if(_streak > 0) SfxBank.b2b.Play();
-                _streakCounter.Ping(1);
-                streakColor = Color.White;
             }
             else
             {
@@ -402,7 +418,6 @@ namespace MonoStacker.Source.GameObj
                     if(_streak > 0)
                         SfxBank.b2bBreak.Play();
                     _streak = -1;
-                    _streakCounter.Kill();
                 }
             }
 
@@ -431,7 +446,7 @@ namespace MonoStacker.Source.GameObj
                 _ => (Color.LightBlue, Color.Blue)
             };
 
-            _atSys.Ping($"{spinTitle} {lineClearTitle}", _currentSpinType is SpinType.None? lineClearColor.color1: activePiece.color, _currentSpinType is SpinType.None ? lineClearColor.color2: Color.White, 3f, .5f);
+            //_atSys.Ping($"{spinTitle} {lineClearTitle}", _currentSpinType is SpinType.None? lineClearColor.color1: activePiece.color, _currentSpinType is SpinType.None ? lineClearColor.color2: Color.White, 3f, .5f);
             
 
             if (_currentSpinType != SpinType.None) SfxBank.clearSpin[_grid.rowsToClear.Count - 1].Play();
@@ -465,13 +480,11 @@ namespace MonoStacker.Source.GameObj
             if (IsSpawnObscured())
             {
                 _isInDanger = false;
-                _currentBoardState = BoardState.GameEnd;
-                _comboCounter.Reset();
-                _streakCounter.Reset();
+                _currentBoardState = BoardState.TopOut;
             }
             else 
             {
-                _currentBoardState = BoardState.Neutral;
+                _currentBoardState = BoardState.Playing;
                 _pieceManager.canHold = true;
                 _softDrop = false;
                 activePiece = _pieceManager.DealPiece();
@@ -495,9 +508,7 @@ namespace MonoStacker.Source.GameObj
                 for (var x = 0; x < _pieceManager.spawnArea[y].Length; x++)
                 {
                     if (_grid._matrix[y + _pieceManager.spawnAreaPosition.Y][x + _pieceManager.spawnAreaPosition.X] > 0) 
-                    {
                         return true;
-                    }
                 }
             }
             return false; 
@@ -629,14 +640,14 @@ namespace MonoStacker.Source.GameObj
 
         public void Update(GameTime gameTime) 
         {
-            if(_currentBoardState is not BoardState.Neutral)
+            if(_currentBoardState is not BoardState.Playing)
                 _inputManager.BufferKeyInput(gameTime);
             switch (_currentBoardState) 
             {
-                case BoardState.Neutral:
+                case BoardState.Playing:
                     if (_inputManager.bufferQueue.Count > 0) ProcessBuffer(); else ProcessButtonInput(gameTime);
                     break;
-                case BoardState.LineClearWait:
+                case BoardState.LineClearDelay:
                     _inputManager.BufferKeyInput(gameTime);
                     if (_lineClearDelay.timeLeftover == _lineClearDelay.max) // marked
                         ClearFilledLines(); //_lcDelay.min = _lcDelay.max;
@@ -645,17 +656,17 @@ namespace MonoStacker.Source.GameObj
                     if (_lineClearDelay.timeLeftover <= 0) 
                     {
                         DropLines();
-                        _previousBoardState = BoardState.LineClearWait;
-                        _currentBoardState = BoardState.PieceEntryWait;
+                        _previousBoardState = BoardState.LineClearDelay;
+                        _currentBoardState = BoardState.ArrivalDelay;
                         _arrivalDelay.timeLeftover = _arrivalDelay.max;
                        
                     }
                     break;
-                case BoardState.PieceEntryWait:
+                case BoardState.ArrivalDelay:
                     _inputManager.BufferKeyInput(gameTime);
                     if ((_arrivalDelay.timeLeftover == _arrivalDelay.max)) // marked
                     {
-                        if(_previousBoardState is not BoardState.LineClearWait)
+                        if(_previousBoardState is not BoardState.LineClearDelay)
                             PlayfieldEffects.FlashPiece(activePiece, activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f, offset);
                     }
                     _previousBoardState = _currentBoardState;
@@ -664,7 +675,7 @@ namespace MonoStacker.Source.GameObj
                     if (_arrivalDelay.timeLeftover <= 0) 
                         GrabNextPiece();
                     break;
-                case BoardState.GameEnd:
+                case BoardState.TopOut:
                     var interval = .1f;
                     rowTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                     _grid.SetDrawMode();
@@ -677,9 +688,9 @@ namespace MonoStacker.Source.GameObj
                         
                     break;
             }
-            if(_currentBoardState is not BoardState.GameEnd)
+            if(_currentBoardState is not BoardState.TopOut)
                 ProcessDirectionalInput(gameTime); // true buffering doesn't work well with DAS, so you can just charge it at any time
-            if (_currentBoardState is BoardState.Neutral) 
+            if (_currentBoardState is BoardState.Playing) 
             {
                 GravitySoftDrop(gameTime);
                 _lockDelayAmount = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
@@ -691,7 +702,7 @@ namespace MonoStacker.Source.GameObj
             if (Keyboard.GetState().IsKeyDown(Keys.T) && !_prevKbState.IsKeyDown(Keys.T))
                 _showDebug = !_showDebug;
             if (Keyboard.GetState().IsKeyDown(Keys.Y) && !_prevKbState.IsKeyDown(Keys.Y))
-                        _showGhostPiece = !_showGhostPiece;
+                _showGhostPiece = !_showGhostPiece;
             if (Keyboard.GetState().IsKeyDown(Keys.R) && !_prevKbState.IsKeyDown(Keys.R))
                 _grid.ClearGrid();
             if (Keyboard.GetState().IsKeyDown(Keys.G) && !_prevKbState.IsKeyDown(Keys.G)) 
@@ -702,19 +713,14 @@ namespace MonoStacker.Source.GameObj
                 }
                 _grid.AddGarbageLine(8);
             }
-                
+            if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !_prevKbState.IsKeyDown(Keys.Tab)) 
+                _combo++;
+
 #endif
                 _prevKbState = Keyboard.GetState();
 
-
-            _aeLayer.Update(gameTime);
             _prevYOff = activePiece.offsetY;
-            _atSys.Update(gameTime, this);
-            _comboCounter.Update(gameTime);
-            _streakCounter.Update(gameTime);
-
-            
-
+            _aeLayer.Update(gameTime);
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
 
@@ -771,7 +777,7 @@ namespace MonoStacker.Source.GameObj
                     }
                 }
             }
-            if (!(_currentBoardState == BoardState.Neutral && _showDebug)) return;
+            if (!(_currentBoardState == BoardState.Playing && _showDebug)) return;
             
             for (var y = 0; y < piece.requiredCorners.GetLength(0); y++)
             {
@@ -795,6 +801,7 @@ namespace MonoStacker.Source.GameObj
 
         public void Draw(SpriteBatch spriteBatch) 
         {
+
             spriteBatch.Begin();
             //spriteBatch.Draw(_bgTest, _offset, Color.White);
             spriteBatch.Draw(ImgBank.GridBg, offset, Color.White);
@@ -815,7 +822,7 @@ namespace MonoStacker.Source.GameObj
                 spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Board/bg_top_gradient"), offset, Color.Red * alpha * .45f);
             }
                 
-            if (_currentBoardState == BoardState.Neutral)
+            if (_currentBoardState == BoardState.Playing)
             {
                 
                 DrawPiece(spriteBatch, activePiece);
@@ -824,12 +831,10 @@ namespace MonoStacker.Source.GameObj
                 #endif
             }
             _pieceManager.Draw(spriteBatch);
-            if (_bravo && _currentBoardState is not BoardState.GameEnd)
+            if (_bravo && _currentBoardState is not BoardState.TopOut)
                 spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Board/bravo"), new Vector2(offset.X + 1, offset.Y + 20), Color.White);
-
-            //if ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())))
             
-            if(_currentBoardState is not BoardState.GameEnd && _spawnAreaObscured)
+            if(_currentBoardState is not BoardState.TopOut && _spawnAreaObscured)
                 DrawPieceDanger(spriteBatch, _pieceManager.pieceQueue.Peek());
 
 
@@ -842,18 +847,10 @@ namespace MonoStacker.Source.GameObj
                 }
             }
 #endif
-            /*
-            if (_combo >= 10)
-                _comboEffect._isActive = true;
-            else
-                _comboEffect._isActive = false;
-            */
-            _streakCounter.Draw(spriteBatch);
-            _comboCounter.Draw(spriteBatch);
-            _atSys.Draw(spriteBatch, this);
-
+            
             spriteBatch.End();
-       
+            
+
         }
     }
 }

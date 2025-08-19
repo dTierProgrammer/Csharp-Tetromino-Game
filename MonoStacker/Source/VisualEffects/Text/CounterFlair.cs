@@ -94,5 +94,11 @@ namespace MonoStacker.Source.VisualEffects.Text
             if (count > _countBase + _deadZone)
                 Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, position, $"{_name}{count}", _color, OriginSetting.BottomRight);
         }
+
+        public void Draw(SpriteBatch spriteBatch, float layerDepth)
+        {
+            if (count > _countBase + _deadZone)
+                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, position, $"{_name}{count}", _color, OriginSetting.BottomRight, layerDepth);
+        }
     }
 }

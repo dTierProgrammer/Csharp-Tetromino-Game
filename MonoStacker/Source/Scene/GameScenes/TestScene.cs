@@ -10,6 +10,8 @@ using System.Threading.Tasks;
 using MonoStacker.Source.VisualEffects;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 using RasterFontLibrary.Source;
+using MonoStacker.Source.Data;
+using MonoStacker.Source.Interface.Input;
 
 namespace MonoStacker.Source.Scene.GameScenes
 {
@@ -20,18 +22,16 @@ namespace MonoStacker.Source.Scene.GameScenes
 
         public void Initialize() 
         {
-            playfield = new PlayField(new Vector2(86, 65));
+            playfield = new PlayField(new Vector2(86, 65), new PlayFieldData(), new InputBinds() );
         }
         public void Load() 
         {
-            _rasterFont = new(GetContent.Load<Texture2D>("Image/Font/small_outline_1"), 1, 1, -1);
+            _rasterFont = new(GetContent.Load<Texture2D>("Image/Font/small_outline"), 1, 1, -1);
         }
 
         public void Update(GameTime gameTime) 
         {
-            AnimatedEffectManager.Update(gameTime);
             playfield.Update(gameTime);
-            
         }
 
         public void Draw(SpriteBatch spriteBatch)
@@ -41,11 +41,9 @@ namespace MonoStacker.Source.Scene.GameScenes
            
           spriteBatch.End();
           playfield.Draw(spriteBatch);
-            spriteBatch.Begin();
-          _rasterFont.RenderString(spriteBatch, Vector2.One, "IJLOSTZ", Color.Yellow);
+            spriteBatch.Begin(SpriteSortMode.Immediate, BlendState.AlphaBlend, SamplerState.PointClamp, DepthStencilState.Default, null);
+          _rasterFont.RenderString(spriteBatch, Vector2.One, "for debug purposes", Color.Yellow);
             spriteBatch.End();
-          AnimatedEffectManager.Draw(spriteBatch);
-          ParticleManager.Draw(spriteBatch);
         }
     }
 }

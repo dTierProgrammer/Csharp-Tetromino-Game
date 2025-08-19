@@ -59,10 +59,14 @@ namespace MonoStacker.Source.VisualEffects.ParticleSys.Particle
 
         public void Draw(SpriteBatch spriteBatch)
         {
-            spriteBatch.Begin();
             foreach (var particle in _particles)
                 particle.Draw(spriteBatch);
-            spriteBatch.End();
+        }
+
+        public void Draw(SpriteBatch spriteBatch, float layer)
+        {
+            foreach (var particle in _particles)
+                particle.Draw(spriteBatch, layer);
         }
     }
 }

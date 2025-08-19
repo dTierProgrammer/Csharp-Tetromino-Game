@@ -105,7 +105,7 @@ public class ParticleObj : AnimatedEffect
         _startingOrientation += _data.rotationSpeed;
     }
 
-    public void Draw(SpriteBatch spriteBatch)
+    public override void Draw(SpriteBatch spriteBatch)
     {
         spriteBatch.Draw
             (
@@ -118,6 +118,22 @@ public class ParticleObj : AnimatedEffect
                 _scale,
                 SpriteEffects.None,
                 1f
+            );
+    }
+
+    public void Draw(SpriteBatch spriteBatch, float layer)
+    {
+        spriteBatch.Draw
+            (
+                _data.texture,
+                _position,
+                null,
+                _color * _opacity,
+                _startingOrientation,
+                _origin,
+                _scale,
+                SpriteEffects.None,
+                layer
             );
     }
 }
