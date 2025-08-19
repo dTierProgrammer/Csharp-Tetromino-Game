@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
@@ -12,14 +13,21 @@ public enum EmissionType
     Burst = 2
 }
 
+public enum EmitterState 
+{
+    Active,
+    Inactive
+}
+
 public class EmitterObj
 { // Object that will emit particles
     protected readonly EmitterData _data; // given interval data
     protected float _timeInInterval; // time leftover within an interval
     protected readonly EmissionSource EmissionSource; //source of emission position
     public EmissionType _emissionType;
+    public EmitterState emissionState;
     public float _timeLeft;
-    public bool _isActive = true;
+    public bool _emitParticles = true;
 
     public EmitterObj(EmissionSource emissionSource, EmitterData data, EmissionType emissionType)
     {
@@ -28,6 +36,18 @@ public class EmitterObj
         _timeInInterval = data.emissionInterval;
         _emissionType = emissionType;
         _timeLeft = data.activeTimeLeft;
+        emissionState = EmitterState.Active;
+    }
+
+    public EmitterObj(EmissionSource emissionSource, EmitterData data, EmissionType emissionType, bool isActive)
+    {
+        EmissionSource = emissionSource;
+        _data = data;
+        _timeInInterval = data.emissionInterval;
+        _emissionType = emissionType;
+        _timeLeft = data.activeTimeLeft;
+        _emitParticles = isActive;
+        emissionState = EmitterState.Active;
     }
 
     public EmitterObj(EmitterData data, EmissionType emissionType)
@@ -36,13 +56,14 @@ public class EmitterObj
         _timeInInterval = data.emissionInterval;
         _emissionType = emissionType;
         _timeLeft = data.activeTimeLeft;
+        emissionState = EmitterState.Active;
     }
 
     public EmitterObj() { }
 
     protected void Emit(Vector2 pos)
     {
-        ParticleData bufferedParticleData = _data.particleData;
+        var bufferedParticleData = _data.particleData;
         bufferedParticleData.activeTime = ExtendedMath.RandomFloat(_data.particleActiveTime.min, _data.particleActiveTime.max);
         bufferedParticleData.speed = ExtendedMath.RandomFloat(_data.speed.min, _data.speed.max);
         float rand = (float)(ExtendedMath.Rng.NextDouble() * 2) - 1;
@@ -52,38 +73,54 @@ public class EmitterObj
         ParticleManager.AddParticle(bufferedParticle);
     }
 
-    public virtual void Update()
+    protected virtual void UpdateBurst()
     {
-        
-        if (_emissionType != EmissionType.Burst && _isActive)
+        emissionState = EmitterState.Inactive;
+        var pos = EmissionSource.Position;
+        for (int i = 0; i < _data.density; i++)
+            Emit(pos);
+        return;
+    }
+
+    protected virtual void UpdateTimed(GameTime gameTime)
+    {
+        while (_timeInInterval <= 0)
         {
-            _timeInInterval -= (float)Game1.uGameTime.ElapsedGameTime.TotalSeconds;
-            while (_timeInInterval <= 0)
-            {
-                _timeInInterval = _data.emissionInterval;
-                var pos = EmissionSource.Position;
-                for(int i = 0; i < _data.density; i++)
-                    Emit(pos);
-            }
+            _timeInInterval = _data.emissionInterval;
+            var pos = EmissionSource.Position;
+            for (int i = 0; i < _data.density; i++)
+                Emit(pos);
         }
-        
-        switch (_emissionType)
+        _timeInInterval -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (_timeLeft <= 0) { emissionState = EmitterState.Inactive; return; }
+        _timeLeft -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+    }
+
+    protected virtual void UpdateContinuous(GameTime gameTime)
+    {
+        while (_timeInInterval <= 0)
         {
-            case EmissionType.Continuous:
+            _timeInInterval = _data.emissionInterval;
+            var pos = EmissionSource.Position;
+            for (int i = 0; i < _data.density; i++)
+                Emit(pos);
+        }
+        _timeInInterval -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+    }
+
+    public virtual void Update(GameTime gameTime)
+    {
+        switch (_emissionType) 
+        {
+            case EmissionType.Burst:
+                UpdateBurst();
                 break;
             case EmissionType.Timed:
-                _timeLeft -= (float)Game1.uGameTime.ElapsedGameTime.TotalSeconds;
-                if (_timeLeft <= 0)
-                    _isActive = false;
+                UpdateTimed(gameTime);
                 break;
-            case EmissionType.Burst:
-            {
-                var pos = EmissionSource.Position;
-                for (int i = 0; i < _data.density; i++)
-                    Emit(pos);
-                _isActive = false;
+            case EmissionType.Continuous:
+                UpdateContinuous(gameTime);
                 break;
-            }
         }
     }
 }

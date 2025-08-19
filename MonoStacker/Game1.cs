@@ -84,6 +84,7 @@ namespace MonoStacker
 
             _sceneManager.EnterScene(_testScene);
 
+            /*
             EmitterData testData = new()
             {
                 emissionInterval = 1f,
@@ -100,8 +101,9 @@ namespace MonoStacker
                 }
 
             };
+            */
 
-            EmitterObj test = new(_testStaticSource, testData, EmissionType.Continuous);
+            //EmitterObj test = new(_testStaticSource, testData, EmissionType.Continuous);
             //ParticleManager.AddEmitter(test);
             
             /*
@@ -109,7 +111,9 @@ namespace MonoStacker
             _testStaticSources.Positions.Add(new(40, 40));
             _testStaticSources.Positions.Add(new(60, 60));
             _testStaticSources.Positions.Add(new(80, 80));
+            */
 
+            /*
             EmitterData testData2 = new()
             {
                 emissionInterval = 1f,
@@ -127,9 +131,9 @@ namespace MonoStacker
 
             };
 
-            GroupEmitterObj test2 = new(_testStaticSources, testData2, EmissionType.Continuous);
-            ParticleManager.AddEmitter(test2);
-            */
+            //GroupEmitterObj test2 = new(_testStaticSources, testData2, EmissionType.Continuous);
+            //ParticleManager.AddEmitter(test2);
+            
             _testStaticSources.Members.Add(new GroupPartData 
             {
                 Position = new(40, 40),
@@ -171,8 +175,8 @@ namespace MonoStacker
             });
 
             //GroupEmitterObj test2 = new(_testStaticSources, EmissionType.Continuous);
-            //ParticleManager.AddEmitter(test2);
-
+            //ParticleManager.AddEmitter(test);
+            */
             // init any custom classes above base method call
             base.Initialize();
         }
@@ -196,7 +200,7 @@ namespace MonoStacker
 
             // TODO: Add your update logic here
             _sceneManager.CurrentScene().Update(gameTime);
-            ParticleManager.Update();
+            ParticleManager.Update(gameTime);
 
             base.Update(gameTime);
         }
@@ -206,6 +210,7 @@ namespace MonoStacker
             GraphicsDevice.SetRenderTarget(_scaledDisp);
             GraphicsDevice.Clear(Color.Black);
             _sceneManager.CurrentScene().Draw(_spriteBatch);
+
             
 
 

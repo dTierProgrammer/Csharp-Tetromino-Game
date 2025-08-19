@@ -66,7 +66,7 @@ public static class PlayfieldEffects
 
     public static void LineClearEffect(Grid grid, Vector2 pos)
     {
-        StaticEmissionSources sources = new(new());
+        StaticEmissionSources sources = new([]);
         for (int y = 0; y < Grid.ROWS; y++)
         {
             for (int x = 0; x < Grid.COLUMNS; x++)

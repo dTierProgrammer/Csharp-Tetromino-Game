@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using MonoStacker.Source.Global;
+using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
+using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
 using RasterFontLibrary.Source;
 using System;
 using System.Collections.Generic;
@@ -31,7 +33,7 @@ namespace MonoStacker.Source.VisualEffects.Text
         private (Color flash, Color regular) _colorSet;
         private CounterState _currentState;
 
-        public CounterFlair(int counterBase, int deadZone, float flashDuration, float fadeDuration, string name, Color color) 
+        public CounterFlair(int counterBase, int deadZone, float flashDuration, float fadeDuration, string name, Color color, Vector2 position): base(position)
         {
             count = counterBase;
             _countBase = counterBase;
@@ -42,6 +44,7 @@ namespace MonoStacker.Source.VisualEffects.Text
             _colorSet = (Color.White, color);
             _currentState = CounterState.Inactive;
         }
+
 
         public void Ping(int num) 
         {
@@ -86,10 +89,10 @@ namespace MonoStacker.Source.VisualEffects.Text
             }
         }
 
-        public void Draw(SpriteBatch spriteBatch, Vector2 pos) 
+        public override void Draw(SpriteBatch spriteBatch)
         {
             if (count > _countBase + _deadZone)
-                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, pos, $"{_name}{count}", _color, OriginSetting.BottomRight);
+                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, position, $"{_name}{count}", _color, OriginSetting.BottomRight);
         }
     }
 }

@@ -20,6 +20,9 @@ using System.Diagnostics;
 using RasterFontLibrary.Source;
 using MonoStacker.Source.Interface;
 using MonoStacker.Source.VisualEffects.Text;
+using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
+using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
+using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
 
 namespace MonoStacker.Source.GameObj
 {
@@ -48,11 +51,7 @@ namespace MonoStacker.Source.GameObj
         Buffer
     }
 
-    public enum ControllerType 
-    {
-        Keyboard,
-        Gamepad
-    }
+    
 
     public class PlayField
     {
@@ -64,6 +63,7 @@ namespace MonoStacker.Source.GameObj
 
         private KeyboardState _prevKbState;
         private readonly InputManager _inputManager;
+        private InputDevice _inputDevice = InputDevice.Keyboard;
 
         private BoardState _currentBoardState = BoardState.Neutral;
         private BoardState _previousBoardState;
@@ -96,14 +96,14 @@ namespace MonoStacker.Source.GameObj
         private readonly int _queueLength = 3;
         private readonly bool _holdEnabled;
         float time = 0;
-        float colorTime = 0;
-        float colorTime2 = 0;
         float rowTime = 0;
-        int buffer = Grid.ROWS - 1;
+        private int _greyRow = Grid.ROWS - 1;
 
         private PieceManager _pieceManager;
 
         private bool _streakIsActive = false;
+        private bool _bravo;
+
         public int _streak { get; private set; } = -1;
         CounterFlair _streakCounter;
         private Color streakColor;
@@ -119,11 +119,14 @@ namespace MonoStacker.Source.GameObj
         private readonly Dictionary<GameAction, float> _eventTimeStamps = [];
         private readonly List<GameAction> _currentInputEvents = []; //= _inputManager.GetKeyInput();
         private List<GameAction> _lastInputEvents = [];
-        private float _apXCenter;
-        private float _apYCenter;
 
         private float _lockDelayAmount;
+        private ParticleLayer _particleLayer;
 
+
+        private EmitterObj _comboEffect;
+        private EmitterObj _streakEffect;
+        EmitterObj comboEffect;
 #if DEBUG
         private bool _showDebug = false;
 #else
@@ -158,15 +161,41 @@ namespace MonoStacker.Source.GameObj
             _softLock = false;
             _dropSpeed = .03f;
             _softDropFactor = 40;
-            _autoRepeatRate = (0, 0);
+            _autoRepeatRate = (.0f, .0f);
             _maxDasTime = .15f;
             _actionText = new();
             _atSys = new(new(offset.X - 6, offset.Y + 41));
-            _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange);
-            _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan);
+            _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new Vector2(offset.X - 6, offset.Y + 49));
+            _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new Vector2(offset.X - 6, offset.Y + 41));
+            _comboEffect = new
+                (
+                new StaticEmissionSource(Vector2.One),
+                new EmitterData
+                {
+                    emissionInterval = .05f,
+                    density = 3,
+                    angleVarianceMax = 3,
+                    particleActiveTime = (.01f, .5f),
+                    speed = (50, 200),
+                    particleData = new ParticleData()
+                    {
+                        texture = GetContent.Load<Texture2D>("Image/Effect/Particle/starLarge"),
+                        rotationSpeed = .05f,
+                        colorTimeLine = (Color.Red, Color.Red),
+                        scaleTimeLine = new(100, 100),
+                        opacityTimeLine = new(1, 1)
+                    }
+                },
+                EmissionType.Continuous,
+                true
+                );
+            _streakEffect = new();
+            //ParticleManager.AddEmitter(_comboEffect);
+           
             
 
             _inputManager = new InputManager();
+            _particleLayer = new();
         }
 
         private void MovePiece(float movementAmt) // move the piece a given amount 
@@ -187,7 +216,8 @@ namespace MonoStacker.Source.GameObj
                 _autoRepeatRate.timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
                 if (_autoRepeatRate.timer >= _autoRepeatRate.interval)
                 {
-                    MovePiece(movementAmt);
+                    for (var i = 0; i < Math.Abs(movementAmt); i++) 
+                        MovePiece(1 * Math.Sign(movementAmt));
                     _autoRepeatRate.timer = 0;
                 }
             }
@@ -224,7 +254,6 @@ namespace MonoStacker.Source.GameObj
             if((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && _rotateResetAllowed)
                 RotateReset();
             activePiece.Update();
-            _apXCenter = (activePiece.currentRotation.GetLength(1) * 8) / 2;
             return true;
         } 
 
@@ -380,10 +409,10 @@ namespace MonoStacker.Source.GameObj
             string lineClearTitle = _grid.rowsToClear.Count switch 
             {
                 1 => "single!",
-                2 => "Double!!",
+                2 => "double!!",
                 3 => "triple!!!",
-                4 => "Quadruple!!!!",
-                _ => "super Move!!!!!"
+                4 => "quadruple!!!!",
+                _ => "super move!!!!!"
             };
 
             string spinTitle = _currentSpinType switch 
@@ -420,7 +449,7 @@ namespace MonoStacker.Source.GameObj
         {
             _grid.ClearLines();
             if (_grid.GetNonEmptyRows() > 0) SfxBank.lineFall.Play();
-            
+            else _bravo = true;
         }
 
         private Piece HoldPiece() // calls the piecemanager's hold method, return a piece if hold is succesful, else return null 
@@ -566,18 +595,12 @@ namespace MonoStacker.Source.GameObj
                     {
                         _autoRepeatRate.timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
                         if (_autoRepeatRate.timer >= _autoRepeatRate.interval)
-                        {
                             AutoRepeatMovement(gameTime, -1);
-
-                        }
                     }
                 }
             }
             else 
-            {
                 _eventTimeStamps.Remove(GameAction.MovePieceLeft);
-                //_autoRepeatRate.timer = 0;
-            }
                 
             
             if (heldActions.Contains(GameAction.MovePieceRight))
@@ -595,56 +618,17 @@ namespace MonoStacker.Source.GameObj
                     {
                         _autoRepeatRate.timer += (float)gameTime.ElapsedGameTime.TotalSeconds;
                         if (_autoRepeatRate.timer >= _autoRepeatRate.interval)
-                        {
                             AutoRepeatMovement(gameTime, 1);
-                        }
                     }
-                        
                 }
             }
             else 
-            {
                 _eventTimeStamps.Remove(GameAction.MovePieceRight);
-                //_autoRepeatRate.timer = 0;
-            }
                 
-        }
-
-        private void UpdateActionText(GameTime gameTime)
-        {
-            if (streakColor != Color.Cyan)
-            {
-                colorTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                streakColor = Color.Lerp(streakColor, Color.Cyan, colorTime / 2);
-            }
-            else
-                colorTime = 0;
-
-            if (comboColor != Color.Orange)
-            {
-                colorTime2 += (float)gameTime.ElapsedGameTime.TotalSeconds;
-                comboColor = Color.Lerp(comboColor, Color.Orange, time / 2);
-            }
-            else
-                colorTime2 = 0;
-            if (_actionText.Count > 0) 
-            {
-                for (int x = 0; x < _actionText.Count; x++)
-                {
-                    var action = _actionText[x];
-                    action.timeDisplayed -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    
-                    action.color = action.color * .994f;
-                    _actionText[x] = action;
-                }
-            }
-            _actionText.RemoveAll(item => item.timeDisplayed <= 0);
         }
 
         public void Update(GameTime gameTime) 
         {
-            _apXCenter = (activePiece.currentRotation.GetLength(1) * 8) / 2;
-            Console.WriteLine(activePiece.GetPixelCenterOfRotation());
             if(_currentBoardState is not BoardState.Neutral)
                 _inputManager.BufferKeyInput(gameTime);
             switch (_currentBoardState) 
@@ -684,11 +668,11 @@ namespace MonoStacker.Source.GameObj
                     var interval = .1f;
                     rowTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                     _grid.SetDrawMode();
-                    if (buffer > 0 && rowTime >= interval) 
+                    if (_greyRow > 0 && rowTime >= interval) 
                     {
                         rowTime = 0;
-                        _grid.ColorRow(buffer, 8);
-                        buffer--;
+                        _grid.ColorRow(_greyRow, 8);
+                        _greyRow--;
                     }
                         
                     break;
@@ -732,8 +716,6 @@ namespace MonoStacker.Source.GameObj
             
 
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            UpdateActionText(gameTime);
-            //Debug.WriteLine(_actionText.Count);
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -842,6 +824,8 @@ namespace MonoStacker.Source.GameObj
                 #endif
             }
             _pieceManager.Draw(spriteBatch);
+            if (_bravo && _currentBoardState is not BoardState.GameEnd)
+                spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Board/bravo"), new Vector2(offset.X + 1, offset.Y + 20), Color.White);
 
             //if ((WillPieceObscureSpawn(_pieceManager.pieceQueue.Peek())))
             
@@ -859,26 +843,13 @@ namespace MonoStacker.Source.GameObj
             }
 #endif
             /*
-            if (_currentBoardState is not BoardState.GameEnd && _combo > 0) 
-                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(offset.X - 6, offset.Y + 41), $"Combo *{_combo}", comboColor , OriginSetting.BottomRight);
-            if (_currentBoardState is not BoardState.GameEnd && _streak > 0)
-                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(offset.X - 6, offset.Y + 49), $"B2B *{_streak}", streakColor, OriginSetting.BottomRight);
-            if (_actionText.Count > 0)
-            {
-                for (var i = 0; i < _actionText.Count; i++)
-                {
-                    Font.DefaultSmallOutlineGradient.RenderString(
-                        spriteBatch,
-                        new Vector2(offset.X - 6, offset.Y + 57 + (i * 8)),
-                        _actionText[i].text,
-                        _actionText[i].color,
-                        OriginSetting.BottomRight
-                    );
-                }
-            }
+            if (_combo >= 10)
+                _comboEffect._isActive = true;
+            else
+                _comboEffect._isActive = false;
             */
-            _streakCounter.Draw(spriteBatch, new Vector2(offset.X - 6, offset.Y + 41));
-            _comboCounter.Draw(spriteBatch, new Vector2(offset.X - 6, offset.Y + 49));
+            _streakCounter.Draw(spriteBatch);
+            _comboCounter.Draw(spriteBatch);
             _atSys.Draw(spriteBatch, this);
 
             spriteBatch.End();

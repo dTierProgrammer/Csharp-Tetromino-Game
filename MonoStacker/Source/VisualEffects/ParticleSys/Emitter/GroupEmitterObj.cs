@@ -2,6 +2,7 @@ using Microsoft.Xna.Framework;
 using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
+using System.Diagnostics;
 
 namespace MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
 
@@ -12,6 +13,7 @@ public class GroupEmitterObj: EmitterObj
     public GroupEmitterObj(EmissionSources sources, EmissionType emissionType)
     {
         this.sources = sources;
+        _emissionType = emissionType;
     }
 
     protected void Emit(Vector2 pos, EmitterData data)
@@ -21,56 +23,71 @@ public class GroupEmitterObj: EmitterObj
         bufferedParticleData.speed = ExtendedMath.RandomFloat(data.speed.min, data.speed.max);
         float rand = (float)(ExtendedMath.Rng.NextDouble() * 2) - 1;
         bufferedParticleData.angle += data.angleVarianceMax * rand;
+        emissionState = EmitterState.Active;
 
         ParticleObj bufferedParticle = new(pos, bufferedParticleData);
         ParticleManager.AddParticle(bufferedParticle);
     }
 
-    public override void Update()
+    protected override void UpdateBurst() 
     {
-        if (_emissionType != EmissionType.Burst && _isActive)
+        foreach (var item in sources.Members)
         {
-            _timeInInterval -= (float)Game1.uGameTime.ElapsedGameTime.TotalSeconds;
-            while (_timeInInterval <= 0)
-            {
-                
-                foreach (var item in sources.Members)
-                {
-                    
-                    var pos = item.Position;
-                    var data = item.Data;
-                    _timeInInterval = data.emissionInterval;
+            var pos = item.Position;
+            var data = item.Data;
+            _timeInInterval = data.emissionInterval;
+            for (int i = 0; i < data.density; i++)
+                Emit(pos, data);
+        }
+        emissionState = EmitterState.Inactive;
+    }
 
-                    for (int i = 0; i < data.density; i++)
-                    {
-                      Emit(pos, data);
-                    }
-                }
+    protected override void UpdateTimed(GameTime gameTime) 
+    {
+        while (_timeInInterval <= 0)
+        {
+            foreach (var item in sources.Members)
+            {
+                var pos = item.Position;
+                var data = item.Data;
+                _timeInInterval = data.emissionInterval;
+                for (int i = 0; i < data.density; i++)
+                    Emit(pos, data);
             }
         }
+        _timeInInterval -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        if (_timeLeft <= 0) { emissionState = EmitterState.Inactive; return; }
+        _timeLeft -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+    }
 
+    protected override void UpdateContinuous(GameTime gameTime) 
+    {
+        while (_timeInInterval <= 0)
+        {
+            foreach (var item in sources.Members)
+            {
+                var pos = item.Position;
+                var data = item.Data;
+                _timeInInterval = data.emissionInterval;
+                for (int i = 0; i < data.density; i++)
+                    Emit(pos, data);
+            }
+        }
+        _timeInInterval -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+    }
+
+    public override void Update(GameTime gameTime)
+    {
         switch (_emissionType) 
         {
             case EmissionType.Continuous:
+                UpdateContinuous(gameTime);
                 break;
             case EmissionType.Timed:
-                _timeLeft -= (float)Game1.uGameTime.ElapsedGameTime.TotalSeconds;
-                if (_timeLeft <= 0)
-                    _isActive = false;
+                UpdateTimed(gameTime);
                 break;
             case EmissionType.Burst:
-                foreach (var item in sources.Members)
-                {
-                    var pos = item.Position;
-                    var data = item.Data;
-
-                    for (int i = 0; i < data.density; i++)
-                    {
-                      Emit(pos);
-                    }
-                }
-                _isActive = false;
-                _timeLeft = 0;
+                UpdateBurst();
                 break;
         }
     }

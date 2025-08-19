@@ -41,19 +41,20 @@ namespace MonoStacker.Source.VisualEffects.ParticleSys.Particle
             _particles.RemoveAll(particle => particle.activeTimeLeft <= 0);
         }
 
-        private void UpdateEmitters()
+        private void UpdateEmitters(GameTime gameTime)
         {
             foreach (var emitter in _emitters)
-                emitter.Update();
-            _emitters.RemoveAll(emitter => emitter._timeLeft <= 0);
+            {
+                if (emitter._emitParticles)
+                    emitter.Update(gameTime);
+            }
+            _emitters.RemoveAll(emitter => emitter.emissionState == EmitterState.Inactive);
         }
 
         public void Update(GameTime gameTime)
         {
             UpdateParticles(gameTime);
-            UpdateEmitters();
-            _emitters.RemoveAll(emitter => emitter._emissionType == EmissionType.Burst && emitter._timeLeft <= 0);
-            //Debug.WriteLine(_particles.Count);
+            UpdateEmitters(gameTime);
         }
 
         public void Draw(SpriteBatch spriteBatch)

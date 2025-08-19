@@ -31,12 +31,13 @@ namespace MonoStacker.Source.Scene.GameScenes
         {
             AnimatedEffectManager.Update(gameTime);
             playfield.Update(gameTime);
+            
         }
 
         public void Draw(SpriteBatch spriteBatch)
         {
           spriteBatch.Begin();
-          spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg_1080"), new Vector2(0, 0), Color.White);
+          //spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Background/bg_1080"), new Vector2(0, 0), Color.White);
            
           spriteBatch.End();
           playfield.Draw(spriteBatch);
