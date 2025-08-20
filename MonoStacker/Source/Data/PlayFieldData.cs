@@ -23,8 +23,8 @@ namespace MonoStacker.Source.Data
         public IRotationSystem rotationSystem = new SuperRotationSys();
         public SpinDenotation parsedSpins = SpinDenotation.TSpinOnly;
         public bool temporaryLandingSys = true;
-        public float lineClearDelay = .583f;
-        public float arrivalDelay = .16667f;
+        public float lineClearDelay = 0;
+        public float arrivalDelay = 0;
         public float softLockDelay = .5f;
         public int horiStepResets = 15;
         public bool horiStepResetAllowed = true;
@@ -33,7 +33,7 @@ namespace MonoStacker.Source.Data
         public bool vertStepResetAllowed = false;
         public bool allowDas = true;
         public float autoshiftDelay = .15f;
-        public float autoshiftRepeatRate = .5f;
+        public float autoshiftRepeatRate = 1;
         public bool softDropLocks = false;
         public float gravity = .03f;
         public float softDropFactor = 20;

@@ -46,11 +46,11 @@ namespace MonoStacker.Source.VisualEffects.Text
         }
 
 
-        public void Ping(int num) 
+        public void Ping() 
         {
             _currentState = CounterState.Increment;
             _color = _colorSet.flash;
-            count+= num;
+            count++;
         }
 
         public void SetPing(int num) 
@@ -93,6 +93,12 @@ namespace MonoStacker.Source.VisualEffects.Text
         {
             if (count > _countBase + _deadZone)
                 Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, position, $"{_name}{count}", _color, OriginSetting.BottomRight);
+        }
+
+        public void Draw(SpriteBatch spriteBatch, OriginSetting originSetting)
+        {
+            if (count > _countBase + _deadZone)
+                Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, position, $"{_name}{count}", _color, originSetting);
         }
 
         public void Draw(SpriteBatch spriteBatch, float layerDepth)

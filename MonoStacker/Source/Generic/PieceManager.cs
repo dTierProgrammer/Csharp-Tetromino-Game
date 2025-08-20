@@ -166,7 +166,7 @@ namespace MonoStacker.Source.Generic
             piece.Update();
         }
 
-        private void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset, int tilesize, bool isGray)
+        private void DrawPiece(SpriteBatch spriteBatch, Piece piece, Vector2 offset, int tilesize, int? overrideId)
         {
             for (var y = 0; y < piece.thumbnail.GetLength(0); y++) 
             {
@@ -177,14 +177,13 @@ namespace MonoStacker.Source.Generic
                         spriteBatch.Draw(
                             ImgBank.BlockTexture,
                             new Rectangle((int)(x * tilesize + offset.X), (int)(y * tilesize + offset.Y), tilesize, tilesize),
-                            isGray? QueuePieceTiles[7] :QueuePieceTiles[piece.thumbnail[y, x] - 1],
+                            overrideId is not null? QueuePieceTiles[overrideId.Value] :QueuePieceTiles[piece.thumbnail[y, x] - 1],
                             Color.White
                         );
                     }
                 }
             }
         }
-
 
         private void DrawSideNextQueue(SpriteBatch spriteBatch, Vector2 queueOffset) 
         {
@@ -209,7 +208,7 @@ namespace MonoStacker.Source.Generic
                     _ => 5
                 };
 
-                DrawPiece(spriteBatch, pieceQueue.ElementAt(i), new Vector2(queueOffset.X + buffer, ((i) * Gridsize) + queueOffset.Y + bufferY), 8, false);
+                DrawPiece(spriteBatch, pieceQueue.ElementAt(i), new Vector2(queueOffset.X + buffer, ((i) * Gridsize) + queueOffset.Y + bufferY), 8, null);
             }
                
 
@@ -241,7 +240,7 @@ namespace MonoStacker.Source.Generic
                     _ => 5
                 };
 
-                DrawPiece(spriteBatch, _holdBox.ElementAt(0), new Vector2(offset.X + buffer, offset.Y + bufferY), 8, !canHold);
+                DrawPiece(spriteBatch, _holdBox.ElementAt(0), new Vector2(offset.X + buffer, offset.Y + bufferY), 8, canHold ? null: 7);
             }
 
             spriteBatch.Draw(BorderTexture, new Vector2(offset.X - 4, offset.Y - 3), QueueBorderTiles[0], Color.White, 0, Vector2.Zero, 1, SpriteEffects.FlipHorizontally, 0);
@@ -256,7 +255,7 @@ namespace MonoStacker.Source.Generic
             spriteBatch.Draw(BgTexture, new Vector2(offset.X + 4, offset.Y + 4), QueueBgTiles[4], Color.White);
             spriteBatch.Draw(BorderTexture, new Vector2(offset.X, offset.Y), QueueBorderTiles[5], Color.White);
             spriteBatch.Draw(BorderTexture, new Vector2(offset.X + 4, offset.Y - 8), QueueBorderTiles[4], Color.White);
-            DrawPiece(spriteBatch, pieceQueue.ElementAt(0), new Vector2(offset.X + 6, offset.Y + 6), 8, false);
+            DrawPiece(spriteBatch, pieceQueue.ElementAt(0), new Vector2(offset.X + 6, offset.Y + 6), 8, null);
 
             if (_queueLength > 1) 
             {
@@ -264,14 +263,14 @@ namespace MonoStacker.Source.Generic
                 spriteBatch.Draw(BgTexture, new Vector2(offset.X + 44, offset.Y + 4), QueueBgTiles[6], Color.White);
                 var bound = _queueLength <= 3 ? _queueLength - 1 : 2;
                 for (var i = 0; i < bound; i++)
-                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i + 1), new Vector2((i * SmallGridsize) + offset.X + 41, offset.Y + 6), 4, false);
+                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i + 1), new Vector2((i * SmallGridsize) + offset.X + 41, offset.Y + 6), 4, null);
             }
 
             if (_queueLength > 3) 
             {
                 for (var i = 0; i < _queueLength - 3; i++) 
                 {
-                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i + 3), new Vector2(offset.X + 67, (i * 13) + offset.Y + 20), 4, false);
+                    DrawPiece(spriteBatch, pieceQueue.ElementAt(i + 3), new Vector2(offset.X + 67, (i * 13) + offset.Y + 20), 4, null);
                 }
             }
         }
@@ -284,7 +283,7 @@ namespace MonoStacker.Source.Generic
 
             if (_holdBox.Count != 0) 
             {
-                DrawPiece(spriteBatch, _holdBox.ElementAt(0), new Vector2(offset.X + 6, offset.Y + 6), 4, !canHold);
+                DrawPiece(spriteBatch, _holdBox.ElementAt(0), new Vector2(offset.X + 6, offset.Y + 6), 4, canHold ? null : 7);
             }
         }
 
