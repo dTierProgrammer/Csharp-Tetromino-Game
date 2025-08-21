@@ -30,15 +30,11 @@ namespace MonoStacker
         /*
         TODO:
         - Revise piece spin detection
-        - Text rendering system (for action text)
         - Garbage system
             - basic line garbage line addition system (o)
         - Revise effects
             - drop particle effect (o)
             - piece hit stack effect (x)
-
-        TEST:
-        - Seperating sub grid movement from physical piece location
         
         FUTURE:
         - Menu system
@@ -47,7 +43,6 @@ namespace MonoStacker
         - Guideline compliant modes (Marathon (150l/Endless), 40l sprint, Ultra)
         - Classic arcade modes (Sega Marathon, TGM1 Master)
         - Freeplay mode
-        - Better customizeable ARR
         - JSON support (for saving scores, times)
         */
 
@@ -67,13 +62,12 @@ namespace MonoStacker
 # else
             _graphics.PreferredBackBufferWidth = 1920;
             _graphics.PreferredBackBufferHeight = 1080;
+            _graphics.IsFullScreen = true;
             _graphics.ApplyChanges();
             _scaledDisp = new RenderTarget2D(GraphicsDevice, GraphicsDevice.DisplayMode.Width / 4, GraphicsDevice.DisplayMode.Height / 4);
             _sceneManager = new SceneManager();
 
 # endif
-
-            
 
             IsMouseVisible = true;
         }   
@@ -92,10 +86,7 @@ namespace MonoStacker
         protected override void LoadContent()
         {
             _spriteBatch = new SpriteBatch(GraphicsDevice);
-            
-
             // TODO: use this.Content to load your game content here
-            
         }
 
         protected override void Update(GameTime gameTime)

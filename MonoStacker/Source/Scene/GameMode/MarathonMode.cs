@@ -1,5 +1,6 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Data;
 using MonoStacker.Source.GameObj;
 using MonoStacker.Source.Generic;
@@ -7,6 +8,7 @@ using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.Interface;
 using MonoStacker.Source.Interface.Input;
+using MonoStacker.Source.VisualEffects;
 using MonoStacker.Source.VisualEffects.Text;
 using RasterFontLibrary.Source;
 using System;
@@ -42,11 +44,20 @@ namespace MonoStacker.Source.Scene.GameMode
         private int snd;
         private int min;
         private bool _runTimer = true;
+        
         private int piecesPlaced = 0;
+        private KeyboardState _prevKBS;
+        AnimatedEffectLayer _aeLayer = new();
+        string _title = "Marathon Game";
+        float startTimer;
+        float intermediateTimer = 1;
+        float successTimer = 2;
+        
 
         public void Initialize() 
         {
-            _currentState = GameState.Play;
+            startTimer = 5;
+            _currentState = GameState.PreGame;
             _playField = new PlayField(new Vector2(240, 135), new PlayFieldData(), new InputBinds());
             _atSys = new ActionTextSystem(new Vector2(_playField.offset.X - 13, _playField.offset.Y + 52));
             _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new(_playField.offset.X - 12, _playField.offset.Y + 41));
@@ -59,6 +70,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _playField.StreakBreak += _streakCounter.Kill;
             _playField.TopOut += StopTimer;
             _playField.PiecePlaced += IncrementPlacements;
+            _playField.Bravo += BravoPing;
             _level = 1;
             _gravity = SetGravity(_level);
             _playField.gravity = _gravity;
@@ -123,6 +135,16 @@ namespace MonoStacker.Source.Scene.GameMode
             };
         }
 
+        private float StreakMultiplier(int streak) 
+        {
+            return 1;
+        }
+
+        private void BravoPing() 
+        {
+            _aeLayer.AddEffect(new EventTitle(ImgBank.BravoTitle, new Vector2(240, 100), new Vector2(ImgBank.BravoTitle.Width + 100, 0), .2f, 1f, new Vector2(ImgBank.BravoTitle.Width + 50, ImgBank.BravoTitle.Height + 10), 1f));
+        }
+
         private void PingLineClear() 
         {
             string lineClearTitle = _playField.grid.rowsToClear.Count switch
@@ -157,18 +179,37 @@ namespace MonoStacker.Source.Scene.GameMode
         {
             _goalProgress += _playField.grid.rowsToClear.Count;
             _linesCleared += _playField.grid.rowsToClear.Count;
-            //if (_playField.currentSpinType == SpinType.None) 
-            //{
-            var num = 1;
-            float num2 = 1;
-            if (_streakCounter.count >= 3)
-                num = _streakCounter.count / 3;
 
-            if (_playField.currentSpinType == SpinType.MiniSpin)
-                num2 = 1.5f;
-            _score += (100 * _playField.grid.rowsToClear.Count * (int)_playField.grid.rowsToClear.Count / 2) * num * num2;
-                
-            //}
+            if (_playField.currentSpinType == SpinType.None)
+            {
+                _score += _playField.grid.rowsToClear.Count switch
+                {
+                    1 => (100 * _level) + (50 * _comboCounter.count * _level),
+                    2 => (300 * _level) + (50 * _comboCounter.count * _level),
+                    3 => (500 * _level) + (50 * _comboCounter.count * _level),
+                    4 => (800 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count
+                };
+            }
+            else if (_playField.currentSpinType == SpinType.MiniSpin)
+            {
+                _score += _playField.grid.rowsToClear.Count switch
+                {
+                    1 => (200 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
+                    2 => (400 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
+                    3 => (600 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
+                    4 => (800 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count
+                };
+            }
+            else 
+            {
+                _score += _playField.grid.rowsToClear.Count switch
+                {
+                    1 => (800 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
+                    2 => (1200 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
+                    3 => (1600 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
+                    4 => (2000 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count
+                };
+            }
 
             ValidateProgress();
             _levelProgressDisplay.Update(_goalProgress);
@@ -186,7 +227,7 @@ namespace MonoStacker.Source.Scene.GameMode
                     if (i % _lineGoal != 0) continue;
                     _level++;
                     _playField.gravity = SetGravity(_level);
-                    _atSys.Ping("level up!", Color.Cyan, Color.Blue,  3, .3f);
+                    _atSys.Ping("level up!", Color.Cyan, Color.RoyalBlue,  3, .3f);
                 }
             }
         }
@@ -201,13 +242,51 @@ namespace MonoStacker.Source.Scene.GameMode
             switch (_currentState) 
             {
                 case GameState.PreGame:
+                    if (startTimer <= 1) { _currentState = GameState.Play; _playField.StartGame(); AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.Go, new Vector2(240, 100), new Vector2(ImgBank.Go.Width + 100, ImgBank.Go.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.OrangeRed, Color.OrangeRed, Color.Red, false)); }
+                        startTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    if (intermediateTimer <= 0) 
+                    {
+                        switch ((int)startTimer) 
+                        {
+                            case 1:
+                                AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown1, new Vector2(240, 100), new Vector2(ImgBank.CountDown1.Width + 100, ImgBank.CountDown1.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.OrangeRed, Color.White, Color.White, false));
+                                break;
+                            case 2:
+                                AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown2, new Vector2(240, 100), new Vector2(ImgBank.CountDown2.Width + 100, ImgBank.CountDown2.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.Orange, Color.White, Color.White, false));
+                                break;
+                            case 3:
+                                AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown3, new Vector2(240, 100), new Vector2(ImgBank.CountDown3.Width + 100, ImgBank.CountDown3.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.Yellow, Color.White, Color.White, false));
+                                break;
+                        }
+                        intermediateTimer = 1;
+                    }
+                    intermediateTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                     break;
                 case GameState.Play:
-                    UpdateGame(gameTime);
-                    if(_runTimer)
+                    
+                    if (_runTimer) 
+                    {
+                        UpdateGame(gameTime);
                         RunTimer(gameTime);
+                    }
+                        
+                    if (_linesCleared >= _maxLinesCleared) 
+                    {
+                        _runTimer = false;
+                        if (successTimer == 2) { AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.ClearTitle, new Vector2(240, 100), new Vector2(ImgBank.ClearTitle.Width + 100, 0), .2f, 1f, new Vector2(ImgBank.ClearTitle.Width + 50, ImgBank.ClearTitle.Height + 10), 1f)); }
+                        successTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                        if (successTimer <= 0) 
+                        {
+                            _currentState = GameState.Succeed;
+                            _playField.EndGame();
+                        }
+                    }
+                   
+                
+                    
                     break;
                 case GameState.Succeed:
+                    UpdateGame(gameTime);
                     break;
                 case GameState.GameOver:
                     break;
@@ -217,6 +296,14 @@ namespace MonoStacker.Source.Scene.GameMode
             _atSys.Update(gameTime);
             _comboCounter.Update(gameTime);
             _streakCounter.Update(gameTime);
+
+            if (Keyboard.GetState().IsKeyDown(Keys.LeftAlt) && !_prevKBS.IsKeyDown(Keys.LeftAlt)) 
+            {
+                _linesCleared += 30;
+            }
+            
+            _prevKBS = Keyboard.GetState();
+            _aeLayer.Update(gameTime);
         }
         public void Draw(SpriteBatch spriteBatch) 
         {
@@ -240,12 +327,15 @@ namespace MonoStacker.Source.Scene.GameMode
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(188, 186), $"Lines: {_linesCleared}/{_maxLinesCleared}", Color.Orange, OriginSetting.TopRight);
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(188, 194), $"Level {_level}", Color.Orange, OriginSetting.TopRight);
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(188, 202), $"Pieces: {piecesPlaced}", Color.Orange, OriginSetting.TopRight);
-            Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(240, 230), $"Marathon Game", Color.Lime, OriginSetting.Top);
+            Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(240, 230), $"{_title}", Color.Lime, OriginSetting.Top);
             spriteBatch.End();
             _atSys.Draw(spriteBatch);
             spriteBatch.Begin();
             _comboCounter.Draw(spriteBatch);
             _streakCounter.Draw(spriteBatch);
+            spriteBatch.End();
+            spriteBatch.Begin();
+            _aeLayer.Draw(spriteBatch);
             spriteBatch.End();
         }
     }

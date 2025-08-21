@@ -13,7 +13,7 @@ namespace MonoStacker.Source.VisualEffects
 {
     public class LockFlash: AnimatedEffect 
     {
-        private Rectangle _sourceRect = new Rectangle(8, 8, 8, 8);
+        private Rectangle? _sourceRect = null;
         private Texture2D _blocks = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect");
         private Vector2 _position;
         private float rectWidth = 8;
@@ -48,6 +48,27 @@ namespace MonoStacker.Source.VisualEffects
             this.distortFactor = distortFactor;
         }
 
+        public LockFlash(Texture2D image, Vector2 position, Color color, float timeDisplayed, Vector2 distortFactor) : base(position)
+        {
+            _blocks = image;
+            _position = position;
+            tint = color;
+            MaxTimeDisplayed = timeDisplayed;
+            TimeDisplayed = timeDisplayed;
+            this.distortFactor = distortFactor;
+        }
+
+        public LockFlash(Texture2D image, Rectangle sourceRect, Vector2 position, Color color, float timeDisplayed, Vector2 distortFactor) : base(position)
+        {
+            _blocks = image;
+            _position = position;
+            tint = color;
+            MaxTimeDisplayed = timeDisplayed;
+            TimeDisplayed = timeDisplayed;
+            this.distortFactor = distortFactor;
+            _sourceRect = sourceRect;
+        }
+
         public override void Update(float deltaTime)
         {
             TimeDisplayed -= deltaTime;
@@ -61,7 +82,7 @@ namespace MonoStacker.Source.VisualEffects
             spriteBatch.Draw
                 (_blocks,
                 new Rectangle((int)_position.X + 4, (int)_position.Y + 4, (int)rectWidth, (int)rectHeight),
-                null,
+                _sourceRect,
                 tint,
                 0,
                 new Vector2(4, 4),

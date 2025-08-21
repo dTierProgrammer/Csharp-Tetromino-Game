@@ -25,7 +25,7 @@ namespace MonoStacker.Source.Generic
         private Microsoft.Xna.Framework.Vector2 _offset;
         private DrawMode _drawMode = DrawMode.Playing;
 
-        public List<Rectangle> imageTiles = new();
+        public readonly List<Rectangle> imageTiles = new();
         private const int TILESIZE = 8;
 
         public const int ROWS = 40; // y
@@ -62,9 +62,7 @@ namespace MonoStacker.Source.Generic
                 _matrix[y] = new int[COLUMNS];
 
                 for (int x = 0; x < COLUMNS; x++) 
-                {
                     _matrix[y][x] = 0;
-                }
             }
         }
 
@@ -97,9 +95,7 @@ namespace MonoStacker.Source.Generic
                     for (int x = 0; x < piece.currentRotation.GetLength(1); x++) // column
                     {
                         if (piece.currentRotation[y, x] > 0) 
-                        {
                             _matrix[y + rowOffset][ x + columnOffset] = piece.currentRotation[y, x];
-                        }
                     }
                 }
             }
@@ -183,6 +179,7 @@ namespace MonoStacker.Source.Generic
         }
 
 
+
         public SpinType CheckForSpin(Piece piece) // Z/S spin doubles aren't counted for whatever reason, investigate sometime
         {
             int mandatoryCornersFilled = 0;
@@ -231,6 +228,22 @@ namespace MonoStacker.Source.Generic
             return SpinType.None;
         }
 
+        public int GetHighestRow() 
+        {
+            int row = 0;
+            bool counting = true;
+            for (var y = 0; y < ROWS; y++) 
+            {
+                row = y;
+                for (var x = 0; x < COLUMNS; x++)
+                {
+                    if (_matrix[y][x] != 0)
+                    { counting = false; break;}
+                }
+                if (!counting) break;
+            }
+            return row;
+        }
         public bool IsLineEmpty(int rowIndex) 
         {
             bool isEmpty = true;
