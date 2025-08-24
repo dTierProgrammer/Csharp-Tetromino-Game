@@ -44,7 +44,7 @@ namespace MonoStacker.Source.Scene.GameMode
         private int snd;
         private int min;
         private bool _runTimer = true;
-        
+        private bool _runGame = true;
         private int piecesPlaced = 0;
         private KeyboardState _prevKBS;
         AnimatedEffectLayer _aeLayer = new();
@@ -69,6 +69,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _playField.StreakContinue += _streakCounter.Ping;
             _playField.StreakBreak += _streakCounter.Kill;
             _playField.TopOut += StopTimer;
+            _playField.GameEnd += StopGame;
             _playField.PiecePlaced += IncrementPlacements;
             _playField.Bravo += BravoPing;
             _level = 1;
@@ -80,6 +81,11 @@ namespace MonoStacker.Source.Scene.GameMode
         private void StopTimer() 
         {
             _runTimer = false;
+        }
+
+        private void StopGame() 
+        {
+            _runGame = false;
         }
 
         private void IncrementPlacements() 
@@ -179,7 +185,7 @@ namespace MonoStacker.Source.Scene.GameMode
         {
             _goalProgress += _playField.grid.rowsToClear.Count;
             _linesCleared += _playField.grid.rowsToClear.Count;
-
+            var num = _streakCounter.count > 0 ? _streakCounter.count : 1;
             if (_playField.currentSpinType == SpinType.None)
             {
                 _score += _playField.grid.rowsToClear.Count switch
@@ -187,27 +193,27 @@ namespace MonoStacker.Source.Scene.GameMode
                     1 => (100 * _level) + (50 * _comboCounter.count * _level),
                     2 => (300 * _level) + (50 * _comboCounter.count * _level),
                     3 => (500 * _level) + (50 * _comboCounter.count * _level),
-                    4 => (800 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count
+                    4 => (800 * _level) + (50 * _comboCounter.count * _level) * num
                 };
             }
             else if (_playField.currentSpinType == SpinType.MiniSpin)
             {
                 _score += _playField.grid.rowsToClear.Count switch
                 {
-                    1 => (200 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
-                    2 => (400 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
-                    3 => (600 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
-                    4 => (800 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count
+                    1 => (200 * _level) + (50 * _comboCounter.count * _level) * num,
+                    2 => (400 * _level) + (50 * _comboCounter.count * _level) * num,
+                    3 => (600 * _level) + (50 * _comboCounter.count * _level) * num,
+                    4 => (800 * _level) + (50 * _comboCounter.count * _level) * num
                 };
             }
             else 
             {
                 _score += _playField.grid.rowsToClear.Count switch
                 {
-                    1 => (800 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
-                    2 => (1200 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
-                    3 => (1600 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count,
-                    4 => (2000 * _level) + (50 * _comboCounter.count * _level) * _streakCounter.count
+                    1 => (800 * _level) + (50 * _comboCounter.count * _level) * num,
+                    2 => (1200 * _level) + (50 * _comboCounter.count * _level) * num,
+                    3 => (1600 * _level) + (50 * _comboCounter.count * _level) * num,
+                    4 => (2000 * _level) + (50 * _comboCounter.count * _level) * num
                 };
             }
 
@@ -232,6 +238,29 @@ namespace MonoStacker.Source.Scene.GameMode
             }
         }
 
+        private void StartingCountDown(GameTime gameTime) 
+        {
+            if (startTimer <= 1) { _currentState = GameState.Play; _playField.Start(); AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.Go, new Vector2(240, 100), new Vector2(ImgBank.Go.Width + 100, ImgBank.Go.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.OrangeRed, Color.OrangeRed, Color.Red, false)); }
+            startTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+            if (intermediateTimer <= 0)
+            {
+                switch ((int)startTimer)
+                {
+                    case 1:
+                        AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown1, new Vector2(240, 100), new Vector2(ImgBank.CountDown1.Width + 100, ImgBank.CountDown1.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.OrangeRed, Color.White, Color.White, false));
+                        break;
+                    case 2:
+                        AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown2, new Vector2(240, 100), new Vector2(ImgBank.CountDown2.Width + 100, ImgBank.CountDown2.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.Orange, Color.White, Color.White, false));
+                        break;
+                    case 3:
+                        AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown3, new Vector2(240, 100), new Vector2(ImgBank.CountDown3.Width + 100, ImgBank.CountDown3.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.Yellow, Color.White, Color.White, false));
+                        break;
+                }
+                intermediateTimer = 1;
+            }
+            intermediateTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+        }
+
         private void UpdateGame(GameTime gameTime) 
         {
             _playField.Update(gameTime);
@@ -242,51 +271,32 @@ namespace MonoStacker.Source.Scene.GameMode
             switch (_currentState) 
             {
                 case GameState.PreGame:
-                    if (startTimer <= 1) { _currentState = GameState.Play; _playField.StartGame(); AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.Go, new Vector2(240, 100), new Vector2(ImgBank.Go.Width + 100, ImgBank.Go.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.OrangeRed, Color.OrangeRed, Color.Red, false)); }
-                        startTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
-                    if (intermediateTimer <= 0) 
-                    {
-                        switch ((int)startTimer) 
-                        {
-                            case 1:
-                                AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown1, new Vector2(240, 100), new Vector2(ImgBank.CountDown1.Width + 100, ImgBank.CountDown1.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.OrangeRed, Color.White, Color.White, false));
-                                break;
-                            case 2:
-                                AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown2, new Vector2(240, 100), new Vector2(ImgBank.CountDown2.Width + 100, ImgBank.CountDown2.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.Orange, Color.White, Color.White, false));
-                                break;
-                            case 3:
-                                AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.CountDown3, new Vector2(240, 100), new Vector2(ImgBank.CountDown3.Width + 100, ImgBank.CountDown3.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.Yellow, Color.White, Color.White, false));
-                                break;
-                        }
-                        intermediateTimer = 1;
-                    }
-                    intermediateTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    StartingCountDown(gameTime);
                     break;
                 case GameState.Play:
-                    
-                    if (_runTimer) 
-                    {
+                    if(_runGame)
                         UpdateGame(gameTime);
+                    if (_runTimer) 
                         RunTimer(gameTime);
-                    }
-                        
                     if (_linesCleared >= _maxLinesCleared) 
                     {
-                        _runTimer = false;
-                        if (successTimer == 2) { AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.ClearTitle, new Vector2(240, 100), new Vector2(ImgBank.ClearTitle.Width + 100, 0), .2f, 1f, new Vector2(ImgBank.ClearTitle.Width + 50, ImgBank.ClearTitle.Height + 10), 1f)); }
+                        if (successTimer == 2) 
+                        { 
+                            AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.ClearTitle, new Vector2(240, 100), new Vector2(ImgBank.ClearTitle.Width + 100, 0), .2f, 1f, new Vector2(ImgBank.ClearTitle.Width + 50, ImgBank.ClearTitle.Height + 10), 1f));
+                            _runTimer = false;
+                            _playField.PauseForEvent();
+                        }
                         successTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                         if (successTimer <= 0) 
                         {
                             _currentState = GameState.Succeed;
-                            _playField.EndGame();
+                            _playField.End();
                         }
                     }
-                   
-                
-                    
                     break;
                 case GameState.Succeed:
-                    UpdateGame(gameTime);
+                    if(_runGame)
+                        UpdateGame(gameTime);
                     break;
                 case GameState.GameOver:
                     break;
@@ -297,12 +307,11 @@ namespace MonoStacker.Source.Scene.GameMode
             _comboCounter.Update(gameTime);
             _streakCounter.Update(gameTime);
 
+#if DEBUG
             if (Keyboard.GetState().IsKeyDown(Keys.LeftAlt) && !_prevKBS.IsKeyDown(Keys.LeftAlt)) 
-            {
                 _linesCleared += 30;
-            }
-            
             _prevKBS = Keyboard.GetState();
+#endif
             _aeLayer.Update(gameTime);
         }
         public void Draw(SpriteBatch spriteBatch) 

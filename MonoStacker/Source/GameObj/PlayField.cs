@@ -40,6 +40,7 @@ namespace MonoStacker.Source.GameObj
     {
         PreGame,
         Playing,
+        EventPause,
         LineClearDelay,
         ArrivalDelay,
         RecieveDamage,
@@ -175,7 +176,7 @@ namespace MonoStacker.Source.GameObj
         private readonly bool _holdEnabled;
         float time = 0;
         float rowTime = 0;
-        private int _greyRow = Grid.ROWS - 1;
+        private int _greyRow = Grid.ROWS - 1  ;
         private int _highestRow;
 
         private PieceManager _pieceManager;
@@ -209,6 +210,7 @@ namespace MonoStacker.Source.GameObj
         public event Action ComboBreak;
         public event Action Bravo;
         public event Action TopOut;
+        public event Action GameEnd;
         public event Action Win;
         public event Action Loss;
 
@@ -249,16 +251,21 @@ namespace MonoStacker.Source.GameObj
             _inputManager = new InputManager(binds);
         }
 
-        public void StartGame() 
+        public void Start() 
         {
             GrabNextPiece();
         }
 
-        public void EndGame() 
+        public void End() 
         {
             _highestRow = grid.GetHighestRow();
             _currentBoardState = BoardState.Finish;
-            Debug.WriteLine("ellle");
+        }
+
+        public void PauseForEvent()
+        {
+            _currentBoardState = BoardState.EventPause;
+            activePiece = null;
         }
 
         private void MovePieceHorizontal(int movementAmt) // move the piece a given amount 
@@ -696,10 +703,7 @@ namespace MonoStacker.Source.GameObj
                     _arrivalDelay.timeLeftover -= (float)gameTime.ElapsedGameTime.TotalSeconds;
 
                     if (_arrivalDelay.timeLeftover <= 0) 
-                    {
                         GrabNextPiece();
-                        //_currentBoardState = BoardState.Playing;
-                    }
                     break;
                 case BoardState.TopOut:
                     var interval = .05f;
@@ -713,6 +717,8 @@ namespace MonoStacker.Source.GameObj
                         grid.ColorRow(_greyRow, 8);
                         _greyRow--;
                     }
+                    if (_greyRow < _highestRow)
+                        GameEnd?.Invoke();
                     break;
                 case BoardState.Finish:
                     var intervalB = .15f;
@@ -721,7 +727,7 @@ namespace MonoStacker.Source.GameObj
                     if (_greyRow >= _highestRow && rowTime >= intervalB)
                     {
                         rowTime = 0;
-                        for (int i = 0; i < Grid.COLUMNS - 1; i++) 
+                        for (int i = 0; i < Grid.COLUMNS; i++) 
                         {
                             if (grid._matrix[_greyRow][i] != 0)
                                 AnimatedEffectManager.AddEffect(new LockFlash(ImgBank.BlockTexture, grid.imageTiles[grid._matrix[_greyRow][i] - 1],new Vector2(offset.X + (i * 8), offset.Y + (_greyRow * 8) - 160), Color.White, 1f, Vector2.Zero));
@@ -730,6 +736,8 @@ namespace MonoStacker.Source.GameObj
                         grid.ColorRow(_greyRow, 0);
                         _greyRow--;
                     }
+                    if (_greyRow < _highestRow)
+                        GameEnd?.Invoke();
                     break;
             }
             if (_currentBoardState is BoardState.Playing || _currentBoardState is BoardState.LineClearDelay || _currentBoardState is BoardState.ArrivalDelay)
@@ -751,17 +759,15 @@ namespace MonoStacker.Source.GameObj
             if (Keyboard.GetState().IsKeyDown(Keys.G) && !_prevKbState.IsKeyDown(Keys.G)) 
             {
                 if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && activePiece.offsetY > -1) 
-                {
                     activePiece.offsetY--;
-                }
                 grid.AddGarbageLine(8);
             }
             if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !_prevKbState.IsKeyDown(Keys.Tab)) 
                 _combo++;
-
+            _prevKbState = Keyboard.GetState();
 #endif
-                _prevKbState = Keyboard.GetState();
-            if(activePiece is not null)
+
+            if (activePiece is not null)
                 _prevYOff = activePiece.offsetY;
             _aeLayer.Update(gameTime);
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -892,7 +898,6 @@ namespace MonoStacker.Source.GameObj
                 }
             }
 #endif
-            
             spriteBatch.End();
         }
     }

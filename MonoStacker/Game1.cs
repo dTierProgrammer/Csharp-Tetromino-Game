@@ -31,9 +31,7 @@ namespace MonoStacker
         TODO:
         - Revise piece spin detection
         - Garbage system
-            - basic line garbage line addition system (o)
         - Revise effects
-            - drop particle effect (o)
             - piece hit stack effect (x)
         
         FUTURE:
