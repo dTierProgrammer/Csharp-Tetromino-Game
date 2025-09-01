@@ -10,6 +10,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using MonoStacker.Source.Generic.Rotation;
 
 namespace MonoStacker.Source.Generic
 {
@@ -123,11 +124,28 @@ namespace MonoStacker.Source.Generic
             _playfield = playfield;
         }
 
-        public Piece DealPiece() 
+        public Piece DealPiece(RotationType? preRotateType, bool preHoldRequested) 
         {
             pieceQueue.Enqueue(_generator.GetNextTetromino(_factory));
-            Piece piece = pieceQueue.Dequeue();
+            var piece = pieceQueue.Dequeue();
+
+            if (preHoldRequested)
+                piece = ChangePiece(piece);
+            if (preRotateType.HasValue)
+            {
+                switch (preRotateType)
+                {
+                    case RotationType.Clockwise:
+                        piece.RotateCW();
+                        break;
+                    case RotationType.CounterClockwise:
+                        piece.RotateCCW();
+                        break;
+                }
+            }
+            
             SetPieceSpawn(piece);
+            piece.Update();
             return piece;
         }
 
@@ -140,14 +158,11 @@ namespace MonoStacker.Source.Generic
             if (_holdBox.Count == 0)
             {
                 _holdBox.Enqueue(piece);
-                return DealPiece();
+                return DealPiece(null, false);
             }
-            else
-            {
-                var heldPiece = _holdBox.Dequeue();
-                _holdBox.Enqueue(piece);
-                return heldPiece;
-            }
+            var heldPiece = _holdBox.Dequeue();
+            _holdBox.Enqueue(piece);
+            return heldPiece;
         }
 
         private void SetPieceSpawn(Piece piece) 

@@ -87,12 +87,12 @@ public static class PlayfieldEffects
 
                     sources.Members.Add(new GroupPartData()
                     {
-                        Position = new Vector2((x * 8) + pos.X, (y * 8) + (pos.Y - 160)),
+                        Position = new Vector2((x * 8) + pos.X + 4, (y * 8) + (pos.Y - 160)),
                         Data = new EmitterData
                         {
                             emissionInterval = 1f,
                             density = 20,
-                            angleVarianceMax = 180,
+                            angleVarianceMax = 90,
                             particleActiveTime = (.01f, .3f),
                             speed = (50, 100),
                             particleData = new ParticleData()
@@ -100,7 +100,8 @@ public static class PlayfieldEffects
                                 texture = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"),
                                 colorTimeLine = (color, color),
                                 scaleTimeLine = new(3, 1),
-                                opacityTimeLine = new(1, 1)
+                                opacityTimeLine = new(1, 1),
+                                frictionFactor = new Vector2(0, .003f)
                             }
                         }
                     });
@@ -127,7 +128,7 @@ public static class PlayfieldEffects
                         {
                             emissionInterval = 1f,
                             density = 3,
-                            angleVarianceMax = 3,
+                            angleVarianceMax = 0,
                             particleActiveTime = (.01f, .5f),
                             speed = (50, 200),
                             particleData = new ParticleData() 
@@ -136,7 +137,8 @@ public static class PlayfieldEffects
                                 rotationSpeed = .05f,
                                 colorTimeLine = (Color.White, Color.White),
                                 scaleTimeLine = new (5, 7),
-                                opacityTimeLine = new (1, 0)
+                                opacityTimeLine = new (1, 0),
+                                frictionFactor = new Vector2(0, .0005f)
                             }
                         }
                     });

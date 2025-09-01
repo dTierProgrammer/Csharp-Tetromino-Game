@@ -29,6 +29,7 @@ public class ParticleObj : AnimatedEffect
     private Vector2 _origin; // origin point of particle
     private Vector2 _direction; // movement direction of particle
     private float _startingOrientation = 0; // initial orientation of particle (before rotation is applied)
+    private Vector2 _friction;
 
     public ParticleObj(Vector2 position, ParticleData data, ParticleOriginSetting originSetting)
     {
@@ -38,6 +39,7 @@ public class ParticleObj : AnimatedEffect
         _position = position;
         _color = _data.colorTimeLine.color1;
         _opacity = _data.opacityTimeLine.X;
+        
 
 
         if (data.speed != 0)
@@ -101,7 +103,10 @@ public class ParticleObj : AnimatedEffect
         _color = Color.Lerp(_data.colorTimeLine.color2, _data.colorTimeLine.color1, _activeTimeAmount);
         _opacity = MathHelper.Clamp(MathHelper.Lerp(_data.opacityTimeLine.Y, _data.opacityTimeLine.X, _activeTimeAmount), 0, 1);
         _scale = MathHelper.Lerp(_data.scaleTimeLine.Y, _data.scaleTimeLine.X, _activeTimeAmount) / _data.texture.Width;
-        _position += _direction * _data.speed * (float)gameTime.ElapsedGameTime.TotalSeconds;
+        _position += (_direction * _data.speed * (float)gameTime.ElapsedGameTime.TotalSeconds);
+        _position.Y += _friction.Y;
+        _position.X += _friction.X;
+        _friction += new Vector2(_data.speed * (_data.frictionFactor.X), _data.speed * (_data.frictionFactor.Y));
         _startingOrientation += _data.rotationSpeed;
     }
 

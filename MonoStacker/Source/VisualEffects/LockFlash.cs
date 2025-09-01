@@ -48,6 +48,15 @@ namespace MonoStacker.Source.VisualEffects
             this.distortFactor = distortFactor;
         }
 
+        public LockFlash(Texture2D image, Vector2 position, Color color, float timeDisplayed) : base(position)
+        {
+            _blocks = image;
+            _position = position;
+            tint = color;
+            MaxTimeDisplayed = timeDisplayed;
+            TimeDisplayed = timeDisplayed;
+        }
+
         public LockFlash(Texture2D image, Vector2 position, Color color, float timeDisplayed, Vector2 distortFactor) : base(position)
         {
             _blocks = image;

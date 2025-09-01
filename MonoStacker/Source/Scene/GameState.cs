@@ -13,7 +13,9 @@ namespace MonoStacker.Source.Scene
         Pause,
         Win,
         Loss,
+        EndingGame,
         Succeed,
+        CreditRoll,
         GameOver
     }
 }

@@ -30,8 +30,8 @@ namespace MonoStacker.Source.Generic
 
         public Piece() { }
 
-        public Piece(TetrominoType type, List<int[,]> rotations, List<int[,]> spinData, Color color, int[,] thumbnail) 
-        { 
+        public Piece(TetrominoType type, List<int[,]> rotations, List<int[,]> spinData, Color color, int[,] thumbnail)
+        {
             this.type = type;
             this.rotations = rotations;
             this.spinData = spinData;

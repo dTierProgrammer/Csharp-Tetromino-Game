@@ -66,7 +66,8 @@ public class TIRandomizer: IRandomizer
         AddToHistory(nextTetromino);
 
         _totalRolls++;
-        return factory.NewPiece(nextTetromino);
+        var piece = factory.NewPiece(nextTetromino);
+        return piece;
     }
 
     private void AddToHistory(TetrominoType tetromino) 

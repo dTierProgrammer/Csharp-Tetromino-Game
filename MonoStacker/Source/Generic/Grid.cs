@@ -101,6 +101,18 @@ namespace MonoStacker.Source.Generic
             }
         }
 
+        public void LockData(int[,] data, int rowOffset, int columnOffset) 
+        {
+            for (int y = 0; y < data.GetLength(0); y++) 
+            {
+                for (int x = 0; x < data.GetLength(1); x++) 
+                {
+                    if (data[y, x] > 0) 
+                        _matrix[y + rowOffset][x + columnOffset] = data[y, x];
+                }
+            }
+        }
+
         public bool IsPlacementValid(Piece piece, int rowOffset, int columnOffset) 
         {
             for (int y = 0; y < piece.currentRotation.GetLength(0); y++) // row
@@ -184,6 +196,7 @@ namespace MonoStacker.Source.Generic
         {
             int mandatoryCornersFilled = 0;
             int optionalCornersFilled = 0;
+            int totalCornersFilled = 0;
 
             for (int y = 0; y < piece.requiredCorners.GetLength(0); y++) // row
             {
@@ -194,36 +207,50 @@ namespace MonoStacker.Source.Generic
                         if ((piece.offsetX + x >= COLUMNS || piece.offsetX + x < 0) ||
                             (piece.offsetY + y >= ROWS || piece.offsetY + y < 0) ||
                             _matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
-                            mandatoryCornersFilled++;
-                    }
+                        { mandatoryCornersFilled++; totalCornersFilled++; }
 
+                    }
+                    
+                    
                     if (piece.requiredCorners[y, x] == 2)
                     {
-                        if((piece.offsetX + x >= COLUMNS || piece.offsetX + x < 0) ||
+                        if ((piece.offsetX + x >= COLUMNS || piece.offsetX + x < 0) ||
                             (piece.offsetY + y >= ROWS || piece.offsetY + y < 0) ||
                             _matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
-                            optionalCornersFilled++;
+                        { optionalCornersFilled++; totalCornersFilled++; }
                     }
+                    
                 }
             }
 
             if (piece.type is TetrominoType.T)
             {
-                if (mandatoryCornersFilled == 2 && optionalCornersFilled >= 1)
-                    return SpinType.FullSpin;
-                else if (mandatoryCornersFilled == 1 && optionalCornersFilled >= 1)
-                    return SpinType.MiniSpin;
+                switch (mandatoryCornersFilled) 
+                {
+                    case 1:
+                        if (optionalCornersFilled >= 2)
+                            return SpinType.MiniSpin;
+                        break;
+                    case 2:
+                        if (optionalCornersFilled > 0)
+                            return SpinType.FullSpin;
+                        break;
+                }
             }
             else
             {
-                switch (optionalCornersFilled)
+                Debug.WriteLine(totalCornersFilled);
+                switch (totalCornersFilled)
                 {
+                    case 0:
+                        break;
                     case 1:
                         return SpinType.MiniSpin;
-                    case 2:
+                    default:
                         return SpinType.FullSpin;
                 }
             }
+
 
             return SpinType.None;
         }
@@ -392,7 +419,11 @@ namespace MonoStacker.Source.Generic
                                 ImgBank.BlockTexture,
                                 new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
                                 imageTiles[_matrix[y][x] - 1],
-                                _drawMode is DrawMode.Playing? color: Color.White
+                                _drawMode is DrawMode.Playing? color: Color.White,
+                                0,
+                                Vector2.Zero,
+                                SpriteEffects.None,
+                                0
                                 );
                         
 

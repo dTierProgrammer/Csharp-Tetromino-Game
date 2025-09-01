@@ -16,6 +16,7 @@ namespace MonoStacker.Source.Data
     public struct PlayFieldData
     {
         // based off of Puyo Puyo Tetris
+        public BufferType bufferType = BufferType.Hold;
         public BoardDisplaySetting displaySetting = BoardDisplaySetting.ShowMeter;
         public ITetrominoFactory factory = new SrsFactory();
         public Point spawnAreaOffset = new Point(3, 18);
@@ -24,7 +25,8 @@ namespace MonoStacker.Source.Data
         public SpinDenotation parsedSpins = SpinDenotation.TSpinOnly;
         public bool temporaryLandingSys = true;
         public float lineClearDelay = .5f;
-        public float arrivalDelay = 0;
+        public float[] individualLcDelays = { .58333f, .66667f, .66667f, .750f };
+        public float arrivalDelay = .11667f;
         public float softLockDelay = .5f;
         public int horiStepResets = 15;
         public bool horiStepResetAllowed = true;
@@ -37,11 +39,18 @@ namespace MonoStacker.Source.Data
         public bool softDropLocks = false;
         public float gravity = .03f;
         public float softDropFactor = 20;
+        public float softDropAmount = 1;
         public int queueLength = 5;
         public QueueType queueType = QueueType.Sides;
         public bool holdEnabled = true;
         public ComboType comboType = ComboType.Conventional;
         public bool singlesBreakCombo = false;
+        public float dasCut = 0.0f;
+        public float hardDropCut = 0.0f;
+        public LineClearDelayType lineClearDelayType = LineClearDelayType.FlatDelay;
+        public SoftDropType softDropType = SoftDropType.Factor;
+        public FastDropType fastDropType = FastDropType.HardDrop;
+        public TopOutRule topOutRule = TopOutRule.BlockOut;
 
         public PlayFieldData() { }
     }

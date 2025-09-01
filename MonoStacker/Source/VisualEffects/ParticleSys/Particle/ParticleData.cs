@@ -14,6 +14,7 @@ public struct ParticleData
     public float speed { get; set; } = 100; // particle movement speed 
     public float angle { get; set; } = 0f;// particle movement angle
     public float rotationSpeed { get; set; } // particle rotation speed
+    public Vector2 frictionFactor { get; set; } = Vector2.Zero;
     
     // TODO: velocity, accel, friction modifiers to simulate physics
     

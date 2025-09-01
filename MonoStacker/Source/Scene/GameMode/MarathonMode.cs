@@ -3,6 +3,7 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Data;
 using MonoStacker.Source.GameObj;
+using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.Generic;
 using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Global;
@@ -20,45 +21,45 @@ using System.Threading.Tasks;
 
 namespace MonoStacker.Source.Scene.GameMode
 {
-    class MarathonMode: IScene
+    public class MarathonMode: IScene
     {
-        private GameState _currentState;
-        private PlayField _playField;
-        private float _score = 0;
-        private CounterFlair _comboCounter;
-        private CounterFlair _streakCounter;
-        private CounterFlair _scoreCounter;
-        private ActionTextSystem _atSys;
-        private float _gravity;
-        private float _prevLinesCleared;
-        private int _linesCleared = 0;
-        private int? _maxLinesCleared = 150;
-        private int _level = 0;
-        private int _maxLevel = 20;
-        private int _lineGoal = 10;
-        private int _goalProgress = 0;
-        private float _goalProgressAmt;
-        private ProgressBar _levelProgressDisplay;
-        private Texture2D bg;
-        private float ms;
-        private int snd;
-        private int min;
-        private bool _runTimer = true;
-        private bool _runGame = true;
-        private int piecesPlaced = 0;
-        private KeyboardState _prevKBS;
+        protected GameState _currentState;
+        protected PlayField _playField;
+        protected float _score = 0;
+        protected CounterFlair _comboCounter;
+        protected CounterFlair _streakCounter;
+        protected CounterFlair _scoreCounter;
+        protected ActionTextSystem _atSys;
+        protected float _gravity;
+        protected float _prevLinesCleared;
+        protected int _linesCleared = 0;
+        protected int? _maxLinesCleared = 150;
+        protected int _level = 0;
+        protected int _maxLevel = 20;
+        protected int _lineGoal = 10;
+        protected int _goalProgress = 0;
+        protected float _goalProgressAmt;
+        protected ProgressBar _levelProgressDisplay;
+        protected Texture2D bg;
+        protected float ms;
+        protected int snd;
+        protected int min;
+        protected bool _runTimer = true;
+        protected bool _runGame = true;
+        protected int piecesPlaced = 0;
+        protected KeyboardState _prevKBS;
         AnimatedEffectLayer _aeLayer = new();
-        string _title = "Marathon Game";
-        float startTimer;
+        protected string _title = "Marathon Game";
+        protected float startTimer;
         float intermediateTimer = 1;
         float successTimer = 2;
         
 
-        public void Initialize() 
+        public virtual void Initialize() 
         {
             startTimer = 5;
             _currentState = GameState.PreGame;
-            _playField = new PlayField(new Vector2(240, 135), new PlayFieldData(), new InputBinds());
+            _playField = new PlayField(new Vector2(240, 135), PlayFieldPresets.GuidelineSlow1, new InputBinds());
             _atSys = new ActionTextSystem(new Vector2(_playField.offset.X - 13, _playField.offset.Y + 52));
             _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new(_playField.offset.X - 12, _playField.offset.Y + 41));
             _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new(_playField.offset.X - 12, _playField.offset.Y + 49));
@@ -78,22 +79,22 @@ namespace MonoStacker.Source.Scene.GameMode
             _levelProgressDisplay = new(new Vector2(_playField.offset.X - 7, _playField.offset.Y), _lineGoal, ProgressBarType.Vertical);
         }
 
-        private void StopTimer() 
+        protected void StopTimer() 
         {
             _runTimer = false;
         }
 
-        private void StopGame() 
+        protected void StopGame() 
         {
             _runGame = false;
         }
 
-        private void IncrementPlacements() 
+        protected void IncrementPlacements() 
         {
             piecesPlaced++;
         }
 
-        private void RunTimer(GameTime gameTime) 
+        protected void RunTimer(GameTime gameTime) 
         {
             ms += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
             if (ms >= 1000) 
@@ -114,7 +115,7 @@ namespace MonoStacker.Source.Scene.GameMode
             bg = GetContent.Load<Texture2D>("Image/Background/bg_1080");
         }
 
-        private float SetGravity(int level)
+        protected float SetGravity(int level)
         {
             return level switch
             { // this sucks
@@ -141,17 +142,17 @@ namespace MonoStacker.Source.Scene.GameMode
             };
         }
 
-        private float StreakMultiplier(int streak) 
+        protected float StreakMultiplier(int streak) 
         {
             return 1;
         }
 
-        private void BravoPing() 
+        protected void BravoPing() 
         {
             _aeLayer.AddEffect(new EventTitle(ImgBank.BravoTitle, new Vector2(240, 100), new Vector2(ImgBank.BravoTitle.Width + 100, 0), .2f, 1f, new Vector2(ImgBank.BravoTitle.Width + 50, ImgBank.BravoTitle.Height + 10), 1f));
         }
 
-        private void PingLineClear() 
+        protected void PingLineClear() 
         {
             string lineClearTitle = _playField.grid.rowsToClear.Count switch
             {
@@ -165,8 +166,8 @@ namespace MonoStacker.Source.Scene.GameMode
             string spinTitle = _playField.currentSpinType switch
             {
                 SpinType.None => "",
-                SpinType.MiniSpin => $"Mini {(char)_playField.activePiece.type}-spin",
-                SpinType.FullSpin => $"{(char)_playField.activePiece.type}-spin"
+                SpinType.MiniSpin => $"Mini {ConvertTypeValue.GetTypeChar(_playField.activePiece.type)}-spin",
+                SpinType.FullSpin => $"{ConvertTypeValue.GetTypeChar(_playField.activePiece.type)}-spin"
             };
 
             (Color color1, Color color2) lineClearColor = _playField.grid.rowsToClear.Count switch
@@ -181,7 +182,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _atSys.Ping($"{spinTitle} {lineClearTitle}", _playField.currentSpinType is SpinType.None ? lineClearColor.color1 : _playField.activePiece.color, _playField.currentSpinType is SpinType.None ? lineClearColor.color2 : Color.White, 3f, .5f);
         }
 
-        private void CheckForLines()
+        protected void CheckForLines()
         {
             _goalProgress += _playField.grid.rowsToClear.Count;
             _linesCleared += _playField.grid.rowsToClear.Count;
@@ -221,7 +222,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _levelProgressDisplay.Update(_goalProgress);
         }
 
-        private void ValidateProgress() 
+        protected void ValidateProgress() 
         {
             if (_goalProgress >= _lineGoal) 
             {
@@ -238,7 +239,7 @@ namespace MonoStacker.Source.Scene.GameMode
             }
         }
 
-        private void StartingCountDown(GameTime gameTime) 
+        protected void StartingCountDown(GameTime gameTime) 
         {
             if (startTimer <= 1) { _currentState = GameState.Play; _playField.Start(); AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.Go, new Vector2(240, 100), new Vector2(ImgBank.Go.Width + 100, ImgBank.Go.Height + 90), .2f, .5f, Vector2.Zero, 1f, Color.OrangeRed, Color.OrangeRed, Color.Red, false)); }
             startTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -261,7 +262,7 @@ namespace MonoStacker.Source.Scene.GameMode
             intermediateTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
         }
 
-        private void UpdateGame(GameTime gameTime) 
+        protected void UpdateGame(GameTime gameTime) 
         {
             _playField.Update(gameTime);
         }
@@ -285,6 +286,8 @@ namespace MonoStacker.Source.Scene.GameMode
                             AnimatedEffectManager.AddEffect(new EventTitle(ImgBank.ClearTitle, new Vector2(240, 100), new Vector2(ImgBank.ClearTitle.Width + 100, 0), .2f, 1f, new Vector2(ImgBank.ClearTitle.Width + 50, ImgBank.ClearTitle.Height + 10), 1f));
                             _runTimer = false;
                             _playField.PauseForEvent();
+                            _streakCounter.Kill();
+                            _comboCounter.Kill();
                         }
                         successTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                         if (successTimer <= 0) 

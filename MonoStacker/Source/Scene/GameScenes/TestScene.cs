@@ -22,7 +22,8 @@ namespace MonoStacker.Source.Scene.GameScenes
 
         public void Initialize() 
         {
-            playfield = new PlayField(new Vector2(86, 65), new PlayFieldData(), new InputBinds() );
+            playfield = new PlayField(new Vector2(240, 135), PlayFieldPresets.Arcade3, new InputBinds() );
+            playfield.Start();
         }
         public void Load() 
         {
