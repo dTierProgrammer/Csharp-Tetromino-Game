@@ -165,7 +165,7 @@ namespace MonoStacker.Source.Generic
             return heldPiece;
         }
 
-        private void SetPieceSpawn(Piece piece) 
+        private void SetPieceSpawn(Piece piece) // crash if piece is held right as one spawns at top of screen ?
         {
             piece.offsetX = spawnAreaPosition.X;
             piece.offsetY = spawnAreaPosition.Y;

@@ -230,7 +230,7 @@ namespace MonoStacker.Source.GameObj
 
         public int _streak { get; private set; } = -1;
         public SpinType currentSpinType { get; private set; } = SpinType.None;
-        private readonly SpinDenotation _parsedSpins = SpinDenotation.TSpinOnly;
+        public readonly SpinDenotation parsedSpins;
         public int _combo { get; private set; } = -1;
         private readonly ComboType _comboType;
         private bool _singlesBreakCombo;
@@ -274,7 +274,7 @@ namespace MonoStacker.Source.GameObj
                     data.queueType,
                     data.holdEnabled
                 );
-            _parsedSpins = data.parsedSpins;
+            parsedSpins = data.parsedSpins;
             _rotationSystem = data.rotationSystem;
             _pieceManager.Initialize(this);
             _softLockDelay = (data.softLockDelay, data.softLockDelay);
@@ -353,6 +353,7 @@ namespace MonoStacker.Source.GameObj
                 SfxBank.stepHori.Play();
             }
         }
+
         private void MovePieceVertical(int movementAmt)
         {
             if (activePiece is null) return;
@@ -395,24 +396,26 @@ namespace MonoStacker.Source.GameObj
             if (_rotationSystem.Rotate(activePiece, grid, rotation))
             {
                 activePiece.Update();
-                currentSpinType = _parsedSpins switch
-                {
-                    SpinDenotation.TSpinOnly => activePiece.type is TetrominoType.T ? grid.CheckForSpin(activePiece) : SpinType.None,
-                    _ => grid.CheckForSpin(activePiece)
-                };
+                currentSpinType = grid.CheckForSpin(activePiece);
                 if (activePiece.offsetY != CalculateGhostPiece(activePiece))
                     currentSpinType = SpinType.None;
-                else 
+                else
                 {
                     if (activePiece.offsetY - _prevYOff == 2)
                         currentSpinType = SpinType.FullSpin;
                 }
+                Debug.WriteLine(parsedSpins);
+                if (parsedSpins == SpinDenotation.None)
+                { 
+                    currentSpinType = SpinType.None; Debug.WriteLine("piece of fucking shit program FUCK YOU"); 
+                }
+                else if (parsedSpins == SpinDenotation.TSpinOnly)
+                    if (activePiece.type is not TetrominoType.T) currentSpinType = SpinType.None;
             }
                 if (currentSpinType is not SpinType.None) SfxBank.twist1m.Play();
                 else SfxBank.rotate.Play();
             if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && _rotateResetAllowed)
                 RotateReset();
-            Debug.WriteLine($"{activePiece.type}, {currentSpinType}");
             return true;
         }
 
@@ -482,11 +485,11 @@ namespace MonoStacker.Source.GameObj
             }
             else
             {
+                if (currentSpinType != SpinType.None)
+                { SfxBank.spinGeneric.Play(); GenericSpinPing?.Invoke(); }
                 BreakCombo();
                 _currentBoardState = BoardState.ArrivalDelay;
                 _arrivalDelay.timeLeftover = _arrivalDelay.max;
-                if (currentSpinType != SpinType.None)
-                    SfxBank.spinGeneric.Play();
                 PlayfieldEffects.FlashPiece(activePiece, activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f, offset);
             }
         }
@@ -744,7 +747,7 @@ namespace MonoStacker.Source.GameObj
             if (!grid.IsPlacementValid(_pieceManager.pieceQueue.Peek(), _pieceManager.spawnAreaPosition.Y + buffer.Y, _pieceManager.spawnAreaPosition.X + buffer.X))
             {
                 grid.LockPiece(_pieceManager.pieceQueue.Peek(), _pieceManager.spawnAreaPosition.Y + buffer.Y, _pieceManager.spawnAreaPosition.X + buffer.X);
-                _pieceManager.DealPiece(preRotationType, preHoldRequested);
+                _pieceManager.DealPiece(null, false);
                 return true; 
             }
             return false;

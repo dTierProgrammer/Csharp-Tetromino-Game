@@ -22,7 +22,7 @@ namespace MonoStacker.Source.Data
         public Point spawnAreaOffset = new Point(3, 18);
         public IRandomizer randomizer = new SevenBagRandomizer();
         public IRotationSystem rotationSystem = new SuperRotationSys();
-        public SpinDenotation parsedSpins = SpinDenotation.TSpinOnly;
+        public SpinDenotation parsedSpins = SpinDenotation.AllSpin;
         public bool temporaryLandingSys = true;
         public float lineClearDelay = .5f;
         public float[] individualLcDelays = { .58333f, .66667f, .66667f, .750f };

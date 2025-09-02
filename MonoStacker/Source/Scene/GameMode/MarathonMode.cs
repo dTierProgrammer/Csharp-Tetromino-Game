@@ -65,6 +65,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new(_playField.offset.X - 12, _playField.offset.Y + 49));
             _playField.ClearingLines += CheckForLines;
             _playField.ClearingLines += PingLineClear;
+            _playField.GenericSpinPing += PingLineClear;
             _playField.ComboContinue += _comboCounter.Ping;
             _playField.ComboBreak += _comboCounter.Kill;
             _playField.StreakContinue += _streakCounter.Ping;
@@ -156,18 +157,19 @@ namespace MonoStacker.Source.Scene.GameMode
         {
             string lineClearTitle = _playField.grid.rowsToClear.Count switch
             {
-                1 => "single!",
-                2 => "double!!",
-                3 => "triple!!!",
-                4 => "quadruple!!!!",
-                _ => "super move!!!!!"
+                0 => "!",
+                1 => " single!",
+                2 => " double!!",
+                3 => " triple!!!",
+                4 => " quadruple!!!!",
+                _ => " super move!!!!!"
             };
 
             string spinTitle = _playField.currentSpinType switch
             {
-                SpinType.None => "",
                 SpinType.MiniSpin => $"Mini {ConvertTypeValue.GetTypeChar(_playField.activePiece.type)}-spin",
-                SpinType.FullSpin => $"{ConvertTypeValue.GetTypeChar(_playField.activePiece.type)}-spin"
+                SpinType.FullSpin => $"{ConvertTypeValue.GetTypeChar(_playField.activePiece.type)}-spin",
+                _ => "",
             };
 
             (Color color1, Color color2) lineClearColor = _playField.grid.rowsToClear.Count switch
@@ -179,7 +181,21 @@ namespace MonoStacker.Source.Scene.GameMode
                 _ => (Color.LightBlue, Color.Blue)
             };
 
-            _atSys.Ping($"{spinTitle} {lineClearTitle}", _playField.currentSpinType is SpinType.None ? lineClearColor.color1 : _playField.activePiece.color, _playField.currentSpinType is SpinType.None ? lineClearColor.color2 : Color.White, 3f, .5f);
+            if (_playField.parsedSpins is not SpinDenotation.TSpinSpecific || _playField.parsedSpins is SpinDenotation.TSpinSpecific && _playField.activePiece.type is TetrominoType.T)
+                _atSys.Ping($"{spinTitle}{lineClearTitle}", _playField.currentSpinType is SpinType.None ? lineClearColor.color1 : _playField.activePiece.color, _playField.currentSpinType is SpinType.None ? lineClearColor.color2 : Color.White, 3f, .5f);
+            else if (_playField.parsedSpins is SpinDenotation.TSpinSpecific && _playField.activePiece.type is not TetrominoType.T)
+            {
+                lineClearTitle = _playField.grid.rowsToClear.Count switch
+                {
+                    0 => "!",
+                    1 => "!",
+                    2 => "!!",
+                    3 => "!!!",
+                    4 => "!!!!",
+                    _ => "??!!"
+                };
+                _atSys.Ping($"super move{lineClearTitle}", Color.LightBlue, Color.Blue, 3f, .5f); 
+            }
         }
 
         protected void CheckForLines()

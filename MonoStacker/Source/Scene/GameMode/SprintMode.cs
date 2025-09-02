@@ -19,7 +19,7 @@ public class SprintMode: MarathonMode
     {
         startTimer = 5;
         _currentState = GameState.PreGame;
-        _playField = new PlayField(new Vector2(240, 135), new PlayFieldData(){lineClearDelay = 0, arrivalDelay = 0, autoshiftRepeatRate = 20, softDropFactor = 10000}, new InputBinds());
+        _playField = new PlayField(new Vector2(240, 135), PlayFieldPresets.GuidelineFast1, new InputBinds());
         _atSys = new ActionTextSystem(new Vector2(_playField.offset.X - 13, _playField.offset.Y + 52));
         _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new(_playField.offset.X - 12, _playField.offset.Y + 41));
         _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new(_playField.offset.X - 12, _playField.offset.Y + 49));

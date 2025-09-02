@@ -23,11 +23,11 @@ namespace MonoStacker.Source.Data
             spawnAreaOffset = new Point(3, 18),
             randomizer = new SevenBagRandomizer(),
             rotationSystem = new SuperRotationSys(),
-            parsedSpins = SpinDenotation.AllSpin,
+            parsedSpins = SpinDenotation.TSpinSpecific,
             temporaryLandingSys = true,
             lineClearDelay = .5f,
             arrivalDelay = .11667f,
-            softLockDelay = 500f,
+            softLockDelay = .5f,
             horiStepResets = 15,
             horiStepResetAllowed = true,
             rotateResets = 6,
@@ -147,7 +147,9 @@ namespace MonoStacker.Source.Data
             comboType = ComboType.Conventional,
             singlesBreakCombo = false,
             dasCut = 0.048f,
-            hardDropCut = 0.048f
+            hardDropCut = 0.048f,
+            softDropType = SoftDropType.Set,
+            softDropAmount = 500,
         };
 
         public static PlayFieldData GuidelineFast2 = new PlayFieldData()
@@ -163,7 +165,7 @@ namespace MonoStacker.Source.Data
             lineClearDelay = .0f,
             arrivalDelay = .0f,
             softDropType = SoftDropType.Set,
-            softDropAmount = 20,
+            softDropAmount = 500,
             softLockDelay = 15f,
             horiStepResets = 15,
             horiStepResetAllowed = true,
