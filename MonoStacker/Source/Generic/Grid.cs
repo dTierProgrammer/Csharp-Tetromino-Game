@@ -15,7 +15,7 @@ using MonoStacker.Source.Global;
 
 namespace MonoStacker.Source.Generic
 {
-    enum DrawMode 
+    enum DrawMode
     {
         Playing,
         GameEnd
@@ -47,7 +47,7 @@ namespace MonoStacker.Source.Generic
 
         bool drawLines = true;
 
-        public Grid(Microsoft.Xna.Framework.Vector2 Position) 
+        public Grid(Microsoft.Xna.Framework.Vector2 Position)
         {
             rowsToClear = new();
             _offset = Position;
@@ -57,63 +57,63 @@ namespace MonoStacker.Source.Generic
 
             _matrix = new int[ROWS][];
 
-            for (int y = 0; y < ROWS; y++) 
+            for (int y = 0; y < ROWS; y++)
             {
                 _matrix[y] = new int[COLUMNS];
 
-                for (int x = 0; x < COLUMNS; x++) 
+                for (int x = 0; x < COLUMNS; x++)
                     _matrix[y][x] = 0;
             }
         }
 
-        private void GetImageCuts() 
+        private void GetImageCuts()
         {
             imageTiles.Add(new Rectangle(0, 0, TILESIZE, TILESIZE)); // Cyan
             imageTiles.Add(new Rectangle(TILESIZE, 0, TILESIZE, TILESIZE)); // Blue
             imageTiles.Add(new Rectangle(TILESIZE * 2, 0, TILESIZE, TILESIZE)); // Orange
             imageTiles.Add(new Rectangle(TILESIZE * 3, 0, TILESIZE, TILESIZE)); // Yellow
             imageTiles.Add(new Rectangle(TILESIZE * 4, 0, TILESIZE, TILESIZE)); // Green
-            imageTiles.Add(new Rectangle(TILESIZE * 5, 0, TILESIZE,  TILESIZE)); // Purple/Magenta/Pink
+            imageTiles.Add(new Rectangle(TILESIZE * 5, 0, TILESIZE, TILESIZE)); // Purple/Magenta/Pink
             imageTiles.Add(new Rectangle(TILESIZE * 6, 0, TILESIZE, TILESIZE)); // Red
             imageTiles.Add(new Rectangle(0, TILESIZE, TILESIZE, TILESIZE));
             imageTiles.Add(new Rectangle(TILESIZE, TILESIZE, TILESIZE, TILESIZE));
             imageTiles.Add(new Rectangle(TILESIZE * 2, TILESIZE, TILESIZE, TILESIZE));
         }
 
-        public void SetDrawMode() 
+        public void SetDrawMode()
         {
-            if(_drawMode != DrawMode.GameEnd)
+            if (_drawMode != DrawMode.GameEnd)
                 _drawMode = DrawMode.GameEnd;
         }
 
-        public void LockPiece(Piece piece, int rowOffset, int columnOffset) 
+        public void LockPiece(Piece piece, int rowOffset, int columnOffset)
         {
-            if (rowOffset > -2) 
+            if (rowOffset > -2)
             {
                 for (int y = 0; y < piece.currentRotation.GetLength(0); y++) // row
                 {
                     for (int x = 0; x < piece.currentRotation.GetLength(1); x++) // column
                     {
-                        if (piece.currentRotation[y, x] > 0) 
-                            _matrix[y + rowOffset][ x + columnOffset] = piece.currentRotation[y, x];
+                        if (piece.currentRotation[y, x] > 0)
+                            _matrix[y + rowOffset][x + columnOffset] = piece.currentRotation[y, x];
                     }
                 }
             }
         }
 
-        public void LockData(int[,] data, int rowOffset, int columnOffset) 
+        public void LockData(int[,] data, int rowOffset, int columnOffset)
         {
-            for (int y = 0; y < data.GetLength(0); y++) 
+            for (int y = 0; y < data.GetLength(0); y++)
             {
-                for (int x = 0; x < data.GetLength(1); x++) 
+                for (int x = 0; x < data.GetLength(1); x++)
                 {
-                    if (data[y, x] > 0) 
+                    if (data[y, x] > 0)
                         _matrix[y + rowOffset][x + columnOffset] = data[y, x];
                 }
             }
         }
 
-        public bool IsPlacementValid(Piece piece, int rowOffset, int columnOffset) 
+        public bool IsPlacementValid(Piece piece, int rowOffset, int columnOffset)
         {
             for (int y = 0; y < piece.currentRotation.GetLength(0); y++) // row
             {
@@ -130,7 +130,7 @@ namespace MonoStacker.Source.Generic
                             return false;
                         */
 
-                        if (rowOffset + y>= ROWS)
+                        if (rowOffset + y >= ROWS)
                             return false;
                         if (columnOffset + x < 0)
                             return false;
@@ -147,7 +147,7 @@ namespace MonoStacker.Source.Generic
             return true;
         }
 
-        public bool IsDataPlacementValid(int[,] data, int rowOffset, int columnOffset) 
+        public bool IsDataPlacementValid(int[,] data, int rowOffset, int columnOffset)
         {
             for (int y = 0; y < data.GetLength(0); y++) // row
             {
@@ -166,9 +166,9 @@ namespace MonoStacker.Source.Generic
 
             return true;
         }
-        
-        
-        public int CheckForLines() 
+
+
+        public int CheckForLines()
         {
             rowsToClear.Clear();
             bool clearedLines = false;
@@ -177,15 +177,15 @@ namespace MonoStacker.Source.Generic
                 clearedLines = true;
                 for (int x = 0; x < COLUMNS; x++) // column
                 {
-                    if (_matrix[y][x] == 0) 
+                    if (_matrix[y][x] == 0)
                     {
                         clearedLines = false;
                         break;
                     }
                 }
-                if (clearedLines) 
+                if (clearedLines)
                     rowsToClear.Add(y);
-                    
+
             }
             return rowsToClear.Count;
         }
@@ -210,8 +210,8 @@ namespace MonoStacker.Source.Generic
                         { mandatoryCornersFilled++; totalCornersFilled++; }
 
                     }
-                    
-                    
+
+
                     if (piece.requiredCorners[y, x] == 2)
                     {
                         if ((piece.offsetX + x >= COLUMNS || piece.offsetX + x < 0) ||
@@ -219,13 +219,13 @@ namespace MonoStacker.Source.Generic
                             _matrix[(int)piece.offsetY + y][(int)piece.offsetX + x] > 0)
                         { optionalCornersFilled++; totalCornersFilled++; }
                     }
-                    
+
                 }
             }
 
             if (piece.type is TetrominoType.T)
             {
-                switch (mandatoryCornersFilled) 
+                switch (mandatoryCornersFilled)
                 {
                     case 1:
                         if (optionalCornersFilled >= 2)
@@ -255,28 +255,28 @@ namespace MonoStacker.Source.Generic
             return SpinType.None;
         }
 
-        public int GetHighestRow() 
+        public int GetHighestRow()
         {
             int row = 0;
             bool counting = true;
-            for (var y = 0; y < ROWS; y++) 
+            for (var y = 0; y < ROWS; y++)
             {
                 row = y;
                 for (var x = 0; x < COLUMNS; x++)
                 {
                     if (_matrix[y][x] != 0)
-                    { counting = false; break;}
+                    { counting = false; break; }
                 }
                 if (!counting) break;
             }
             return row;
         }
-        public bool IsLineEmpty(int rowIndex) 
+        public bool IsLineEmpty(int rowIndex)
         {
             bool isEmpty = true;
             Console.WriteLine(rowIndex);
 
-            for (int i = 0; i < COLUMNS; i++) 
+            for (int i = 0; i < COLUMNS; i++)
             {
                 if (_matrix[rowIndex][i] > 0)
                 {
@@ -303,7 +303,7 @@ namespace MonoStacker.Source.Generic
 
         public void ClearLine(int rowIndex) // fuck
         {
-            for (int i = 0; i < COLUMNS; i++) 
+            for (int i = 0; i < COLUMNS; i++)
             {
                 _matrix[rowIndex][i] = 0;
             }
@@ -315,9 +315,9 @@ namespace MonoStacker.Source.Generic
 
             for (int y = 0; y < ROWS; y++)
             {
-                for (int x = 0; x < COLUMNS; x++) 
+                for (int x = 0; x < COLUMNS; x++)
                 {
-                    if (_matrix[y][x] != 0) 
+                    if (_matrix[y][x] != 0)
                     {
                         nonEmptyRows.Add(_matrix[y]);
                         break;
@@ -327,9 +327,9 @@ namespace MonoStacker.Source.Generic
             return nonEmptyRows.Count();
         }
 
-        public void MoveRow(int rowIndex, int offset) 
+        public void MoveRow(int rowIndex, int offset)
         {
-            for (int i = 0; i < COLUMNS; i++) 
+            for (int i = 0; i < COLUMNS; i++)
             {
                 if (rowIndex + offset >= 40 || rowIndex + offset < 0) return;
                 _matrix[rowIndex + offset][i] = _matrix[rowIndex][i];
@@ -345,43 +345,43 @@ namespace MonoStacker.Source.Generic
                 _matrix[rowIndex + offset][i] = _matrix[rowIndex][i];
             }
         }
-        public void ColorRow(int rowIndex, int colorId) 
+        public void ColorRow(int rowIndex, int colorId)
         {
-            for (int i = 0; i < COLUMNS; i++) 
+            for (int i = 0; i < COLUMNS; i++)
             {
                 if (_matrix[rowIndex][i] != 0)
                     _matrix[rowIndex][i] = colorId;
             }
         }
 
-        public void ClearLines() 
+        public void ClearLines()
         {
             int clearedLines = 0;
-            for (int y = ROWS - 1; y >= 0; y--) 
+            for (int y = ROWS - 1; y >= 0; y--)
             {
                 if (IsLineFull(y))
                 {
                     ClearLine(y);
                     clearedLines++;
                 }
-                else if (clearedLines > 0) 
+                else if (clearedLines > 0)
                     MoveRow(y, clearedLines);
             }
             rowsToClear.Clear();
         }
 
-        public void ClearGrid() 
+        public void ClearGrid()
         {
-            for (var y = 0; y < ROWS; y++) 
+            for (var y = 0; y < ROWS; y++)
             {
-                for (var x = 0; x < COLUMNS; x++) 
+                for (var x = 0; x < COLUMNS; x++)
                 {
                     _matrix[y][x] = 0;
                 }
             }
         }
 
-        public void AddGarbageLine(int hole) 
+        public void AddGarbageLine(int hole)
         {
             if (GetNonEmptyRows() == ROWS - 1)
             {
@@ -398,49 +398,98 @@ namespace MonoStacker.Source.Generic
             }
         }
 
-        public void Draw(SpriteBatch spriteBatch) 
+        public void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = imageTiles[0];
 
-            for (int y = 0; y < ROWS; y++) 
+            for (int y = 0; y < ROWS; y++)
             {
-                for (int x = 0; x < COLUMNS; x++) 
+                for (int x = 0; x < COLUMNS; x++)
                 {
                     Color color = Color.DarkGray;
                     if (y < 20)
                         color = new Color(100, 100, 100);
                     if (y == 0)
                         color = Color.Black;
-                    if (_matrix[y][x] > 0 && !rowsToClear.Contains(y)) 
+                    if (_matrix[y][x] > 0 && !rowsToClear.Contains(y))
                     {
-                        
+
                         spriteBatch.Draw
                                 (
                                 ImgBank.BlockTexture,
                                 new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, TILESIZE),
                                 imageTiles[_matrix[y][x] - 1],
-                                _drawMode is DrawMode.Playing? color: Color.White,
+                                _drawMode is DrawMode.Playing ? color : Color.White,
                                 0,
                                 Vector2.Zero,
                                 SpriteEffects.None,
                                 0
                                 );
-                        
 
-                        if (drawLines && _drawMode is DrawMode.Playing) 
+
+                        if (drawLines && _drawMode is DrawMode.Playing)
                         { // chopped ahh hell
                             if (y >= 19 && !(x - 1 < 0) && (_matrix[y][x - 1] == 0) ||
                                 (y <= 19 && x == 0) ||
                                 (y <= 19 && x > 0 && (_matrix[y][x - 1] == 0)))
                                 spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), 1, TILESIZE), Color.White);
-                            if  ((y >= 19 && !(x + 1 >= COLUMNS) && _matrix[y][x + 1] == 0) ||
-                                (y <= 19 && x == COLUMNS - 1) || 
+                            if ((y >= 19 && !(x + 1 >= COLUMNS) && _matrix[y][x + 1] == 0) ||
+                                (y <= 19 && x == COLUMNS - 1) ||
                                 (y <= 19 && x < COLUMNS - 1) && _matrix[y][x + 1] == 0)
                                 spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X + 7), (int)((y * TILESIZE) + _offset.Y - 160), 1, TILESIZE), Color.White);
                             if (!(y - 1 < 0) && (_matrix[y - 1][x] == 0) || rowsToClear.Contains(y - 1))
                                 spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160), TILESIZE, 1), Color.White);
                             if (!(y + 1 >= ROWS) && (_matrix[y + 1][x] == 0 || rowsToClear.Contains(y + 1)))
                                 spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + _offset.X), (int)((y * TILESIZE) + _offset.Y - 160 + 7), TILESIZE, 1), Color.White);
+                        }
+                    }
+                }
+            }
+
+        }
+        public void Draw(SpriteBatch spriteBatch, Vector2 pos)
+        {
+            Rectangle sourceRect = imageTiles[0];
+
+            for (int y = 0; y < ROWS; y++)
+            {
+                for (int x = 0; x < COLUMNS; x++)
+                {
+                    Color color = Color.DarkGray;
+                    if (y < 20)
+                        color = new Color(100, 100, 100);
+                    if (y == 0)
+                        color = Color.Black;
+                    if (_matrix[y][x] > 0 && !rowsToClear.Contains(y))
+                    {
+
+                        spriteBatch.Draw
+                                (
+                                ImgBank.BlockTexture,
+                                new Rectangle((int)((x * TILESIZE) + pos.X), (int)((y * TILESIZE) + pos.Y - 160), TILESIZE, TILESIZE),
+                                imageTiles[_matrix[y][x] - 1],
+                                _drawMode is DrawMode.Playing ? color : Color.White,
+                                0,
+                                Vector2.Zero,
+                                SpriteEffects.None,
+                                0
+                                );
+
+
+                        if (drawLines && _drawMode is DrawMode.Playing)
+                        { // chopped ahh hell
+                            if (y >= 19 && !(x - 1 < 0) && (_matrix[y][x - 1] == 0) ||
+                                (y <= 19 && x == 0) ||
+                                (y <= 19 && x > 0 && (_matrix[y][x - 1] == 0)))
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + pos.X), (int)((y * TILESIZE) + pos.Y - 160), 1, TILESIZE), Color.White);
+                            if ((y >= 19 && !(x + 1 >= COLUMNS) && _matrix[y][x + 1] == 0) ||
+                                (y <= 19 && x == COLUMNS - 1) ||
+                                (y <= 19 && x < COLUMNS - 1) && _matrix[y][x + 1] == 0)
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + pos.X + 7), (int)((y * TILESIZE) + pos.Y - 160), 1, TILESIZE), Color.White);
+                            if (!(y - 1 < 0) && (_matrix[y - 1][x] == 0) || rowsToClear.Contains(y - 1))
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + pos.X), (int)((y * TILESIZE) + pos.Y - 160), TILESIZE, 1), Color.White);
+                            if (!(y + 1 >= ROWS) && (_matrix[y + 1][x] == 0 || rowsToClear.Contains(y + 1)))
+                                spriteBatch.Draw(draw, new Rectangle((int)((x * TILESIZE) + pos.X), (int)((y * TILESIZE) + pos.Y - 160 + 7), TILESIZE, 1), Color.White);
                         }
                     }
                 }

@@ -37,8 +37,8 @@ namespace MonoStacker.Source.Scene.GameMode
 
         protected override void InitProgressBar()
         {
-            _levelProgressDisplay = new(new Microsoft.Xna.Framework.Vector2(_playField.offset.X - 7, _playField.offset.Y),_totalSeconds, _totalSeconds, ProgressBarType.Vertical);
-            _timerBar = new(new Microsoft.Xna.Framework.Vector2(_playField.offset.X - 7, _playField.offset.Y), ProgressBarType.Vertical, time);
+            _levelProgressDisplay = new(new Microsoft.Xna.Framework.Vector2(_playField.Offset.X - 7, _playField.Offset.Y),_totalSeconds, _totalSeconds, ProgressBarType.Vertical);
+            _timerBar = new(new Microsoft.Xna.Framework.Vector2(_playField.Offset.X - 7, _playField.Offset.Y), ProgressBarType.Vertical, time);
         }
 
         public override void Initialize()
@@ -135,7 +135,7 @@ namespace MonoStacker.Source.Scene.GameMode
             spriteBatch.Begin();
 
             //_levelProgressDisplay.Draw(spriteBatch);
-            _timerBar.Draw(spriteBatch);
+            _timerBar.Draw(spriteBatch, new Vector2((int)_playField._shakeOffsetX, (int)_playField._shakeOffsetY));
             
 # if DEBUG
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, Vector2.Zero,

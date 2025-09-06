@@ -125,5 +125,11 @@ namespace MonoStacker.Source.Interface
             spriteBatch.Draw(fillTexture, new Vector2(_position.X, _position.Y + fillTexture.Height - segment.Height), segment, Color.DarkGray);
             spriteBatch.Draw(animatedTexture, new Vector2(_position.X, _position.Y + fillTexture.Height - anSegment.Height), anSegment, Color.White);
         }
+
+        public virtual void Draw(SpriteBatch spriteBatch, Vector2 drawOffset)
+        {
+            spriteBatch.Draw(fillTexture, new Vector2(_position.X + drawOffset.X, _position.Y + fillTexture.Height - segment.Height + drawOffset.Y), segment, Color.DarkGray);
+            spriteBatch.Draw(animatedTexture, new Vector2(_position.X + drawOffset.X, _position.Y + fillTexture.Height - anSegment.Height + drawOffset.Y), anSegment, Color.White);
+        }
     }
 }

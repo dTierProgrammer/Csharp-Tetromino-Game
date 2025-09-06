@@ -22,5 +22,7 @@ namespace MonoStacker.Source.VisualEffects
         public virtual void Update(float deltaTime) { }
 
         public virtual void Draw(SpriteBatch spriteBatch) { }
+
+        public virtual void Draw(SpriteBatch spriteBatch, Vector2 drawOffset) { }
     }
 }

@@ -128,5 +128,18 @@ namespace MonoStacker.Source.VisualEffects
                 SpriteEffects.None,
                 1);
         }
+
+        public override void Draw(SpriteBatch spriteBatch, Vector2 drawOffset) 
+        {  
+            spriteBatch.Draw
+                (_blocks,
+                new Rectangle((int)_position.X + 4 + (int)drawOffset.X, (int)_position.Y + 4 + (int)drawOffset.Y, (int)rectWidth, (int)rectHeight),
+                _sourceRect,
+                tint,
+                0,
+                new Vector2(4, 4),
+                SpriteEffects.None,
+                1);
+        }
     }
 }

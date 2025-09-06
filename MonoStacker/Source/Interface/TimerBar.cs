@@ -44,5 +44,10 @@ namespace MonoStacker.Source.Interface
         {
             spriteBatch.Draw(fillTexture, new Vector2(_position.X, _position.Y + fillTexture.Height - segHeight), new Rectangle((int)_position.X, (int)_position.Y, fillTexture.Width, (int)segHeight), Color.White);
         }
+
+        public override void Draw(SpriteBatch spriteBatch, Vector2 drawOffset)
+        {
+            spriteBatch.Draw(fillTexture, new Vector2(_position.X + drawOffset.X, _position.Y + fillTexture.Height - segHeight + drawOffset.Y), new Rectangle((int)_position.X, (int)_position.Y, fillTexture.Width, (int)segHeight), Color.White);
+        }
     }
 }

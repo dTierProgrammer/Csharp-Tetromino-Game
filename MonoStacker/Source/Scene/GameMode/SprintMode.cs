@@ -24,9 +24,9 @@ public class SprintMode: MarathonMode
         startTimer = 5;
         _currentState = GameState.PreGame;
         _playField = new PlayField(new Vector2(240, 135), PlayFieldPresets.GuidelineFast1, new InputBinds());
-        _atSys = new ActionTextSystem(new Vector2(_playField.offset.X - 13, _playField.offset.Y + 52));
-        _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new(_playField.offset.X - 12, _playField.offset.Y + 41));
-        _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new(_playField.offset.X - 12, _playField.offset.Y + 49));
+        _atSys = new ActionTextSystem(new Vector2(_playField.Offset.X - 13, _playField.Offset.Y + 52));
+        _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new(_playField.Offset.X - 12, _playField.Offset.Y + 41));
+        _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new(_playField.Offset.X - 12, _playField.Offset.Y + 49));
         _playField.ClearingLines += IncrementScore;
         _playField.ClearingLines += PingLineClear;
         _playField.GenericSpinPing += PingLineClear;
@@ -41,9 +41,9 @@ public class SprintMode: MarathonMode
         _level = 1;
         _gravity = SetGravity(_level);
         _playField.gravity = _gravity;
-        _levelProgressDisplay = new(new Vector2(_playField.offset.X - 7, _playField.offset.Y), _lineGoal, ProgressBarType.Vertical);
+        _levelProgressDisplay = new(new Vector2(_playField.Offset.X - 7, _playField.Offset.Y), _lineGoal, ProgressBarType.Vertical);
 
-        _streakFireSource = new(new(_playField.offset.X - 48, _playField.offset.Y + 46));
+        _streakFireSource = new(new(_playField.Offset.X - 48, _playField.Offset.Y + 46));
         _streakFire = new EmitterData()
         {
             particleData = new ParticleData
@@ -64,7 +64,7 @@ public class SprintMode: MarathonMode
         _streakFireEmitter = new EmitterObj(_streakFireSource, _streakFire, EmissionType.Continuous, false);
 
         _particleLayer.AddEmitter(_streakFireEmitter);
-        _comboFireSource = new(new(_playField.offset.X - 45, _playField.offset.Y + 38));
+        _comboFireSource = new(new(_playField.Offset.X - 45, _playField.Offset.Y + 38));
         _comboFire = new EmitterData()
         {
             particleData = new ParticleData
@@ -85,7 +85,7 @@ public class SprintMode: MarathonMode
         _comboFireEmitter = new EmitterObj(_comboFireSource, _comboFire, EmissionType.Continuous, false);
         _particleLayer.AddEmitter(_comboFireEmitter);
 
-        _levelUpEffectSource = new(new(_playField.offset.X - 7, _playField.offset.Y + 160));
+        _levelUpEffectSource = new(new(_playField.Offset.X - 7, _playField.Offset.Y + 160));
         _levelUpEffect = new EmitterData()
         {
             particleData = new ParticleData

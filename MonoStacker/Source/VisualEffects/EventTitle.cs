@@ -145,6 +145,7 @@ namespace MonoStacker.Source.VisualEffects
                     _currentScale.X = MathHelper.Lerp(_exitDistortion.X, image.Width, 1 - (1 - _exitTimeAmount) * (1 - _exitTimeAmount));
                     _currentScale.Y = MathHelper.Lerp(_exitDistortion.Y, image.Height, 1 - (1 - _exitTimeAmount) * (1 - _exitTimeAmount));
 
+
                     break;
             }
         }

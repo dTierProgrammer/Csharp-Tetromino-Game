@@ -32,4 +32,12 @@ public class AnimatedEffectLayer
             effect.Draw(spriteBatch);
         //spriteBatch.End();
     }
+
+    public void Draw(SpriteBatch spriteBatch, Vector2 drawOffset)
+    {
+        //spriteBatch.Begin();
+        foreach (var effect in _visualEffects)
+            effect.Draw(spriteBatch, drawOffset);
+        //spriteBatch.End();
+    }
 }

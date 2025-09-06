@@ -10,4 +10,9 @@ public static class ExtendedMath
     {
         return (float)(Rng.NextDouble() * (max - min)) + min;
     }
+
+    public static float EaseOut(float interpolation) 
+    {
+        return 1 - MathF.Pow(1 - interpolation, 3);
+    }
 }
