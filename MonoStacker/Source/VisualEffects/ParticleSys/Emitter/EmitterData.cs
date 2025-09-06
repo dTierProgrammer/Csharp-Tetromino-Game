@@ -12,6 +12,10 @@ public class EmitterData // Conatins parameters emitters will emit particles bas
     public float emissionInterval; // the time intervals particles will be emitted at
     public int density; // how many particles will be emitted every interval
     public float activeTimeLeft { get; set; } // (if emissionSource is marked as timed) how long the emissionSource will stay active (different from emissionInterval)
+    public (float min, float max) offsetX { get; set; } = (0, 0);
+    public (float min, float max) offsetY { get; set; } = (0, 0);
+
+    public (float min, float max) rotationSpeed = (0, 0);
 
     public EmitterData() { }
 

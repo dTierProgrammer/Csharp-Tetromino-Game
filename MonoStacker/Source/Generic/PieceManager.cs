@@ -133,13 +133,21 @@ namespace MonoStacker.Source.Generic
                 piece = ChangePiece(piece);
             if (preRotateType.HasValue)
             {
+                var buffer = piece.type switch
+                {
+                    TetrominoType.I => _factory.SpawnOffset_I(),
+                    TetrominoType.O => _factory.SpawnOffset_O(),
+                    _ => _factory.SpawnOffset_Jlstz()
+                };
                 switch (preRotateType)
                 {
                     case RotationType.Clockwise:
-                        piece.RotateCW();
+                        if(_playfield.grid.IsDataPlacementValid(piece.rotations[piece.ProjectRotateCW()], spawnAreaPosition.Y + buffer.Y, spawnAreaPosition.X + buffer.X))
+                            piece.RotateCW();
                         break;
                     case RotationType.CounterClockwise:
-                        piece.RotateCCW();
+                        if (_playfield.grid.IsDataPlacementValid(piece.rotations[piece.ProjectRotateCCW()], spawnAreaPosition.Y + buffer.Y, spawnAreaPosition.X + buffer.X))
+                            piece.RotateCCW();
                         break;
                 }
             }

@@ -6,7 +6,7 @@ namespace MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 
 public struct ParticleData 
 { // Contains parameters needed to create a particle object
-    public Texture2D texture { get; set; } = GetContent.Load<Texture2D>("Image/Effect/clearEffect");
+    public Texture2D texture { get; set; } = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect");
     public float activeTime { get; set; } = 1; // how long the particle will be active
     public (Color color1, Color color2) colorTimeLine { get; set; } = (Color.Orange, Color.Red); // color change over time (start, end)
     public Vector2 opacityTimeLine { get; set; } = new(1f, 0f); // opacity change over time (start, end)
@@ -15,8 +15,10 @@ public struct ParticleData
     public float angle { get; set; } = 0f;// particle movement angle
     public float rotationSpeed { get; set; } // particle rotation speed
     public Vector2 frictionFactor { get; set; } = Vector2.Zero;
-    
+
+    public Vector2 offset = Vector2.Zero;
+
     // TODO: velocity, accel, friction modifiers to simulate physics
-    
+
     public ParticleData() { }
 }

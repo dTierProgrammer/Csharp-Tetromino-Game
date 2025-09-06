@@ -48,6 +48,18 @@ namespace MonoStacker.Source.VisualEffects
             this.distortFactor = distortFactor;
         }
 
+        public LockFlash(Vector2 position, int width, int height, Color color, float startingOpacity, float timeDisplayed, Vector2 distortFactor) : base(position)
+        {
+            _position = position;
+            tint = color * MathHelper.Clamp(startingOpacity, 0, 1);
+            MaxTimeDisplayed = timeDisplayed;
+            TimeDisplayed = timeDisplayed;
+            this.distortFactor = distortFactor;
+            rectWidth = width;
+            rectHeight = height;
+        }
+
+
         public LockFlash(Texture2D image, Vector2 position, Color color, float timeDisplayed) : base(position)
         {
             _blocks = image;
@@ -55,6 +67,8 @@ namespace MonoStacker.Source.VisualEffects
             tint = color;
             MaxTimeDisplayed = timeDisplayed;
             TimeDisplayed = timeDisplayed;
+            rectWidth = image.Width;
+            rectHeight = image.Height;
         }
 
         public LockFlash(Texture2D image, Vector2 position, Color color, float timeDisplayed, Vector2 distortFactor) : base(position)
@@ -65,6 +79,20 @@ namespace MonoStacker.Source.VisualEffects
             MaxTimeDisplayed = timeDisplayed;
             TimeDisplayed = timeDisplayed;
             this.distortFactor = distortFactor;
+            rectWidth = image.Width;
+            rectHeight = image.Height;
+        }
+
+        public LockFlash(Texture2D image, Vector2 position, int width, int height, Color color, float timeDisplayed, Vector2 distortFactor) : base(position)
+        {
+            _blocks = image;
+            _position = position;
+            tint = color;
+            MaxTimeDisplayed = timeDisplayed;
+            TimeDisplayed = timeDisplayed;
+            this.distortFactor = distortFactor;
+            rectWidth = width;
+            rectHeight = height;
         }
 
         public LockFlash(Texture2D image, Rectangle sourceRect, Vector2 position, Color color, float timeDisplayed, Vector2 distortFactor) : base(position)
@@ -76,6 +104,8 @@ namespace MonoStacker.Source.VisualEffects
             TimeDisplayed = timeDisplayed;
             this.distortFactor = distortFactor;
             _sourceRect = sourceRect;
+            rectWidth = 8;
+            rectHeight = 8;
         }
 
         public override void Update(float deltaTime)

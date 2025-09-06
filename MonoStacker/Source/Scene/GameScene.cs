@@ -14,5 +14,7 @@ namespace MonoStacker.Source.Scene
         public void Load();
         public void Update(GameTime gameTime);
         public void Draw(SpriteBatch spriteBatch);
+
+        public void DrawText(SpriteBatch spriteBatch);
     }
 }

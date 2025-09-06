@@ -1,4 +1,6 @@
+
 using System;
+using System.Diagnostics;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 
@@ -36,7 +38,7 @@ public class ParticleObj : AnimatedEffect
         _data = data;
         activeTimeLeft = _data.activeTime;
         _activeTimeAmount = 1f;
-        _position = position;
+        
         _color = _data.colorTimeLine.color1;
         _opacity = _data.opacityTimeLine.X;
         
@@ -62,6 +64,7 @@ public class ParticleObj : AnimatedEffect
             case (ParticleOriginSetting)8: _origin = new(_data.texture.Width / 2, 0); break;
             case (ParticleOriginSetting)9: _origin = new(_data.texture.Width, 0);break;
         }
+        _position = position + data.offset;
     }
     
     public ParticleObj(Vector2 position, ParticleData data)
@@ -69,7 +72,7 @@ public class ParticleObj : AnimatedEffect
         _data = data;
         activeTimeLeft = _data.activeTime;
         _activeTimeAmount = 1f;
-        _position = position;
+        _position = position + data.offset;
         _color = _data.colorTimeLine.color1;
         _opacity = _data.opacityTimeLine.X;
 
@@ -112,6 +115,7 @@ public class ParticleObj : AnimatedEffect
 
     public override void Draw(SpriteBatch spriteBatch)
     {
+        //Debug.WriteLine("called");
         spriteBatch.Draw
             (
                 _data.texture,

@@ -113,7 +113,9 @@ namespace MonoStacker
             ParticleManager.Draw(_spriteBatch);
             _spriteBatch.Begin();
             Font.DefaultSmallOutlineGradient.RenderString(_spriteBatch, new Vector2(479, 0), $"{GetFps.fps:F0}", Color.Yellow, OriginSetting.TopRight);
+            //_spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"), new Rectangle(10,10, 256, 256), Color.Red);
             _spriteBatch.End();
+            _sceneManager.CurrentScene().DrawText(_spriteBatch);
 
 
             // TODO: Add your drawing code here

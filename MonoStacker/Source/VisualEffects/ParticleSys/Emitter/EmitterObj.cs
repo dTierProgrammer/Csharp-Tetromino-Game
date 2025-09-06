@@ -68,6 +68,9 @@ public class EmitterObj
         bufferedParticleData.speed = ExtendedMath.RandomFloat(_data.speed.min, _data.speed.max);
         float rand = (float)(ExtendedMath.Rng.NextDouble() * 2) - 1;
         bufferedParticleData.angle += _data.angleVarianceMax * rand;
+        bufferedParticleData.offset.X += ExtendedMath.RandomFloat(_data.offsetX.min, _data.offsetX.max);
+        bufferedParticleData.offset.Y += ExtendedMath.RandomFloat(_data.offsetY.min, _data.offsetY.max);
+        bufferedParticleData.rotationSpeed += ExtendedMath.RandomFloat(_data.rotationSpeed.min, _data.rotationSpeed.max);
 
         ParticleObj bufferedParticle = new(pos, bufferedParticleData);
         ParticleManager.AddParticle(bufferedParticle);

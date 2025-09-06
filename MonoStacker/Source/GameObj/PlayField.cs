@@ -23,7 +23,10 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
+using System.Drawing;
 using System.Linq;
+using Color = Microsoft.Xna.Framework.Color;
+using Rectangle = Microsoft.Xna.Framework.Rectangle;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
 
 namespace MonoStacker.Source.GameObj
@@ -222,6 +225,7 @@ namespace MonoStacker.Source.GameObj
         float rowTime = 0;
         private int _greyRow = Grid.ROWS - 1  ;
         private int _highestRow;
+        
 
         private PieceManager _pieceManager;
 
@@ -258,6 +262,11 @@ namespace MonoStacker.Source.GameObj
         public event Action GameEnd;
         public event Action Win;
         public event Action Loss;
+
+        private float _shakeOffsetX;
+        private (float timer, float timeMax) _shakeOffsetXTime;
+        private float _shakeOffsetY;
+        private (float timer, float timeMax) _shakeOffsetYTime;
 
         public PlayField(Vector2 position, PlayFieldData data, InputBinds binds)
         { // game feels ever so slightly less responsive now, will investigate
@@ -307,6 +316,11 @@ namespace MonoStacker.Source.GameObj
             _bufferType = data.bufferType;
         }
 
+        public Vector2 Offset 
+        {
+            get { return new Vector2(offset.X * _shakeOffsetX, offset.Y * _shakeOffsetY); }
+        }
+
         public void Start() 
         {
             GrabNextPiece();
@@ -339,7 +353,9 @@ namespace MonoStacker.Source.GameObj
 
         private void MovePieceHorizontal(int movementAmt) // move the piece a given amount 
         {
+
             if (activePiece is null) return;
+            currentSpinType = SpinType.None;
             for (var i = 0; i < Math.Abs(movementAmt); i++)
             {
                 if (!grid.IsPlacementValid(activePiece, (int)activePiece.offsetY, (int)(activePiece.offsetX + (1 * Math.Sign(movementAmt))))) break;
@@ -356,7 +372,9 @@ namespace MonoStacker.Source.GameObj
 
         private void MovePieceVertical(int movementAmt)
         {
+            
             if (activePiece is null) return;
+            currentSpinType = SpinType.None;
             for (var i = 0; i < Math.Abs(movementAmt); i++)
             {
                 if (!grid.IsPlacementValid(activePiece, (int)(activePiece.offsetY + (1 * Math.Sign(movementAmt))), (int)(activePiece.offsetX))) 
@@ -407,7 +425,7 @@ namespace MonoStacker.Source.GameObj
                 Debug.WriteLine(parsedSpins);
                 if (parsedSpins == SpinDenotation.None)
                 { 
-                    currentSpinType = SpinType.None; Debug.WriteLine("piece of fucking shit program FUCK YOU"); 
+                    currentSpinType = SpinType.None;
                 }
                 else if (parsedSpins == SpinDenotation.TSpinOnly)
                     if (activePiece.type is not TetrominoType.T) currentSpinType = SpinType.None;
@@ -421,6 +439,8 @@ namespace MonoStacker.Source.GameObj
 
         private int CalculateGhostPiece(Piece piece) // get the ghost piece's position
         {
+            if (piece is null) return 0;
+
             var xOff = (int)piece.offsetX;
             var yOff = (int)piece.offsetY;
             while (grid.IsPlacementValid(piece, yOff + 1, xOff))
@@ -465,6 +485,23 @@ namespace MonoStacker.Source.GameObj
             }
         }
 
+        private void IncrementStreak() 
+        {
+            _streakIsActive = true;
+            _streak = _streakIsActive ? _streak += 1 : 0;
+            if (_streak > 0) SfxBank.b2b.Play();
+            StreakContinue?.Invoke();
+        }
+
+        private void BreakStreak() 
+        {
+            _streakIsActive = false;
+            if (_streak > 0)
+                SfxBank.b2bBreak.Play();
+            _streak = -1;
+            StreakBreak?.Invoke();
+        }
+
         private void LockPiece() // lock piece onto the grid
         {
             if (activePiece is null) return;
@@ -481,7 +518,7 @@ namespace MonoStacker.Source.GameObj
                 _currentBoardState = BoardState.LineClearDelay;
                 _lineClearDelay.timeLeftover = _lineClearDelay.max;
                 if (_lineClearDelayType == LineClearDelayType.IndividualDelay) 
-                    _lineClearDelay.timeLeftover = _individualLcDelays[grid.CheckForLines() - 1];
+                    _lineClearDelay.timeLeftover = _individualLcDelays[grid.CheckForLines() < 4? grid.CheckForLines() - 1: 3];
             }
             else
             {
@@ -563,16 +600,13 @@ namespace MonoStacker.Source.GameObj
 
                 if (activePiece.offsetY != _prevYOff)
                 {
-                    Debug.WriteLine("ssskasj");
                     SfxBank.stackHit.Play();
-                    if (speed > .5f)
+                    if (speed > .2f)
                         HitEffect(new Color(214, 255, 255));
-
                 }
 
                 if (_softLock && _softDrop)
                 {
-                    Debug.WriteLine("hotaro");
                     LockPiece();
                     SfxBank.softLock.Play();
                 }
@@ -601,6 +635,7 @@ namespace MonoStacker.Source.GameObj
 
         private void HardDrop() // place the piecec at the ghost piece's offset, lock it onto the grid
         {
+            if (activePiece is null) return;
             if (_currentBoardState is not BoardState.Playing) return;
             _aeLayer.AddEffect(new DropEffect(offset, 1f, activePiece, ((int)CalculateGhostPiece(activePiece) - (int)activePiece.offsetY), activePiece.color));
             activePiece.offsetY = CalculateGhostPiece(activePiece);
@@ -617,39 +652,32 @@ namespace MonoStacker.Source.GameObj
                 _aeLayer.AddEffect(new DropEffect(offset, 1f, activePiece, ((int)CalculateGhostPiece(activePiece) - (int)activePiece.offsetY), activePiece.color));
                 activePiece.offsetY = CalculateGhostPiece(activePiece);
                 HitEffect(new Color(214, 255, 255));
-            }
-                
+            }  
         }
 
         private void ClearFilledLines() // actually animates the line clear/plays the corresponding sounds/effects
         { // refactor to use event action delegate
-            if (grid.rowsToClear.Count == 4 || ((currentSpinType == SpinType.FullSpin || currentSpinType == SpinType.MiniSpin)))
-            {
-                _streakIsActive = true;
-                _streak = _streakIsActive ? _streak += 1 : 0;
-                if (_streak > 0) SfxBank.b2b.Play();
-                StreakContinue?.Invoke();
-            }
-            else
-            {
-                if (_streakIsActive)
-                {
-                    _streakIsActive = false;
-                    if (_streak > 0)
-                        SfxBank.b2bBreak.Play();
-                    _streak = -1;
-                    StreakBreak?.Invoke();
-                }
-            }
+            if (grid.rowsToClear.Count >= 4 || 
+                parsedSpins is not SpinDenotation.TSpinSpecific && currentSpinType is not SpinType.None ||
+                parsedSpins is SpinDenotation.TSpinSpecific && activePiece.type is TetrominoType.T && currentSpinType is not SpinType.None)
+                IncrementStreak();
+            else if (!(grid.rowsToClear.Count >= 4 ||
+                parsedSpins is not SpinDenotation.TSpinSpecific && currentSpinType is not SpinType.None ||
+                parsedSpins is SpinDenotation.TSpinSpecific && activePiece.type is TetrominoType.T && currentSpinType is not SpinType.None))
+                BreakStreak();
 
             if(grid.GetNonEmptyRows() - grid.rowsToClear.Count == 0)
                 Bravo?.Invoke();
 
-            if (currentSpinType != SpinType.None) SfxBank.clearSpin[grid.rowsToClear.Count - 1].Play();
-            else SfxBank.clear[grid.rowsToClear.Count - 1].Play();
+            var num = grid.rowsToClear.Count - 1;
+            if (num > 3) num = 3;
+            if (currentSpinType != SpinType.None) SfxBank.clearSpin[num].Play();
+            else { SfxBank.clear[num].Play(); }
             
             PlayfieldEffects.LineClearFlash(Color.White, .5f, grid, offset);
             PlayfieldEffects.LineClearEffect(grid, offset);
+            if(grid.rowsToClear.Count >= 4)
+                _aeLayer.AddEffect(new LockFlash(new Vector2(offset.X + 36, offset.Y + 76), Grid.COLUMNS * 8, (Grid.ROWS / 2) * 8, Color.White, .5f, 3f, Vector2.Zero ));
 
             if (currentSpinType != SpinType.None && activePiece is not null)
                 PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), offset);
@@ -669,6 +697,12 @@ namespace MonoStacker.Source.GameObj
             if (piece is null) return null;
             else activePiece = piece;
             return piece;
+        }
+
+        private void AddGarbageLine() 
+        {
+            grid.AddGarbageLine(ExtendedMath.Rng.Next(0, 8));
+            AnimatedEffectManager.AddEffect(new ClearFlash(new Vector2(39 + offset.X, (int)(39 * 8) + offset.Y - 155.5f), Color.White, .3f, new Vector2(3, 3)));
         }
 
         private void Kill() 
@@ -1021,14 +1055,14 @@ namespace MonoStacker.Source.GameObj
                 _temporaryLandingSys = !_temporaryLandingSys;
             if (Keyboard.GetState().IsKeyDown(Keys.R) && !_prevKbState.IsKeyDown(Keys.R))
                 grid.ClearGrid();
-            /*
-            if (Keyboard.GetState().IsKeyDown(Keys.G) && !_prevKbState.IsKeyDown(Keys.G)) 
+            
+            if (Keyboard.GetState().IsKeyDown(Keys.Q) && !_prevKbState.IsKeyDown(Keys.Q)) 
             {
                 if (activePiece is not null && activePiece.offsetY == CalculateGhostPiece(activePiece) && activePiece.offsetY > -1) 
                     activePiece.offsetY--;
-                grid.AddGarbageLine(8);
+                AddGarbageLine();
             }
-            */
+            
             if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !_prevKbState.IsKeyDown(Keys.Tab))
                 activePiece = _pieceManager.DealPiece(null, false);
             if (Keyboard.GetState().IsKeyDown(Keys.A) && !_prevKbState.IsKeyDown(Keys.A))

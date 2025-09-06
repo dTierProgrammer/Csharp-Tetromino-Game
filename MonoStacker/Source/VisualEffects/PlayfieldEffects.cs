@@ -123,14 +123,17 @@ public static class PlayfieldEffects
                 {
                     sources.Members.Add(new GroupPartData()
                     {
-                        Position = new Vector2((x * 8) + pos.X + ((int)piece.offsetX * 8) + 4, (y * 8) + (pos.Y) + ((int)(piece.offsetY * 8) - 160) + 4),
+                        Position = new Vector2((x * 8) + pos.X + ((int)piece.offsetX * 8), (y * 8) + (pos.Y) + ((int)(piece.offsetY * 8) - 160)),
                         Data = new EmitterData 
                         {
                             emissionInterval = 1f,
-                            density = 3,
+                            density = ExtendedMath.Rng.Next(1, 4),
                             angleVarianceMax = 0,
                             particleActiveTime = (.01f, .5f),
                             speed = (50, 200),
+                            rotationSpeed = (-.05f, .05f),
+                            offsetX = (0, 8),
+                            offsetY = (0, 8),
                             particleData = new ParticleData() 
                             {
                                 texture = GetContent.Load<Texture2D>("Image/Effect/Particle/starLarge"),
@@ -138,7 +141,7 @@ public static class PlayfieldEffects
                                 colorTimeLine = (Color.White, Color.White),
                                 scaleTimeLine = new (5, 7),
                                 opacityTimeLine = new (1, 0),
-                                frictionFactor = new Vector2(0, .0005f)
+                                frictionFactor = new Vector2(0, .0005f),
                             }
                         }
                     });

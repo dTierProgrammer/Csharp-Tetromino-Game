@@ -39,6 +39,7 @@ namespace MonoStacker.Source.VisualEffects
         private EmitterData emitterData;
         private EmitterObj emitter;
         bool emit;
+        private float rotation;
 
         public event Action IsActive;
 
@@ -55,24 +56,28 @@ namespace MonoStacker.Source.VisualEffects
             MaxTimeDisplayed = exitTime;
             _exitDistortion = exitDistortion;
             emissionSource = new (position);
-            particleData = new () 
+            particleData = new()
             {
                 texture = GetContent.Load<Texture2D>("Image/Effect/starLarge"),
-                colorTimeLine = (Color.Orange, Color.Yellow),
-                rotationSpeed = .03f,
-                scaleTimeLine = new Vector2 (8, 32)
+                colorTimeLine = (Color.Yellow, Color.Orange),
+                //rotationSpeed = .03f,
+                scaleTimeLine = new Vector2(8, 0)
             };
-            emitterData = new() 
+            emitterData = new()
             {
                 particleData = particleData,
                 activeTimeLeft = activeTime,
                 angleVarianceMax = 180,
                 particleActiveTime = (1, 2),
                 speed = (10, 50),
-                density = 20,
+                density = 40,
+                offsetX = (-image.Width / 2 , image.Width / 2),
+                offsetY = (-image.Height / 2, image.Height / 2),
+                rotationSpeed = (-.05f, .05f)
             };
             emitter = new(emissionSource, emitterData, EmissionType.Burst);
             emit = true;
+            //rotation = 5;
         }
 
         public EventTitle(Texture2D texture, Vector2 position, Vector2 entranceDistortion, float entranceTime, float activeTime, Vector2 exitDistortion, float exitTime, Color color, Color particleColor1, Color particleColor2, bool emit) : base(position)
@@ -92,8 +97,8 @@ namespace MonoStacker.Source.VisualEffects
             {
                 texture = GetContent.Load<Texture2D>("Image/Effect/starLarge"),
                 colorTimeLine = (particleColor1, particleColor2),
-                rotationSpeed = .03f,
-                scaleTimeLine = new Vector2(8, 32)
+                //rotationSpeed = .03f,
+                scaleTimeLine = new Vector2(8, 0)
             };
             emitterData = new()
             {
@@ -102,11 +107,16 @@ namespace MonoStacker.Source.VisualEffects
                 angleVarianceMax = 180,
                 particleActiveTime = (1, 2),
                 speed = (10, 50),
-                density = 20,
+                density = 40,
+                offsetX = (-image.Width / 2, image.Width / 2),
+                offsetY = (-image.Height / 2, image.Height / 2),
+                rotationSpeed = (-.05f, .05f)
             };
             emitter = new(emissionSource, emitterData, EmissionType.Burst);
             _tint = color;
             this.emit = emit;
+            //rotation = 5;
+            rotation = 0;
         }
 
         public override void Update(float deltaTime) 
@@ -118,8 +128,8 @@ namespace MonoStacker.Source.VisualEffects
                     _entranceTime.timer -= deltaTime;
                     _entranceTimeAmount = MathHelper.Clamp(_entranceTime.timer / _entranceTime.timerMax, 0, 1);
                     _opacity = MathHelper.Lerp(1, 0, _entranceTimeAmount);
-                    _currentScale.X = MathHelper.Lerp(image.Width, _entranceDistortion.X, _entranceTimeAmount);
-                    _currentScale.Y = MathHelper.Lerp(image.Height, _entranceDistortion.Y, _entranceTimeAmount);
+                    _currentScale.X = MathHelper.Lerp(image.Width, _entranceDistortion.X, _entranceTimeAmount * _entranceTimeAmount);
+                    _currentScale.Y = MathHelper.Lerp(image.Height, _entranceDistortion.Y, _entranceTimeAmount * _entranceTimeAmount);
                     break;
                 case EventTitleState.Active:
                     if (_activeTime.timer <= 0) { _currentState = EventTitleState.Exiting; }
@@ -132,8 +142,9 @@ namespace MonoStacker.Source.VisualEffects
                     TimeDisplayed -= deltaTime;
                     _exitTimeAmount = MathHelper.Clamp(TimeDisplayed / MaxTimeDisplayed, 0, 1);
                     _opacity = MathHelper.Lerp(0, 1, _exitTimeAmount);
-                    _currentScale.X = MathHelper.Lerp(_exitDistortion.X, image.Width, _exitTimeAmount);
-                    _currentScale.Y = MathHelper.Lerp(_exitDistortion.Y, image.Height, _exitTimeAmount);
+                    _currentScale.X = MathHelper.Lerp(_exitDistortion.X, image.Width, 1 - (1 - _exitTimeAmount) * (1 - _exitTimeAmount));
+                    _currentScale.Y = MathHelper.Lerp(_exitDistortion.Y, image.Height, 1 - (1 - _exitTimeAmount) * (1 - _exitTimeAmount));
+
                     break;
             }
         }
@@ -147,7 +158,7 @@ namespace MonoStacker.Source.VisualEffects
                     new Rectangle((int)position.X, (int)position.Y, (int)_currentScale.X, (int)_currentScale.Y),
                     null,
                     _tint * _opacity,
-                    0f,
+                    rotation,
                     new Vector2(image.Width / 2, image.Height / 2),
                     SpriteEffects.None,
                     0

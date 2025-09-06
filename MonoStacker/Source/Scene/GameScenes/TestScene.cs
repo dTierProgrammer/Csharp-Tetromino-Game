@@ -46,5 +46,7 @@ namespace MonoStacker.Source.Scene.GameScenes
           _rasterFont.RenderString(spriteBatch, Vector2.One, "for debug purposes", Color.Yellow);
             spriteBatch.End();
         }
+
+        public void DrawText(SpriteBatch spriteBatch) { }
     }
 }

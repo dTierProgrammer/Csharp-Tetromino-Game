@@ -13,7 +13,7 @@ namespace MonoStacker.Source.VisualEffects
         public float TimeDisplayed { get; protected set; }
         public float MaxTimeDisplayed { get; protected set; }
         public Texture2D image { get; protected set; }
-        public virtual Vector2 position { get; protected set; }
+        public Vector2 position;
 
         public AnimatedEffect(Vector2 position) { this.position = position; }
 

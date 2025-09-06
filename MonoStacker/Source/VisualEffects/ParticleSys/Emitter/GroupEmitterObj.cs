@@ -24,6 +24,9 @@ public class GroupEmitterObj: EmitterObj
         float rand = (float)(ExtendedMath.Rng.NextDouble() * 2) - 1;
         bufferedParticleData.angle += data.angleVarianceMax * rand;
         emissionState = EmitterState.Active;
+        bufferedParticleData.offset.X += ExtendedMath.RandomFloat(data.offsetX.min, data.offsetX.max);
+        bufferedParticleData.offset.Y += ExtendedMath.RandomFloat(data.offsetY.min, data.offsetY.max);
+        bufferedParticleData.rotationSpeed = ExtendedMath.RandomFloat(data.rotationSpeed.min, data.rotationSpeed.max);
 
         ParticleObj bufferedParticle = new(pos, bufferedParticleData);
         ParticleManager.AddParticle(bufferedParticle);

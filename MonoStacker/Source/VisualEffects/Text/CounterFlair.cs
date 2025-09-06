@@ -78,9 +78,10 @@ namespace MonoStacker.Source.VisualEffects.Text
                     if (_flashDuration.timer <= 0) { _currentState = CounterState.Active; _flashDuration.timer = _flashDuration.timerMax; }
                     _flashDuration.timer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                     _flashAmt = MathHelper.Clamp(_flashDuration.timer / _flashDuration.timerMax, 0, 1);
-                    if(_color != _colorSet.regular)
-                        _color = Color.Lerp(_colorSet.regular, _colorSet.flash, _flashAmt);
-                    break;
+                    if (_color == _colorSet.regular)
+                        return;
+                    _color = Color.Lerp(_colorSet.regular, _colorSet.flash, _flashAmt);
+                        break;
                 case CounterState.Fade:
                     if (_fadeDuration.timer <= 0) { _currentState = CounterState.Inactive; _fadeDuration.timer = _fadeDuration.timerMax; Reset(); }
                     _fadeDuration.timer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -92,7 +93,11 @@ namespace MonoStacker.Source.VisualEffects.Text
         public override void Draw(SpriteBatch spriteBatch)
         {
             if (count > _countBase + _deadZone)
+            {
+                spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Font/flair_bg"), new Rectangle((int)position.X - Font.DefaultSmallOutlineGradient.GetStringLength($"{_name}{count}") + 2, (int)position.Y - 8, Font.DefaultSmallOutlineGradient.GetStringLength($"{_name}{count}"), 9), _color);
                 Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, position, $"{_name}{count}", _color, OriginSetting.BottomRight);
+                
+            }
         }
 
         public void Draw(SpriteBatch spriteBatch, OriginSetting originSetting)
