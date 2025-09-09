@@ -55,7 +55,7 @@ public static class PlayfieldEffects
 
     public static void LineClearFlash(Color color, float timeDisplayed, Grid grid, Vector2 pos) 
     {
-        for (int y = 0; y < 40; y++)
+        for (int y = 0; y < Grid.ROWS; y++)
         {
             if (grid.rowsToClear.Contains(y))
             {
@@ -63,6 +63,83 @@ public static class PlayfieldEffects
             }
         }
     } // move to "effect manager" class
+
+    public static void BoardExplosion(Grid grid, Vector2 pos) 
+    {
+        StaticEmissionSources sources = new([]);
+        for (var y = 0; y < Grid.ROWS; y++)
+        {
+            for (var x = 0; x < Grid.COLUMNS; x++)
+            {
+                if (grid._matrix[y][x] == 0) continue;
+                sources.Members.Add(new GroupPartData()
+                {
+                    Position = new Vector2((x * 8) + pos.X + 4, (y * 8) + (pos.Y - 160)),
+                    Data = new EmitterData
+                    {
+                        density = 1,
+                        angleVarianceMax = 180,
+                        speed = (30, 60),
+                        rotationSpeed = (-.05f, .05f),
+                        particleActiveTime = (3, 3),
+
+                        particleData = new ParticleData()
+                        {
+                            texture = ImgBank.BlockTexture,
+                            textureSourceRect = grid.imageTiles[grid._matrix[y][x] - 1],
+                            colorTimeLine = (Color.White, Color.White),
+                            opacityTimeLine = new(1, 1),
+                            frictionFactor = new Vector2(0, .003f),
+                            scaleTimeLine = new(64, 64),
+                            originOverride = new(4, 4)
+                        }
+                    }
+                });
+            }
+        }
+        GroupEmitterObj clear = new(sources, EmissionType.Burst);
+        ParticleManager.AddEmitter(clear);
+    }
+
+    public static void LineClearAltEffect(Grid grid, Vector2 pos)
+    {
+        StaticEmissionSources sources = new([]);
+        for (var y = 0; y < Grid.ROWS; y++) 
+        {
+            if (grid.rowsToClear.Contains(y)) 
+            {
+                for (var x = 0; x < Grid.COLUMNS; x++)
+                {
+                    sources.Members.Add(new GroupPartData()
+                    {
+                        Position = new Vector2((x * 8) + pos.X + 4, (y * 8) + (pos.Y - 160)),
+                        Data = new EmitterData
+                        {
+                            density = 1,
+                            angleVarianceMax = 50,
+                            speed = (30, 60),
+                            rotationSpeed = (-.05f, .05f),
+                            particleActiveTime = (.5f, 1),
+                            
+                            particleData = new ParticleData()
+                            {
+                                texture = ImgBank.BlockTexture,
+                                textureSourceRect = grid.imageTiles[8],
+                                colorTimeLine = (Color.White, Color.White),
+                                opacityTimeLine = new(.4f, 0),
+                                frictionFactor = new Vector2(0, .003f),
+                                scaleTimeLine = new(64, 64),
+                                originOverride = new(4, 4)
+                            }
+                        }
+                    });
+                }
+            
+            }
+        }
+        GroupEmitterObj clear = new(sources, EmissionType.Burst);
+        ParticleManager.AddEmitter(clear);
+    }
 
     public static void LineClearEffect(Grid grid, Vector2 pos)
     {

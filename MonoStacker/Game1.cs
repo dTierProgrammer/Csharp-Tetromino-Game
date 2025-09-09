@@ -49,6 +49,7 @@ namespace MonoStacker
             _graphics = new GraphicsDeviceManager(this);
             Content.RootDirectory = "Content";
             uGameTime = new GameTime();
+            Window.Title = "Demo";
 
 #if DEBUG
             _graphics.PreferredBackBufferWidth = 1920;

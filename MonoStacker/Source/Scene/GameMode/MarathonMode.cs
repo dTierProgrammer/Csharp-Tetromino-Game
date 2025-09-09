@@ -1,4 +1,5 @@
 ﻿using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Data;
@@ -67,6 +68,7 @@ namespace MonoStacker.Source.Scene.GameMode
         protected int piecesPlaced = 0;
         protected KeyboardState _prevKBS;
         protected AnimatedEffectLayer _aeLayer = new();
+        protected AnimatedEffectLayer _aeLayerOffset = new();
         protected string _title = "Marathon Game";
         protected List<string> leftStatsDisplay = new();
         protected List<string> rightStatsDisplay = new();
@@ -210,7 +212,7 @@ namespace MonoStacker.Source.Scene.GameMode
 
         protected virtual void InitRuleset() 
         {
-            pfData = PlayFieldPresets.GuidelineSlow1;
+            pfData = PlayFieldPresets.GuidelineSlow2;
             capLinesCleared = true;
         }
 
@@ -236,6 +238,7 @@ namespace MonoStacker.Source.Scene.GameMode
         protected void StopTimer() 
         {
             _runTimer = false;
+            
         }
 
         protected void StopGame() 
@@ -250,19 +253,9 @@ namespace MonoStacker.Source.Scene.GameMode
 
         protected virtual void IncrementTimer(GameTime gameTime) 
         {
-            ms += (float)gameTime.ElapsedGameTime.TotalMilliseconds;
+            
             time += (float)gameTime.ElapsedGameTime.TotalSeconds;
-            if (ms >= 1000)
-            {
-                ms = 0;
-                snd++;
-            }
-
-            if (snd >= 60)
-            {
-                snd = 0;
-                min++;
-            }
+            
         }
         protected virtual void DecrementTimer(GameTime gameTime) 
         {
@@ -349,9 +342,12 @@ namespace MonoStacker.Source.Scene.GameMode
         protected void BravoPing() 
         {
             _aeLayer.AddEffect(new EventTitle(ImgBank.BravoTitle, new Vector2(240, 100), new Vector2(ImgBank.BravoTitle.Width + 100, 0), .2f, 1f, new Vector2(ImgBank.BravoTitle.Width + 50, ImgBank.BravoTitle.Height + 10), 1f));
+            GetContent.Load<SoundEffect>("Audio/Sound/old/clear2").Play();
+            GetContent.Load<SoundEffect>("Audio/Sound/old/s_hakushu").Play();
+            _playField.FlashBoardBg(Color.Yellow, 3, .5f);
         }
 
-        protected void PingLineClear() 
+        protected void PingLineClear()
         {
             string lineClearTitle = _playField.grid.rowsToClear.Count switch
             {
@@ -392,8 +388,10 @@ namespace MonoStacker.Source.Scene.GameMode
                     4 => "!!!!",
                     _ => "!!!!!--"
                 };
-                _atSys.Ping($"super move{lineClearTitle}", Color.LightBlue, Color.Blue, 3f, .5f); 
+                _atSys.Ping($"super move{lineClearTitle}", Color.LightBlue, Color.Blue, 3f, .5f);
             }
+            if (_playField.grid.rowsToClear.Count >= 4 || (_playField.currentSpinType is not SpinType.None) && _playField.grid.rowsToClear.Count >= 2)
+                _playField.FlashBoardBg(Color.White, 3, .5f);
         }
 
         protected virtual void IncrementScore()
@@ -452,10 +450,10 @@ namespace MonoStacker.Source.Scene.GameMode
                     _level++;
                     _playField.gravity = SetGravity(_level);
                     _atSys.Ping("level up!", Color.Cyan, Color.RoyalBlue,  3, .3f);
-                    _aeLayer.AddEffect(new LockFlash
+                    _aeLayerOffset.AddEffect(new LockFlash
                         (
                             GetContent.Load<Texture2D>("Image/Board/levelMeterFillMask"), 
-                            new Vector2(_playField.Offset.X - 7, _playField.Offset.Y),
+                            new Vector2(_playField.offset.X - 7, _playField.offset.Y),
                             Color.White,
                             5f
                         ));
@@ -510,6 +508,9 @@ namespace MonoStacker.Source.Scene.GameMode
                 _playField.PauseForEvent();
                 _streakCounter.Kill();
                 _comboCounter.Kill();
+                _playField.FlashBoardBg(Color.Yellow, 5, 1);
+                GetContent.Load<SoundEffect>("Audio/Sound/old/s_hakushu").Play();
+                GetContent.Load<SoundEffect>("Audio/Sound/old/clear3").Play();
             }
             successTimer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
             if (successTimer <= 0)
@@ -564,6 +565,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _prevKBS = Keyboard.GetState();
 #endif
             _aeLayer.Update(gameTime);
+            _aeLayerOffset.Update(gameTime);
             _particleLayer.Update(gameTime);
             //Debug.WriteLine(clockBehavior);
         }
@@ -594,6 +596,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _atSys.Draw(spriteBatch);
             spriteBatch.Begin();
             _aeLayer.Draw(spriteBatch);
+            _aeLayerOffset.Draw(spriteBatch, new Vector2(_playField._shakeOffsetX, _playField._shakeOffsetY));
             spriteBatch.End();
         }
 

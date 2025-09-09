@@ -65,6 +65,11 @@ public class ParticleObj : AnimatedEffect
             case (ParticleOriginSetting)9: _origin = new(_data.texture.Width, 0);break;
         }
         _position = position + data.offset;
+
+        if (data.originOverride.HasValue)
+            _origin = (Vector2)data.originOverride;
+        if (data.rotateInDirection)
+            _startingOrientation = MathF.Atan2(_direction.Y, _direction.X);
     }
     
     public ParticleObj(Vector2 position, ParticleData data)
@@ -97,6 +102,12 @@ public class ParticleObj : AnimatedEffect
             case (ParticleOriginSetting)8: _origin = new(_data.texture.Width / 2, 0); break;
             case (ParticleOriginSetting)9: _origin = new(_data.texture.Width, 0);break;
         }
+
+        if (data.originOverride.HasValue)
+            _origin = (Vector2)data.originOverride;
+
+        if (data.rotateInDirection)
+            _startingOrientation = MathF.Atan2(_direction.Y, _direction.X);
     }
 
     public void Update(GameTime gameTime) 
@@ -120,7 +131,7 @@ public class ParticleObj : AnimatedEffect
             (
                 _data.texture,
                 _position,
-                null,
+                _data.textureSourceRect,
                 _color * _opacity,
                 _startingOrientation,
                 _origin,
@@ -136,7 +147,7 @@ public class ParticleObj : AnimatedEffect
             (
                 _data.texture,
                 _position,
-                null,
+                _data.textureSourceRect,
                 _color * _opacity,
                 _startingOrientation,
                 _origin,

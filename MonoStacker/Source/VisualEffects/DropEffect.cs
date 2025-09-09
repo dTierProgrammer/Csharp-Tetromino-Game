@@ -57,7 +57,7 @@ public class DropEffect: AnimatedEffect
         this.position = position;
         _rowOffset = (int)piece.offsetY;
         _subRowOffset = piece.GetEmptyRows();
-        _rowsLength = length * 8;
+        _rowsLength = length;
         _columnOffset = (int)piece.offsetX;
         _subColumnOffset = piece.GetEmptyColumns();
         _columnsLength = piece.GetNonEmptyColumns().Count;
@@ -111,7 +111,7 @@ public class DropEffect: AnimatedEffect
                     (int)(position.X) + (_columnOffset * 8) + (_subColumnOffset * 8) + (int)drawOffset.X,
                     (int)(position.Y) + (_rowOffset * 8) - 160 + (_subRowOffset * 8) + (exOffset * 8) + (int)drawOffset.Y,
                     _columnsLength * 8,
-                    _rowsLength
+                    _rowsLength * 8
                 ),
                 _tint * .5f
             );

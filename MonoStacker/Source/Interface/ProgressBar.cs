@@ -117,7 +117,7 @@ namespace MonoStacker.Source.Interface
             {
                 _lerpTime.timer -= (float)gameTime.ElapsedGameTime.TotalSeconds;
                 float lerpProgress = MathHelper.Clamp(_lerpTime.timer / _lerpTime.maxTime, 0, 1);
-                anSegment.Height = (int)MathHelper.Lerp(segment.Height, anSegment.Height, lerpProgress * lerpProgress);
+                anSegment.Height = (int)MathHelper.Lerp(segment.Height, anSegment.Height, lerpProgress);
             }
         }
         public virtual void Draw(SpriteBatch spriteBatch) 
@@ -126,10 +126,10 @@ namespace MonoStacker.Source.Interface
             spriteBatch.Draw(animatedTexture, new Vector2(_position.X, _position.Y + fillTexture.Height - anSegment.Height), anSegment, Color.White);
         }
 
-        public virtual void Draw(SpriteBatch spriteBatch, Vector2 drawOffset)
+        public virtual void Draw(SpriteBatch spriteBatch, Vector2 DrawOffset)
         {
-            spriteBatch.Draw(fillTexture, new Vector2(_position.X + drawOffset.X, _position.Y + fillTexture.Height - segment.Height + drawOffset.Y), segment, Color.DarkGray);
-            spriteBatch.Draw(animatedTexture, new Vector2(_position.X + drawOffset.X, _position.Y + fillTexture.Height - anSegment.Height + drawOffset.Y), anSegment, Color.White);
+            spriteBatch.Draw(fillTexture, new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - segment.Height + DrawOffset.Y), segment, Color.DarkGray);
+            spriteBatch.Draw(animatedTexture, new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - anSegment.Height + DrawOffset.Y), anSegment, Color.White);
         }
     }
 }

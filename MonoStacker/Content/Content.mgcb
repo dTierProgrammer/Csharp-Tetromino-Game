@@ -49,6 +49,54 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/clear_triple.wav
 
+#begin Audio/Sound/combo-01.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo-01.wav
+
+#begin Audio/Sound/combo-02.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo-02.wav
+
+#begin Audio/Sound/combo-03.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo-03.wav
+
+#begin Audio/Sound/combo-04.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo-04.wav
+
+#begin Audio/Sound/combo-05.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo-05.wav
+
+#begin Audio/Sound/combo-06.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo-06.wav
+
+#begin Audio/Sound/combo-07.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo-07.wav
+
+#begin Audio/Sound/combo.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/combo.wav
+
 #begin Audio/Sound/hard_drop.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor

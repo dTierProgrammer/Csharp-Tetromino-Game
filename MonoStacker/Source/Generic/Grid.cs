@@ -255,6 +255,16 @@ namespace MonoStacker.Source.Generic
             return SpinType.None;
         }
 
+        public SpinType CheckForSpinImmobile(Piece piece, bool forceMini) 
+        {
+            var spin = SpinType.None;
+            if (IsPlacementValid(piece, piece.initOffsetY, piece.offsetX + 1)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
+            if (IsPlacementValid(piece, piece.initOffsetY, piece.offsetX - 1)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
+            if (IsPlacementValid(piece, piece.initOffsetY + 1, piece.offsetX)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
+            if (IsPlacementValid(piece, piece.initOffsetY - 1, piece.offsetX)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
+            return spin;
+        }
+
         public int GetHighestRow()
         {
             int row = 0;
@@ -345,12 +355,18 @@ namespace MonoStacker.Source.Generic
                 _matrix[rowIndex + offset][i] = _matrix[rowIndex][i];
             }
         }
-        public void ColorRow(int rowIndex, int colorId)
+        public void ColorRow(int rowIndex, int colorId, int greyColor)
         {
             for (int i = 0; i < COLUMNS; i++)
             {
-                if (_matrix[rowIndex][i] != 0)
-                    _matrix[rowIndex][i] = colorId;
+                if (_matrix[rowIndex][i] != 0) 
+                {
+                    if(_matrix[rowIndex][i] == 8)
+                        _matrix[rowIndex][i] = greyColor;
+                    else
+                        _matrix[rowIndex][i] = colorId;
+                }
+                    
             }
         }
 
