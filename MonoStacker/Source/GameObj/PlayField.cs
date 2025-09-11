@@ -1,5 +1,6 @@
 ﻿
 using Microsoft.Xna.Framework;
+using Microsoft.Xna.Framework.Audio;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Data;
@@ -25,6 +26,7 @@ using System.ComponentModel;
 using System.Diagnostics;
 using System.Drawing;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using Color = Microsoft.Xna.Framework.Color;
 using Rectangle = Microsoft.Xna.Framework.Rectangle;
 using Vector2 = Microsoft.Xna.Framework.Vector2;
@@ -179,6 +181,7 @@ namespace MonoStacker.Source.GameObj
         private (float timeLeftover, float max) _dasCut;
         private (float timeLeftover, float max) _hardDropCut;
         private InputDevice _inputDevice = InputDevice.Keyboard;
+        private PlayerIndex _playerIndex = PlayerIndex.One;
         private BufferType _bufferType;
         private RotationType? preRotationType;
         private bool preHoldRequested;
@@ -227,6 +230,7 @@ namespace MonoStacker.Source.GameObj
         float rowTime = 0;
         private int _greyRow = Grid.ROWS - 1  ;
         private int _highestRow;
+        //private int _garbageRow;
         
 
         private PieceManager _pieceManager;
@@ -266,6 +270,18 @@ namespace MonoStacker.Source.GameObj
         public event Action Loss;
         private float pitch = -1;
         private float comboPitch = 0;
+
+        private StaticEmissionSource topOutEffectSource;
+        private EmitterData topOutEffect;
+        private EmitterObj topOutEffectEmitter;
+        private int garbageHole;
+        public int garbageQueued = 0;
+        int lineRecieveLimit = 12;
+        int overflow;
+        public float garbageTime;
+        bool _soonToDie;
+
+        public readonly Vector2 fixOffset = new Vector2(Grid.COLUMNS * 8, Grid.ROWS * 8);
         
 
         public float _shakeOffsetX { get; private set; } = 0;
@@ -273,22 +289,33 @@ namespace MonoStacker.Source.GameObj
         public float _shakeOffsetY { get; private set; } = 0;
         private (float timer, float timeMax) _shakeOffsetYTime = (5, 5);
 
+        public float animateOffsetX { get; private set; } = 0;
+        public float animateOffsetY { get; private set; } = 0;
+
+        private float rotationOffset = 0;
+        public float orientation = 0;
+
+        private float _maxFallAnimationVelocity = 10;
+        private float _fallAnimationVelocity;
+        private float _fallAnimationAcceleration = .083f;
+        
+
         public Vector2 Offset
         {
-            get { return new Vector2((offset.X + (int)_shakeOffsetX), (offset.Y + (int)_shakeOffsetY)); }
+            get { return new Vector2((offset.X + (int)_shakeOffsetX) + (int)animateOffsetX, (offset.Y + (int)_shakeOffsetY) + (int)animateOffsetY); }
         }
 
-        public PlayField(Vector2 position, PlayFieldData data, InputBinds binds)
+        public PlayField(Vector2 position, IRandomizer randomizer, PlayFieldData data, InputDevice device, PlayerIndex? playerIndex, InputBinds binds)
         { // game feels ever so slightly less responsive now, will investigate
             _aeLayer = new();
             _particleLayer = new();
-            offset = position - new Vector2(_bgTest.Width / 2, _bgTest.Height / 2);
+            offset = position;
             grid = new Grid(Offset);
             _pieceManager = new
                 (
                     data.factory,
                     data.spawnAreaOffset,
-                    data.randomizer,
+                    randomizer,
                     data.queueLength,
                     data.queueType,
                     data.holdEnabled
@@ -320,14 +347,38 @@ namespace MonoStacker.Source.GameObj
             _hardDropCut = (0, data.hardDropCut);
             _fastDropType = data.fastDropType;
             _topOutRule = data.topOutRule;
+
+            _inputDevice = device;
+            if (playerIndex.HasValue)
+                _playerIndex = (PlayerIndex)playerIndex;
             
 
             _inputManager = new InputManager(binds);
             _bufferType = data.bufferType;
-            
-        }
 
-        
+            topOutEffectSource = new StaticEmissionSource(new(offset.X, offset.Y - 80));
+            topOutEffect = new()
+            {
+
+                offsetX = new(-40, 40),
+                speed = (30, 60),
+                angleVarianceMax = 180,
+                density = 300,
+                particleActiveTime = (.5f, 1),
+                rotationSpeed = (-.05f, .05f),
+                
+                particleData = new ParticleData 
+                {
+                    colorTimeLine = (Color.Yellow, Color.Red),
+                    scaleTimeLine = new(2,1),
+                    texture = GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"),
+                    frictionFactor = new Vector2(0, -.0003f)
+                }
+            };
+
+            topOutEffectEmitter = new(topOutEffectSource, topOutEffect, EmissionType.Burst);
+            Debug.WriteLine($"PlayField Instance | {TimeSpan.FromSeconds(Game1.uGameTime.TotalGameTime.TotalSeconds).ToString(@"mm\:ss\.ff")} | Initialization success.");
+        }
 
         public void Start() 
         {
@@ -338,6 +389,7 @@ namespace MonoStacker.Source.GameObj
         {
             _highestRow = grid.GetHighestRow();
             _currentBoardState = BoardState.Finish;
+            
         }
 
         public void PauseForEvent()
@@ -346,12 +398,12 @@ namespace MonoStacker.Source.GameObj
             _nextAction = NextAction.None;
         }
 
-        private void GetInput(InputDevice device, PlayerIndex player)
+        private void GetInput(InputDevice device)
         {
             switch (device)
             {
                 case InputDevice.Gamepad:
-                    _currentInputEvents = _inputManager.GetButtonInput(player);
+                    _currentInputEvents = _inputManager.GetButtonInput(_playerIndex);
                     break;
                 case InputDevice.Keyboard:
                     _currentInputEvents = _inputManager.GetKeyInput();
@@ -437,13 +489,12 @@ namespace MonoStacker.Source.GameObj
                     if (activePiece.offsetY - _prevYOff == 2)
                         currentSpinType = SpinType.FullSpin;
                 }
-                Debug.WriteLine(parsedSpins);
                 if (parsedSpins == SpinDenotation.None)
                     currentSpinType = SpinType.None;
                 else if (parsedSpins == SpinDenotation.TSpinOnly)
                     if (activePiece.type is not TetrominoType.T) currentSpinType = SpinType.None;
             }
-            if (currentSpinType is not SpinType.None) { SfxBank.twist1m.Play(); PieceSparkle(); PlayfieldEffects.FlashPiece(activePiece, Color.White, 5, offset, _aeLayerOffset); }
+            if (currentSpinType is not SpinType.None) { SfxBank.twist1m.Play(); PieceSparkle(); PlayfieldEffects.FlashPiece(activePiece, Color.White, 5, offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), _aeLayerOffset); }
             else SfxBank.rotate.Play();
             if ((int)activePiece.offsetY == CalculateGhostPiece(activePiece) && _rotateResetAllowed)
                 RotateReset();
@@ -545,10 +596,25 @@ namespace MonoStacker.Source.GameObj
                 if (currentSpinType != SpinType.None)
                 { SfxBank.spinGeneric.Play(); GenericSpinPing?.Invoke(); }
                 BreakCombo();
-                _currentBoardState = BoardState.ArrivalDelay;
-                _arrivalDelay.timeLeftover = _arrivalDelay.max;
-                PlayfieldEffects.FlashPiece(activePiece, activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f, offset, _aeLayerOffsetFront);
+                if (garbageQueued > 0) 
+                {
+                    while (garbageQueued > lineRecieveLimit) 
+                    {
+                        garbageQueued--;
+                        overflow++;
+                    }
+                    garbageHole = ExtendedMath.Rng.Next(0, 8);
+                    _currentBoardState = BoardState.RecieveDamage;
+                }
+                    
+                else 
+                {
+                    _arrivalDelay.timeLeftover = _arrivalDelay.max;
+                    _currentBoardState = BoardState.ArrivalDelay;
+                }
+                PlayfieldEffects.FlashPiece(activePiece, activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f, offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), _aeLayerOffsetFront);
             }
+            
         }
 
         private bool RotateReset() // reset lock delay when the piece rotates while touching the stack
@@ -578,10 +644,10 @@ namespace MonoStacker.Source.GameObj
                     {
                         if (activePiece.offsetY + y + 1 >= Grid.ROWS || grid._matrix[activePiece.offsetY + y + 1][activePiece.offsetX + x] > 0) 
                         {
-                            _aeLayerOffsetFront.AddEffect(new LockFlash(GetContent.Load<Texture2D>("Image/Effect/HitEffect"), new Vector2(offset.X + ((activePiece.offsetX + x) * 8), offset.Y + ((activePiece.offsetY + y + 1) * 8) - 160 - 1), color, .3f));
+                            _aeLayerOffsetFront.AddEffect(new LockFlash(GetContent.Load<Texture2D>("Image/Effect/HitEffect"), new Vector2(offset.X + ((activePiece.offsetX + x) * 8), offset.Y + ((activePiece.offsetY + y + 1) * 8) - 160 - 1) - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), color, .3f));
                             sources.Members.Add(new GroupPartData()
                             {
-                                Position = new Vector2(Offset.X + ((activePiece.offsetX + x) * 8 + 4), Offset.Y + ((activePiece.offsetY + y + 1) * 8) - 160 - 1),
+                                Position = new Vector2(Offset.X + ((activePiece.offsetX + x) * 8 + 4), Offset.Y + ((activePiece.offsetY + y + 1) * 8) - 160 - 1) - new Vector2(fixOffset.X / 2, fixOffset.Y / 4),
                                 Data = new EmitterData
                                 {
                                     emissionInterval = 1f,
@@ -620,7 +686,7 @@ namespace MonoStacker.Source.GameObj
                     {
                         sources.Members.Add(new GroupPartData()
                         {
-                            Position = new Vector2(Offset.X + ((activePiece.offsetX + x) * 8), Offset.Y + ((activePiece.offsetY + y) * 8) - 160 - 1),
+                            Position = new Vector2(Offset.X + ((activePiece.offsetX + x) * 8), Offset.Y + ((activePiece.offsetY + y) * 8) - 160 - 1) - new Vector2(fixOffset.X / 2, fixOffset.Y / 4),
                             Data = new EmitterData
                             {
                                 emissionInterval = 1f,
@@ -696,7 +762,7 @@ namespace MonoStacker.Source.GameObj
 
         public void FlashBoardBg(Color color, float duration, float opacity) 
         {
-            _aeLayerOffset.AddEffect(new LockFlash(new Vector2(offset.X + 36, offset.Y + 76), Grid.COLUMNS * 8, (Grid.ROWS / 2) * 8, color, opacity, duration, Vector2.Zero));
+            _aeLayerOffset.AddEffect(new LockFlash(new Vector2(offset.X + 36, offset.Y + 76) - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), Grid.COLUMNS * 8, (Grid.ROWS / 2) * 8, color, opacity, duration, Vector2.Zero));
         }
 
         private void HardDrop() // place the piecec at the ghost piece's offset, lock it onto the grid
@@ -705,9 +771,9 @@ namespace MonoStacker.Source.GameObj
             if (_currentBoardState is not BoardState.Playing) return;
             int shake = 4;
             ShakeY(shake);
-            _aeLayerOffsetFront.AddEffect(new DropEffect(offset, 1f, activePiece, ((int)CalculateGhostPiece(activePiece) - (int)activePiece.offsetY), activePiece.color));
+            _aeLayerOffsetFront.AddEffect(new DropEffect(offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), 1f, activePiece, ((int)CalculateGhostPiece(activePiece) - (int)activePiece.offsetY), activePiece.color));
             activePiece.offsetY = CalculateGhostPiece(activePiece);
-            PlayfieldEffects.DropSparkle(activePiece, Offset);
+            PlayfieldEffects.DropSparkle(activePiece, Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
             HitEffect(Color.Orange);
             LockPiece();
             SfxBank.hardDrop.Play();
@@ -717,7 +783,7 @@ namespace MonoStacker.Source.GameObj
         {
             if (activePiece is not null && activePiece.offsetY != CalculateGhostPiece(activePiece)) 
             {
-                _aeLayer.AddEffect(new DropEffect(offset, 1f, activePiece, ((int)CalculateGhostPiece(activePiece) - (int)activePiece.offsetY), activePiece.color));
+                _aeLayer.AddEffect(new DropEffect(offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), 1f, activePiece, ((int)CalculateGhostPiece(activePiece) - (int)activePiece.offsetY), activePiece.color));
                 activePiece.offsetY = CalculateGhostPiece(activePiece);
                 HitEffect(new Color(214, 255, 255));
             }  
@@ -742,12 +808,12 @@ namespace MonoStacker.Source.GameObj
             if (currentSpinType != SpinType.None) SfxBank.clearSpin[num].Play();
             else { SfxBank.clear[num].Play(); }
             
-            PlayfieldEffects.LineClearFlash(Color.White, .5f, grid, Offset);
-            PlayfieldEffects.LineClearAltEffect(grid, offset);
-            PlayfieldEffects.LineClearEffect(grid, Offset);
+            PlayfieldEffects.LineClearFlash(Color.White, .5f, grid, Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
+            PlayfieldEffects.LineClearAltEffect(grid, offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
+            PlayfieldEffects.LineClearEffect(grid, Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
 
             if (currentSpinType != SpinType.None && activePiece is not null)
-                PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), Offset);
+                PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
         }
 
         private void DropLines() // actually clears the lines
@@ -766,18 +832,24 @@ namespace MonoStacker.Source.GameObj
             return piece;
         }
 
-        private void AddGarbageLine() 
+        private void AddGarbageLine(int amount, int hole) 
         {
-            var hole = ExtendedMath.Rng.Next(0, 8);
+            //var hole = ExtendedMath.Rng.Next(0, 8);
            
-            for (var i = 0; i < 4; i++) 
+            for (var i = 0; i < amount; i++) 
             {
+                /*
                 var chance = ExtendedMath.Rng.Next(0, 3);
                 if(chance == 2)
                     hole = ExtendedMath.Rng.Next(0, 8);
+                */
+                if (activePiece is not null && activePiece.offsetY == CalculateGhostPiece(activePiece) && activePiece.offsetY > -1)
+                    activePiece.offsetY--;
                 grid.AddGarbageLine(hole); 
             }
-            AnimatedEffectManager.AddEffect(new ClearFlash(new Vector2(39 + Offset.X, (int)(39 * 8) + Offset.Y - 155.5f), Color.Black, .3f, new Vector2(3, 0)));
+            ShakeY(-4);
+            GetContent.Load<SoundEffect>("Audio/Sound/old/clear0").Play();
+            AnimatedEffectManager.AddEffect(new ClearFlash(new Vector2(39 + Offset.X, (int)(39 * 8) + Offset.Y - 155.5f) - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), Color.White, .3f, new Vector2(3, 0)));
         }
 
         private void Kill() 
@@ -1010,8 +1082,8 @@ namespace MonoStacker.Source.GameObj
 
         private void ChargeDas(GameTime gameTime) // if directional inputs are read, execute associated actions
         {
-            List<GameAction> heldActions = _inputManager.GetKeyInputSelection(new Keys[] { _inputManager._binds.k_MovePieceLeft, _inputManager._binds.k_MovePieceRight });
-            if (heldActions.Contains(GameAction.MovePieceLeft))
+            //List<GameAction> heldActions = _inputManager.GetKeyInputSelection(new Keys[] { _inputManager._binds.k_MovePieceLeft, _inputManager._binds.k_MovePieceRight });
+            if (_currentInputEvents.Contains(GameAction.MovePieceLeft))
             {
                 if (!_lastInputEvents.Contains(GameAction.MovePieceLeft))
                     _eventTimeStamps.TryAdd(GameAction.MovePieceLeft, (float)gameTime.TotalGameTime.TotalSeconds);
@@ -1029,7 +1101,7 @@ namespace MonoStacker.Source.GameObj
             }
 
 
-            if (heldActions.Contains(GameAction.MovePieceRight))
+            if (_currentInputEvents.Contains(GameAction.MovePieceRight))
             {
                 if (!_lastInputEvents.Contains(GameAction.MovePieceRight))
                     _eventTimeStamps.TryAdd(GameAction.MovePieceRight, (float)gameTime.TotalGameTime.TotalSeconds);
@@ -1084,7 +1156,7 @@ namespace MonoStacker.Source.GameObj
 
         public void Update(GameTime gameTime)
         {
-            GetInput(_inputDevice, PlayerIndex.One);
+            GetInput(_inputDevice);
             ProcessInput(gameTime);
             _dasCut.timeLeftover -= (float)gameTime.ElapsedGameTime.TotalSeconds;
             _hardDropCut.timeLeftover -= (float)gameTime.ElapsedGameTime.TotalSeconds;
@@ -1116,22 +1188,49 @@ namespace MonoStacker.Source.GameObj
                     else
                         _currentBoardState = BoardState.EventPause;
                     break;
+                case BoardState.RecieveDamage:
+                    var intervalC = .1f;
+                    if (garbageTime >= intervalC && garbageQueued > 0) 
+                    {
+                        var chance = ExtendedMath.Rng.Next(0, 3);
+                        var offsetHole = ExtendedMath.Rng.Next(0, 8);
+                        if (chance == 2)
+                            AddGarbageLine(1, offsetHole);
+                        else
+                            AddGarbageLine(1, garbageHole);
+                        garbageQueued--;
+                        garbageTime = 0;
+                    }
+                    if (garbageQueued <= 0) 
+                    {
+                        GrabNextPiece();
+                        garbageTime = 0;
+                        garbageQueued += overflow;
+                        _arrivalDelay.timeLeftover = _arrivalDelay.max;
+                        _currentBoardState = BoardState.ArrivalDelay;
+                        overflow = 0;
+                    }
+                    garbageTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
+                    break;
                 case BoardState.TopOut:
-                    var interval = .15f;
+                    //var interval = .15f;
                     activePiece = null;
                     
                     grid.SetDrawMode();
 
                     if (rowTime == 0)
                     {
-                        PlayfieldEffects.BoardExplosion(grid, Offset);
+                        PlayfieldEffects.BoardExplosion(grid, Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
+                        ParticleManager.AddEmitter(topOutEffectEmitter);
                         //GameEnd?.Invoke();
-                        for (var i = 0; i < Grid.ROWS; i++)
-                        {
-                            grid.ColorRow(i, 0, 0);
-                        }
-
+                        rotationOffset = ExtendedMath.RandomFloat(-.01f, .01f);
+                        ShakeY(-8f);
+                        GetContent.Load < SoundEffect >("Audio/Sound/old/Puyo-2-SFX 064").Play();
+                        grid.ClearGrid();
                     }
+                    _fallAnimationVelocity = (_fallAnimationVelocity + _fallAnimationAcceleration);
+                    animateOffsetY += _fallAnimationVelocity;
+                    orientation += rotationOffset;
                     rowTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                     /*
                     if (_greyRow >= _highestRow && rowTime >= interval)
@@ -1158,7 +1257,7 @@ namespace MonoStacker.Source.GameObj
                         for (int i = 0; i < Grid.COLUMNS; i++)
                         {
                             if (grid._matrix[_greyRow][i] != 0 && !grid.rowsToClear.Contains(_greyRow))
-                                AnimatedEffectManager.AddEffect(new LockFlash(ImgBank.BlockTexture, grid.imageTiles[grid._matrix[_greyRow][i] - 1], new Vector2(Offset.X + (i * 8), Offset.Y + (_greyRow * 8) - 160), Color.White, 1f, Vector2.Zero));
+                                AnimatedEffectManager.AddEffect(new LockFlash(ImgBank.BlockTexture, grid.imageTiles[grid._matrix[_greyRow][i] - 1], new Vector2(Offset.X + (i * 8), Offset.Y + (_greyRow * 8) - 160) - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), Color.White, 1f, Vector2.Zero));
                         }
                         grid.ColorRow(_greyRow, 0, 0);
                         _greyRow--;
@@ -1186,9 +1285,9 @@ namespace MonoStacker.Source.GameObj
             
             if (Keyboard.GetState().IsKeyDown(Keys.Q) && !_prevKbState.IsKeyDown(Keys.Q)) 
             {
-                if (activePiece is not null && activePiece.offsetY == CalculateGhostPiece(activePiece) && activePiece.offsetY > -1) 
-                    activePiece.offsetY--;
-                AddGarbageLine();
+                //if (activePiece is not null && activePiece.offsetY == CalculateGhostPiece(activePiece) && activePiece.offsetY > -1) 
+                    //activePiece.offsetY--;
+                AddGarbageLine(4, ExtendedMath.Rng.Next(0, 8));
             }
             
             if (Keyboard.GetState().IsKeyDown(Keys.Tab) && !_prevKbState.IsKeyDown(Keys.Tab))
@@ -1220,7 +1319,7 @@ namespace MonoStacker.Source.GameObj
                 time += (float)gameTime.ElapsedGameTime.TotalSeconds;
             else
                 time = 0;
-            Debug.WriteLine(_shakeOffsetX);
+            //Debug.WriteLine(fixOffset);
         }
 
         private void DrawPiece(SpriteBatch spriteBatch, Piece piece) 
@@ -1232,8 +1331,8 @@ namespace MonoStacker.Source.GameObj
                     if (piece.currentRotation[y, x] != 0)
                     {
                         if (_temporaryLandingSys)
-                            spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + (piece.offsetX * 8) + (int)Offset.X, (y * 8) + (CalculateGhostPiece(activePiece) * 8) + (int)Offset.Y - 160, 8, 8), grid.imageTiles[7], Color.White * .35f);
-                        spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + (piece.offsetX * 8) + (int)Offset.X, (y * 8) + ((int)piece.offsetY * 8) + (int)Offset.Y - 160, 8, 8), grid.imageTiles[piece.currentRotation[y, x] - 1], Color.Lerp(Color.DarkGray, Color.White, MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1)));
+                            spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + (piece.offsetX * 8) + (int)Offset.X - (int)fixOffset.X / 2, (y * 8) + (CalculateGhostPiece(activePiece) * 8) + (int)Offset.Y - 160 - (int)fixOffset.Y / 4, 8, 8), grid.imageTiles[7], Color.White * .35f);
+                        spriteBatch.Draw(ImgBank.BlockTexture, new Rectangle((x * 8) + (piece.offsetX * 8) + (int)Offset.X - (int)fixOffset.X / 2, (y * 8) + ((int)piece.offsetY * 8) + (int)Offset.Y - 160 - (int)fixOffset.Y / 4, 8, 8), grid.imageTiles[piece.currentRotation[y, x] - 1], Color.Lerp(Color.DarkGray, Color.White, MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1)));
                     }
                 }
             }
@@ -1256,7 +1355,7 @@ namespace MonoStacker.Source.GameObj
                     {
                         spriteBatch.Draw
                             (GetContent.Load<Texture2D>("Image/Block/spawnPt"), 
-                            new Rectangle((x * 8) + ((int)_pieceManager.spawnAreaPosition.X * 8) + (buffer.X * 8) + (int)Offset.X, (y * 8) + ((int)_pieceManager.spawnAreaPosition.Y * 8) + (buffer.Y * 8) + (int)Offset.Y - 160, 8, 8), 
+                            new Rectangle((x * 8) + ((int)_pieceManager.spawnAreaPosition.X * 8) + (buffer.X * 8) + (int)Offset.X - (int)fixOffset.X / 2, (y * 8) + ((int)_pieceManager.spawnAreaPosition.Y * 8) + (buffer.Y * 8) + (int)Offset.Y - 160 - (int)fixOffset.Y / 4, 8, 8), 
                             Color.White);
                     }
                 }
@@ -1290,26 +1389,81 @@ namespace MonoStacker.Source.GameObj
 
             spriteBatch.Begin();
             //spriteBatch.Draw(_bgTest, _offset, Color.White);
-            spriteBatch.Draw(ImgBank.GridBg, Offset, Color.White);
+            spriteBatch.Draw
+            (
+                ImgBank.GridBg, 
+                Offset, 
+                null,
+                Color.White,
+                orientation,
+                new Vector2(ImgBank.GridBg.Width / 2, ImgBank.GridBg.Height / 2),
+                1f,
+                SpriteEffects.None,
+                1
+             );
             spriteBatch.End();
             spriteBatch.Begin();
             _aeLayer.Draw(spriteBatch);
             _aeLayerOffset.Draw(spriteBatch, new Vector2(_shakeOffsetX, _shakeOffsetY));
             spriteBatch.End();
             spriteBatch.Begin();
-            grid.Draw(spriteBatch, Offset);
+            grid.Draw(spriteBatch, Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
             if (displaySetting is BoardDisplaySetting.BoardOnly)
-                spriteBatch.Draw(_border, new Vector2((int)Offset.X - 5, (int)Offset.Y - 4), !_isInDanger ? Color.White : Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)));
+                spriteBatch.Draw
+                (
+                    _border,
+                    new Vector2((int)Offset.X, (int)Offset.Y), 
+                    null,
+                    !_isInDanger ? Color.White : Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)),
+                    orientation,
+                    new Vector2(_border.Width / 2, _border.Height / 2),
+                    1f,
+                    SpriteEffects.None,
+                    1
+                 );
             else
             {
-                spriteBatch.Draw(_border1, new Vector2((int)Offset.X - 11, (int)Offset.Y - 4), !_isInDanger ? Color.White : Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)));
-                spriteBatch.Draw(_borderMeterBg, new Vector2((int)Offset.X - 7, (int)Offset.Y), Color.White);
+                spriteBatch.Draw
+                (
+                    _border1, 
+                    new Vector2((int)Offset.X - 3, (int)Offset.Y), 
+                    null,
+                    !_isInDanger ? Color.White : Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)),
+                    orientation,
+                    new Vector2(_border1.Width / 2, _border1.Height / 2),
+                    1f,
+                    SpriteEffects.None,
+                    1
+                );
+                spriteBatch.Draw
+                (
+                    _borderMeterBg, 
+                    new Vector2((int)Offset.X, (int)Offset.Y), 
+                    null,
+                    Color.White,
+                    orientation,
+                    new Vector2(_borderMeterBg.Width + 44, _borderMeterBg.Height / 2),
+                    1f,
+                    SpriteEffects.None,
+                    1
+                );
             }
-            spriteBatch.Draw(_lockDelayMeter, new Vector2(offset.X - 5, offset.Y + 165), Color.White);
+            spriteBatch.Draw
+            (
+                _lockDelayMeter, 
+                new Vector2(offset.X, offset.Y + 88), 
+                null, 
+                Color.White, 
+                0f, 
+                new Vector2(_lockDelayMeter.Width / 2, _lockDelayMeter.Height / 2),
+                1, 
+                SpriteEffects.None, 
+                1
+            );
             spriteBatch.Draw
             (
                 GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"),
-                new Rectangle((int)offset.X - 2, (int)offset.Y + 168, (int)MathHelper.Lerp(0, 84, _lockDelayAmount), 1),
+                new Rectangle((int)offset.X - (_lockDelayMeter.Width / 2) + 3, (int)offset.Y + 88, (int)MathHelper.Lerp(0, 84, _lockDelayAmount), 1),
                 Color.Lerp(new Color(255, 0, 0), new Color(0, 255, 0), _lockDelayAmount)
             );
             _aeLayerOffsetFront.Draw(spriteBatch, new Vector2(_shakeOffsetX, _shakeOffsetY));
@@ -1317,7 +1471,7 @@ namespace MonoStacker.Source.GameObj
             if (_isInDanger) 
             {
                 float alpha = (float)(Math.Sin(time * 2.0f) * .5f + .5f);
-                spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Board/bg_top_gradient"), Offset, Color.Red * alpha * .45f);
+                spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Board/bg_top_gradient"), Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), Color.Red * alpha * .45f);
             }
                 
             if (_currentBoardState == BoardState.Playing)

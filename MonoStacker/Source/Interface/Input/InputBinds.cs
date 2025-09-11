@@ -20,10 +20,10 @@ public struct InputBinds
 
     public Buttons b_MovePieceLeft { get; set; } = Buttons.DPadLeft;
     public Buttons b_MovePieceRight { get; set; } = Buttons.DPadRight;
-    public Buttons b_RotateCw { get; set; } = Buttons.A;
-    public Buttons b_RotateCcw { get; set; } = Buttons.B;
+    public Buttons b_RotateCw { get; set; } = Buttons.B;
+    public Buttons b_RotateCcw { get; set; } = Buttons.A;
     public Buttons b_Rotate180 { get; set; }
-    public Buttons b_HardDrop { get; set; } = Buttons.RightTrigger;
+    public Buttons b_HardDrop { get; set; } = Buttons.DPadUp;
     public Buttons b_FirmDrop { get; set; }
     public Buttons b_SoftDrop { get; set; } = Buttons.DPadDown;
     public Buttons b_Hold { get; set; } = Buttons.LeftTrigger;

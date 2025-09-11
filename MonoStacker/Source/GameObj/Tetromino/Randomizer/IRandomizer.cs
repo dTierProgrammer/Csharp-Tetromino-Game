@@ -6,4 +6,5 @@ namespace MonoStacker.Source.GameObj.Tetromino.Randomizer;
 public interface IRandomizer
 {
     public Piece GetNextTetromino(ITetrominoFactory factory);
+    public void SeedRandomizer(int seed);
 }

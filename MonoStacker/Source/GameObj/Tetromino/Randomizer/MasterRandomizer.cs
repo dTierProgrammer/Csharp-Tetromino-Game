@@ -9,7 +9,9 @@ namespace MonoStacker.Source.GameObj.Tetromino.Randomizer;
 
 public class MasterRandomizer : IRandomizer
 { // tgm1 randomizer
-    private readonly Random _rng = new();
+    
+
+    private Random _rng = new();
     private readonly Queue<TetrominoType> _tetrominoHistory = [];
     private const int EntryLimit = 4;
     private readonly Array _tetrominos = Enum.GetValues<TetrominoType>();
@@ -21,6 +23,21 @@ public class MasterRandomizer : IRandomizer
         TetrominoType.T,
     };
     private int _totalRolls = 0;
+
+    public MasterRandomizer()
+    {
+        _rng = new();
+    }
+
+    public MasterRandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
+
+    public void SeedRandomizer(int seed) 
+    {
+        _rng = new(seed);
+    }
     public Piece GetNextTetromino(ITetrominoFactory factory)
     {
         if (!_tetrominoHistory.Any())

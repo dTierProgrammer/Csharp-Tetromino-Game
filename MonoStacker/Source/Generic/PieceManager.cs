@@ -117,11 +117,18 @@ namespace MonoStacker.Source.Generic
             _queueType = queueDisplayType;
             canHold = true;
             LoadQueue();
+            _generator.SeedRandomizer(100);
         }
 
         public void Initialize(PlayField playfield) 
         {
             _playfield = playfield;
+        }
+
+        public void Initialize(PlayField playfield, int seed)
+        {
+            _playfield = playfield;
+            _generator.SeedRandomizer(seed);
         }
 
         public Piece DealPiece(RotationType? preRotateType, bool preHoldRequested) 
@@ -315,13 +322,14 @@ namespace MonoStacker.Source.Generic
             switch (_queueType) 
             {
                 case QueueType.Top:
-                    DrawTopNextQueue(spriteBatch, new Vector2(_playfield.offset.X + 18, _playfield.offset.Y - 45));
+                    DrawTopNextQueue(spriteBatch, new Vector2(_playfield.offset.X + 18, _playfield.offset.Y - 45) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
                     if(holdEnabled)
-                        DrawTopHoldQueue(spriteBatch, new Vector2(_playfield.offset.X - 5, _playfield.offset.Y - 45));
+                        DrawTopHoldQueue(spriteBatch, new Vector2(_playfield.offset.X - 5, _playfield.offset.Y - 45) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
                     break;
                 case QueueType.Sides:
-                    DrawSideNextQueue(spriteBatch, new Vector2(_playfield.offset.X + 88, _playfield.offset.Y - 1));
-                    DrawSideHoldQueue(spriteBatch, new Vector2(_playfield.displaySetting is BoardDisplaySetting.BoardOnly? _playfield.offset.X - 42 : _playfield.offset.X - 48, _playfield.offset.Y - 1));
+                    DrawSideNextQueue(spriteBatch, new Vector2(_playfield.offset.X + 88, _playfield.offset.Y - 1) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
+                    if(holdEnabled)
+                        DrawSideHoldQueue(spriteBatch, new Vector2(_playfield.displaySetting is BoardDisplaySetting.BoardOnly? _playfield.offset.X - 42 : _playfield.offset.X - 48, _playfield.offset.Y - 1) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
                     break;
             }
         }

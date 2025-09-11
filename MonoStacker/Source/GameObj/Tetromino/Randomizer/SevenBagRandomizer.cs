@@ -7,10 +7,27 @@ namespace MonoStacker.Source.GameObj.Tetromino.Randomizer;
 
 public class SevenBagRandomizer: IRandomizer
 {
-    private readonly Random _rng = new ();
+
+
+    private Random _rng;
 
     private List<TetrominoType> _bag = [];
-    
+
+    public void SeedRandomizer(int seed)
+    {
+        //_rng = new(100);
+    }
+
+    public SevenBagRandomizer() 
+    {
+        _rng = new();
+    }
+
+    public SevenBagRandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
+
     public Piece GetNextTetromino(ITetrominoFactory factory)
     {
         if (_bag.Count == 0)

@@ -8,6 +8,7 @@ using MonoStacker.Source.VisualEffects;
 using RasterFontLibrary.Source;
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Numerics;
 using System.Runtime.CompilerServices;
@@ -32,7 +33,7 @@ namespace MonoStacker.Source.Scene.GameMode
         {
             base.InitClocks();
             clockBehavior = ClockBehavior.Decrement;
-            time = 180;
+            time = 30;
         }
 
         protected override void InitProgressBar()
@@ -45,6 +46,7 @@ namespace MonoStacker.Source.Scene.GameMode
         {
             base.Initialize();
             _title = $"Score Attack -- {TimeSpan.FromSeconds(time).ToString(@"mm\:ss")}";
+            Debug.WriteLine($"Score Attack | {TimeSpan.FromSeconds(Game1.uGameTime.TotalGameTime.TotalSeconds).ToString(@"mm\:ss\.ff")} | Initialization success, seed: {seed}.");
         }
 
         protected override void DecrementTimer(GameTime gameTime) 
@@ -135,7 +137,7 @@ namespace MonoStacker.Source.Scene.GameMode
             spriteBatch.Begin();
 
             //_levelProgressDisplay.Draw(spriteBatch);
-            _timerBar.Draw(spriteBatch, new Vector2((int)_playField._shakeOffsetX, (int)_playField._shakeOffsetY));
+            _timerBar.Draw(spriteBatch, new Vector2((int)_playField._shakeOffsetX + _playField.animateOffsetX, (int)_playField._shakeOffsetY + _playField.animateOffsetY), _playField.orientation);
             
 # if DEBUG
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, Vector2.Zero,

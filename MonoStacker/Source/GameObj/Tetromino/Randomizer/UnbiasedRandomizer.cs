@@ -6,7 +6,22 @@ namespace MonoStacker.Source.GameObj.Tetromino.Randomizer;
 
 public class UnbiasedRandomizer: IRandomizer
 {
-    private readonly Random _rng = new ();
+    private Random _rng = new ();
+
+    public void SeedRandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
+
+    public UnbiasedRandomizer()
+    {
+        _rng = new();
+    }
+
+    public UnbiasedRandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
     public Piece GetNextTetromino(ITetrominoFactory factory)
     {
         Array tetrominos = Enum.GetValues<TetrominoType>();

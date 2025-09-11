@@ -5,6 +5,7 @@ using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Data;
 using MonoStacker.Source.GameObj;
 using MonoStacker.Source.GameObj.Tetromino;
+using MonoStacker.Source.GameObj.Tetromino.Randomizer;
 using MonoStacker.Source.Generic;
 using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Global;
@@ -93,6 +94,7 @@ namespace MonoStacker.Source.Scene.GameMode
         protected StaticEmissionSource _testEffectSource;
         protected EmitterData _testEffect;
         protected EmitterObj _testEffectEmitter;
+        protected int seed = ExtendedMath.Rng.Next();
 
         protected virtual void InitEvents() 
         {
@@ -111,7 +113,7 @@ namespace MonoStacker.Source.Scene.GameMode
 
         protected virtual void InitEffects() 
         {
-            _streakFireSource = new(new(_playField.Offset.X - 48, _playField.Offset.Y + 46));
+            _streakFireSource = new(new Vector2(_playField.Offset.X - 48, _playField.Offset.Y + 46) - new Vector2(_playField.fixOffset.X / 2, _playField.fixOffset.Y / 4));
             _streakFire = new EmitterData()
             {
                 particleData = new ParticleData
@@ -133,7 +135,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _streakFireEmitter = new EmitterObj(_streakFireSource, _streakFire, EmissionType.Continuous, false);
             _particleLayer.AddEmitter(_streakFireEmitter);
 
-            _comboFireSource = new(new(_playField.Offset.X - 45, _playField.Offset.Y + 38));
+            _comboFireSource = new(new Vector2 (_playField.Offset.X - 45, _playField.Offset.Y + 38) - new Vector2(_playField.fixOffset.X / 2, _playField.fixOffset.Y / 4));
             _comboFire = new EmitterData()
             {
                 particleData = new ParticleData
@@ -155,7 +157,7 @@ namespace MonoStacker.Source.Scene.GameMode
             _comboFireEmitter = new EmitterObj(_comboFireSource, _comboFire, EmissionType.Continuous, false);
             _particleLayer.AddEmitter(_comboFireEmitter);
 
-            _levelUpEffectSource = new(new(_playField.Offset.X - 7, _playField.Offset.Y + 160));
+            _levelUpEffectSource = new(new Vector2 (_playField.Offset.X - 7, _playField.Offset.Y + 160) - new Vector2(_playField.fixOffset.X / 2, _playField.fixOffset.Y / 4));
             _levelUpEffect = new EmitterData()
             {
                 particleData = new ParticleData
@@ -212,7 +214,7 @@ namespace MonoStacker.Source.Scene.GameMode
 
         protected virtual void InitRuleset() 
         {
-            pfData = PlayFieldPresets.GuidelineSlow2;
+            pfData = PlayFieldPresets.GuidelineSlow1;
             capLinesCleared = true;
         }
 
@@ -220,10 +222,10 @@ namespace MonoStacker.Source.Scene.GameMode
         {
             InitRuleset();
             _currentState = GameState.PreGame;
-            _playField = new PlayField(new Vector2(240, 135), pfData, new InputBinds());
-            _atSys = new ActionTextSystem(new Vector2(_playField.Offset.X - 13, _playField.Offset.Y + 52));
-            _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new(_playField.Offset.X - 13, _playField.Offset.Y + 41));
-            _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new(_playField.Offset.X - 13, _playField.Offset.Y + 51));
+            _playField = new PlayField(new Vector2(240, 135), new SevenBagRandomizer(seed), pfData, InputDevice.Keyboard, null, new InputBinds());
+            _atSys = new ActionTextSystem(new Vector2(_playField.Offset.X - 13, _playField.Offset.Y + 52) - new Vector2(_playField.fixOffset.X / 2, _playField.fixOffset.Y / 4));
+            _comboCounter = new(-1, 1, .5f, .3f, "Combo *", Color.Orange, new Vector2(_playField.Offset.X - 13, _playField.Offset.Y + 41) - new Vector2(_playField.fixOffset.X / 2, _playField.fixOffset.Y / 4));
+            _streakCounter = new(-1, 1, .5f, .3f, "Streak *", Color.Cyan, new Vector2(_playField.Offset.X - 13, _playField.Offset.Y + 51) - new Vector2(_playField.fixOffset.X / 2, _playField.fixOffset.Y / 4));
             _level = 1;
             _gravity = SetGravity(_level);
             _playField.gravity = _gravity;
@@ -232,7 +234,7 @@ namespace MonoStacker.Source.Scene.GameMode
             InitEvents();
             InitEffects();
             InitProgressBar();
-            Debug.WriteLine(clockBehavior);
+            Debug.WriteLine($"Marathon | {TimeSpan.FromSeconds(Game1.uGameTime.TotalGameTime.TotalSeconds).ToString(@"mm\:ss\.ff")} | Initialization success, seed: {seed}.");
         }
 
         protected void StopTimer() 
@@ -453,7 +455,7 @@ namespace MonoStacker.Source.Scene.GameMode
                     _aeLayerOffset.AddEffect(new LockFlash
                         (
                             GetContent.Load<Texture2D>("Image/Board/levelMeterFillMask"), 
-                            new Vector2(_playField.offset.X - 7, _playField.offset.Y),
+                            new Vector2(_playField.offset.X - 7, _playField.offset.Y) - new Vector2(_playField.fixOffset.X / 2, _playField.fixOffset.Y / 4),
                             Color.White,
                             5f
                         ));
@@ -582,7 +584,7 @@ namespace MonoStacker.Source.Scene.GameMode
             //Debug.WriteLine("everything else");
             spriteBatch.Begin();
            
-            _levelProgressDisplay.Draw(spriteBatch, new Vector2((int)_playField._shakeOffsetX, (int)_playField._shakeOffsetY));
+            _levelProgressDisplay.Draw(spriteBatch, new Vector2((int)_playField._shakeOffsetX + _playField.animateOffsetX, (int)_playField._shakeOffsetY + _playField.animateOffsetY), _playField.orientation);
 # if DEBUG
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, Vector2.Zero, 
                 $"lines -- {_linesCleared}\n" +

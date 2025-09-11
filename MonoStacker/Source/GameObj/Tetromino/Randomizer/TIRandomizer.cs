@@ -22,7 +22,7 @@ public class TIRandomizer: IRandomizer
     - Return piece
     */
 
-    private readonly Random _rng = new Random();
+    private Random _rng = new Random();
     private readonly TetrominoType[] _initTetrominos = // for initial roll
     { 
         TetrominoType.I,
@@ -34,6 +34,21 @@ public class TIRandomizer: IRandomizer
     private readonly Queue<TetrominoType> _history = new();
     private int entryLimit = 4;
     private int _totalRolls = 0;
+
+    public TIRandomizer()
+    {
+        _rng = new();
+    }
+
+    public TIRandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
+
+    public void SeedRandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
 
     public Piece GetNextTetromino(ITetrominoFactory factory) 
     {

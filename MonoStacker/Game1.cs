@@ -1,6 +1,8 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using MonoStacker.Source.GameObj.Tetromino.Factory;
+using MonoStacker.Source.GameObj.Tetromino.Randomizer;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.Scene;
 using MonoStacker.Source.Scene.GameMode;
@@ -12,6 +14,7 @@ using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
 using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 using RasterFontLibrary.Source;
 using System.Collections.Generic;
+using System.Diagnostics;
 
 namespace MonoStacker
 {
@@ -23,22 +26,17 @@ namespace MonoStacker
         private readonly SceneManager _sceneManager;
         private TestScene _testScene;
         public static GameTime uGameTime;
-        private StaticEmissionSource _testStaticSource = new(new(50, 50));
-        private StaticEmissionSources _testStaticSources = new(new List<GroupPartData>());
-        private RasterFont _rasterFont;
-        
+        private SevenBagRandomizer sBag1;
+        private SevenBagRandomizer sBag2;
+
         /*
-        TODO:
-        - Revise piece spin detection
-        - Garbage system
-        - Revise effects
-            - piece hit stack effect (x)
+        
         
         FUTURE:
         - Menu system
         - New (hopefully better) sounds
         - Music?
-        - Guideline compliant modes (Marathon (150l/Endless), 40l sprint, Ultra)
+        - Battle Mode
         - Classic arcade modes (Sega Marathon, TGM1 Master)
         - Freeplay mode
         - JSON support (for saving scores, times)
@@ -69,11 +67,13 @@ namespace MonoStacker
 # endif
 
             IsMouseVisible = true;
-        }   
+        }
 
         protected override void Initialize()
         {
             // TODO: Add your initialization logic here
+            //sBag1 = new(100);
+            //sBag2 = new(100);
             GetContent.Initialize(this);
             _testScene = new TestScene();
 
@@ -96,6 +96,7 @@ namespace MonoStacker
             
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
+            
 
             // TODO: Add your update logic here
             _sceneManager.CurrentScene().Update(gameTime);

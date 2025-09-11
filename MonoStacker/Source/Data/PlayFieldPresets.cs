@@ -82,7 +82,7 @@ namespace MonoStacker.Source.Data
             hardDropCut = 0.0f,
             lineClearDelayType = LineClearDelayType.IndividualDelay
         };
-        
+
 
         public static PlayFieldData GuidelineSlow2 = new PlayFieldData()
         {
@@ -96,7 +96,7 @@ namespace MonoStacker.Source.Data
             temporaryLandingSys = true,
             lineClearDelay = .5f,
             arrivalDelay = .11667f,
-            softLockDelay = 500f,
+            softLockDelay = .5f,
             horiStepResets = 15,
             horiStepResetAllowed = true,
             rotateResets = 6,
@@ -106,8 +106,10 @@ namespace MonoStacker.Source.Data
             autoshiftDelay = .15f,
             autoshiftRepeatRate = 1,
             softDropLocks = false,
-            gravity = .03f,
+            gravity = 0.0f,
             softDropFactor = 20,
+            softDropType = SoftDropType.Set,
+            softDropAmount = .5f,
             queueLength = 5,
             queueType = QueueType.Sides,
             holdEnabled = true,
@@ -158,7 +160,7 @@ namespace MonoStacker.Source.Data
             displaySetting = BoardDisplaySetting.ShowMeter,
             factory = new SrsFactory(),
             spawnAreaOffset = new Point(3, 18),
-            randomizer = new SevenBagRandomizer(),
+            randomizer = new TIRandomizer(),
             rotationSystem = new SuperRotationSys(),
             parsedSpins = SpinDenotation.TSpinOnly,
             temporaryLandingSys = true,

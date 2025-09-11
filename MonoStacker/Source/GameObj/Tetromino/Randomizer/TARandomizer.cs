@@ -9,7 +9,7 @@ namespace MonoStacker.Source.GameObj.Tetromino.Randomizer;
 
 public class TARandomizer: IRandomizer
 { // tap randomizer (same as tgm1, but 6 rerolls)
-    private readonly Random _rng = new();
+    private Random _rng = new();
     private readonly Queue<TetrominoType> _tetrominoHistory = [];
     private const int EntryLimit = 4;
     private readonly TetrominoType[] _initTetrominos = // for initial roll
@@ -20,6 +20,20 @@ public class TARandomizer: IRandomizer
         TetrominoType.T,
     };
     private int _totalRolls = 0;
+
+    public TARandomizer()
+    {
+        _rng = new();
+    }
+
+    public TARandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
+    public void SeedRandomizer(int seed)
+    {
+        _rng = new(seed);
+    }
     public Piece GetNextTetromino(ITetrominoFactory factory)
     {
         if (!_tetrominoHistory.Any())

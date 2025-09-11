@@ -239,7 +239,6 @@ namespace MonoStacker.Source.Generic
             }
             else
             {
-                Debug.WriteLine(totalCornersFilled);
                 switch (totalCornersFilled)
                 {
                     case 0:
@@ -255,14 +254,23 @@ namespace MonoStacker.Source.Generic
             return SpinType.None;
         }
 
-        public SpinType CheckForSpinImmobile(Piece piece, bool forceMini) 
+        public SpinType CheckForSpinImmobile(Piece piece, bool forceMini)
         {
             var spin = SpinType.None;
-            if (IsPlacementValid(piece, piece.initOffsetY, piece.offsetX + 1)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
-            if (IsPlacementValid(piece, piece.initOffsetY, piece.offsetX - 1)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
-            if (IsPlacementValid(piece, piece.initOffsetY + 1, piece.offsetX)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
-            if (IsPlacementValid(piece, piece.initOffsetY - 1, piece.offsetX)) spin = SpinType.FullSpin; if (forceMini) spin = SpinType.MiniSpin; return spin;
+            
+            if(!IsPlacementValid(piece, piece.initOffsetY, piece.offsetX + 1) &&
+                !IsPlacementValid(piece, piece.initOffsetY, piece.offsetX - 1) && 
+                !IsPlacementValid(piece, piece.initOffsetY + 1, piece.offsetX) &&
+                !IsPlacementValid(piece, piece.initOffsetY - 1, piece.offsetX))
+            { spin = SpinType.FullSpin; }
+            if (forceMini && spin != SpinType.None)
+                spin = SpinType.MiniSpin;
             return spin;
+        }
+
+        public void Attack() 
+        {
+
         }
 
         public int GetHighestRow()
@@ -465,6 +473,7 @@ namespace MonoStacker.Source.Generic
         }
         public void Draw(SpriteBatch spriteBatch, Vector2 pos)
         {
+            //spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Board/bound"), pos, Color.White);
             Rectangle sourceRect = imageTiles[0];
 
             for (int y = 0; y < ROWS; y++)

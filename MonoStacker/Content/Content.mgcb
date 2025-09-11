@@ -181,6 +181,12 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/old/move.wav
 
+#begin Audio/Sound/old/Puyo-2-SFX 064.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/old/Puyo-2-SFX 064.wav
+
 #begin Audio/Sound/old/rotate.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -210,6 +216,30 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/rotate.wav
+
+#begin Audio/Sound/send_0.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/send_0.wav
+
+#begin Audio/Sound/send_1.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/send_1.wav
+
+#begin Audio/Sound/send_2.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/send_2.wav
+
+#begin Audio/Sound/send_3.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/send_3.wav
 
 #begin Audio/Sound/soft_lock.wav
 /importer:WavImporter
@@ -522,6 +552,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Board/border1.png
+
+#begin Image/Board/bound.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/bound.png
 
 #begin Image/Board/bravo.png
 /importer:TextureImporter

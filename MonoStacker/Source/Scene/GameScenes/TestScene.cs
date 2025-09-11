@@ -12,6 +12,7 @@ using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
 using RasterFontLibrary.Source;
 using MonoStacker.Source.Data;
 using MonoStacker.Source.Interface.Input;
+using MonoStacker.Source.GameObj.Tetromino.Randomizer;
 
 namespace MonoStacker.Source.Scene.GameScenes
 {
@@ -22,7 +23,7 @@ namespace MonoStacker.Source.Scene.GameScenes
 
         public void Initialize() 
         {
-            playfield = new PlayField(new Vector2(240, 135), PlayFieldPresets.Arcade3, new InputBinds() );
+            playfield = new PlayField(new Vector2(240, 135), new SevenBagRandomizer(), PlayFieldPresets.Arcade3, InputDevice.Keyboard, null, new InputBinds() );
             playfield.Start();
         }
         public void Load() 

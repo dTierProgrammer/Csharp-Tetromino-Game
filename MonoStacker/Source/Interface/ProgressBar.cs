@@ -48,14 +48,14 @@ namespace MonoStacker.Source.Interface
             _type = type;
             segment = type switch 
             {
-                ProgressBarType.Vertical => new Rectangle((int)position.X, (int)position.Y, fillTexture.Width, 0),
-                ProgressBarType.Horizontal => new Rectangle((int)position.X, (int)position.Y, 0, fillTexture.Height)
+                ProgressBarType.Vertical => new Rectangle(0, 0, fillTexture.Width, 0),
+                ProgressBarType.Horizontal => new Rectangle(0, 0, 0, fillTexture.Height)
             };
 
             anSegment = type switch 
             {
-                ProgressBarType.Vertical => new Rectangle((int)position.X, (int)position.Y, fillTexture.Width, 0),
-                ProgressBarType.Horizontal => new Rectangle((int)position.X, (int)position.Y, 0, fillTexture.Height)
+                ProgressBarType.Vertical => new Rectangle(0, 0, fillTexture.Width, 0),
+                ProgressBarType.Horizontal => new Rectangle(0, 0, 0, fillTexture.Height)
             };
 
         }
@@ -68,14 +68,14 @@ namespace MonoStacker.Source.Interface
             _current = start;
             segment = type switch
             {
-                ProgressBarType.Vertical => new Rectangle((int)position.X, (int)position.Y, fillTexture.Width, 0),
-                ProgressBarType.Horizontal => new Rectangle((int)position.X, (int)position.Y, 0, fillTexture.Height)
+                ProgressBarType.Vertical => new Rectangle(0, 0, fillTexture.Width, 0),
+                ProgressBarType.Horizontal => new Rectangle(0, 0, 0, fillTexture.Height)
             };
 
             anSegment = type switch
             {
-                ProgressBarType.Vertical => new Rectangle((int)position.X, (int)position.Y, fillTexture.Width, 0),
-                ProgressBarType.Horizontal => new Rectangle((int)position.X, (int)position.Y, 0, fillTexture.Height)
+                ProgressBarType.Vertical => new Rectangle(0, 0, fillTexture.Width, 0),
+                ProgressBarType.Horizontal => new Rectangle(0, 0, 0, fillTexture.Height)
             };
         }
 
@@ -84,14 +84,14 @@ namespace MonoStacker.Source.Interface
             _type = type;
             segment = type switch
             {
-                ProgressBarType.Vertical => new Rectangle((int)position.X, (int)position.Y, fillTexture.Width, 0),
-                ProgressBarType.Horizontal => new Rectangle((int)position.X, (int)position.Y, 0, fillTexture.Height)
+                ProgressBarType.Vertical => new Rectangle(0, 0, fillTexture.Width, 0),
+                ProgressBarType.Horizontal => new Rectangle(0, 0, 0, fillTexture.Height)
             };
 
             anSegment = type switch
             {
-                ProgressBarType.Vertical => new Rectangle((int)position.X, (int)position.Y, fillTexture.Width, 0),
-                ProgressBarType.Horizontal => new Rectangle((int)position.X, (int)position.Y, 0, fillTexture.Height)
+                ProgressBarType.Vertical => new Rectangle(0, 0, fillTexture.Width, 0),
+                ProgressBarType.Horizontal => new Rectangle(0, 0, 0, fillTexture.Height)
             };
         }
 
@@ -128,8 +128,58 @@ namespace MonoStacker.Source.Interface
 
         public virtual void Draw(SpriteBatch spriteBatch, Vector2 DrawOffset)
         {
-            spriteBatch.Draw(fillTexture, new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - segment.Height + DrawOffset.Y), segment, Color.DarkGray);
-            spriteBatch.Draw(animatedTexture, new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - anSegment.Height + DrawOffset.Y), anSegment, Color.White);
+            spriteBatch.Draw
+            (
+                fillTexture, 
+                new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - segment.Height + DrawOffset.Y),
+                segment, 
+                Color.DarkGray,
+                0f,
+                new Vector2(fillTexture.Width + 37, fillTexture.Height / 2),
+                1f,
+                SpriteEffects.None,
+                1
+            );
+            spriteBatch.Draw
+            (
+                animatedTexture, 
+                new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - anSegment.Height + DrawOffset.Y), 
+                anSegment, 
+                Color.White,
+                0f,
+                new Vector2(animatedTexture.Width + 37, animatedTexture.Height / 2),
+                1f,
+                SpriteEffects.None,
+                1
+            );
+        }
+
+        public virtual void Draw(SpriteBatch spriteBatch, Vector2 DrawOffset, float rotation)
+        {
+            spriteBatch.Draw
+            (
+                fillTexture,
+                new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - segment.Height + DrawOffset.Y),
+                segment,
+                Color.DarkGray,
+                rotation,
+                new Vector2(fillTexture.Width + 37, fillTexture.Height / 2),
+                1f,
+                SpriteEffects.None,
+                1
+            );
+            spriteBatch.Draw
+            (
+                animatedTexture,
+                new Vector2(_position.X + DrawOffset.X, _position.Y + fillTexture.Height - anSegment.Height + DrawOffset.Y),
+                anSegment,
+                Color.White,
+                rotation,
+                new Vector2(animatedTexture.Width + 37, animatedTexture.Height / 2),
+                1f,
+                SpriteEffects.None,
+                1
+            );
         }
     }
 }
