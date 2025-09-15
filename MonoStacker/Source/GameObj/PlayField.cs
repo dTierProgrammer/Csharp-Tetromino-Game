@@ -8,6 +8,9 @@ using MonoStacker.Source.GameObj.Tetromino;
 using MonoStacker.Source.GameObj.Tetromino.Factory;
 using MonoStacker.Source.GameObj.Tetromino.Randomizer;
 using MonoStacker.Source.Generic;
+using MonoStacker.Source.Generic.GarbageSystem;
+using MonoStacker.Source.Generic.GarbageSystem.AttackSystem;
+using MonoStacker.Source.Generic.GarbageSystem.Factory;
 using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Generic.Rotation.RotationSystems;
 using MonoStacker.Source.Global;
@@ -70,7 +73,8 @@ namespace MonoStacker.Source.GameObj
     public enum BoardDisplaySetting 
     {
         BoardOnly,
-        ShowMeter
+        SingleMeter,
+        DoubleMeter
     }
 
     public enum BufferType
@@ -193,6 +197,7 @@ namespace MonoStacker.Source.GameObj
         public Piece? activePiece { get; set; }
         private readonly Texture2D _border = GetContent.Load<Texture2D>("Image/Board/border1");
         private readonly Texture2D _border1 = GetContent.Load<Texture2D>("Image/Board/border0");
+        private readonly Texture2D _border2 = GetContent.Load<Texture2D>("Image/Board/border2");
         private readonly Texture2D _borderMeterBg = GetContent.Load<Texture2D>("Image/Board/meter_bg");
         private readonly Texture2D _lockDelayMeter = GetContent.Load<Texture2D>("Image/Board/meter_hori");
         private bool _temporaryLandingSys = true;
@@ -268,14 +273,14 @@ namespace MonoStacker.Source.GameObj
         public event Action GameEnd;
         public event Action Win;
         public event Action Loss;
-        private float pitch = -1;
-        private float comboPitch = 0;
+        public event Action EmptyPiecePlacement;
 
         private StaticEmissionSource topOutEffectSource;
         private EmitterData topOutEffect;
         private EmitterObj topOutEffectEmitter;
         private int garbageHole;
         public int garbageQueued = 0;
+        private int garbageRow;
         int lineRecieveLimit = 12;
         int overflow;
         public float garbageTime;
@@ -298,6 +303,11 @@ namespace MonoStacker.Source.GameObj
         private float _maxFallAnimationVelocity = 10;
         private float _fallAnimationVelocity;
         private float _fallAnimationAcceleration = .083f;
+
+        public AttackMeter attackMeter;
+        public IAttackSystem attackSys;
+        public GarbageMeter garbageMeter;
+        public IGarbageGenerator garbageGenerator;
         
 
         public Vector2 Offset
@@ -377,7 +387,20 @@ namespace MonoStacker.Source.GameObj
             };
 
             topOutEffectEmitter = new(topOutEffectSource, topOutEffect, EmissionType.Burst);
+            //displaySetting = BoardDisplaySetting.DoubleMeter;
             Debug.WriteLine($"PlayField Instance | {TimeSpan.FromSeconds(Game1.uGameTime.TotalGameTime.TotalSeconds).ToString(@"mm\:ss\.ff")} | Initialization success.");
+        }
+
+        public void ConstructGarbageSys() 
+        {
+            garbageMeter = new();
+        }
+
+        public void ConstructAttackSys() 
+        {
+            attackSys = new StandardAttackSystem();
+            garbageGenerator = new StandardGarbageGenerator();
+            attackMeter = new();
         }
 
         public void Start() 
@@ -550,7 +573,6 @@ namespace MonoStacker.Source.GameObj
                 _combo = -1;
                 ComboBreak?.Invoke();
             }
-            comboPitch = 0;
         }
 
         private void IncrementStreak() 
@@ -596,14 +618,8 @@ namespace MonoStacker.Source.GameObj
                 if (currentSpinType != SpinType.None)
                 { SfxBank.spinGeneric.Play(); GenericSpinPing?.Invoke(); }
                 BreakCombo();
-                if (garbageQueued > 0) 
+                if (garbageMeter.GetTotalReadyLines() > 0) 
                 {
-                    while (garbageQueued > lineRecieveLimit) 
-                    {
-                        garbageQueued--;
-                        overflow++;
-                    }
-                    garbageHole = ExtendedMath.Rng.Next(0, 8);
                     _currentBoardState = BoardState.RecieveDamage;
                 }
                     
@@ -613,6 +629,7 @@ namespace MonoStacker.Source.GameObj
                     _currentBoardState = BoardState.ArrivalDelay;
                 }
                 PlayfieldEffects.FlashPiece(activePiece, activePiece.offsetY < 20 ? Color.Red : Color.White, activePiece.offsetY < 20 ? 4f : .3f, offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), _aeLayerOffsetFront);
+                EmptyPiecePlacement?.Invoke();
             }
             
         }
@@ -814,6 +831,18 @@ namespace MonoStacker.Source.GameObj
 
             if (currentSpinType != SpinType.None && activePiece is not null)
                 PlayfieldEffects.FlashPiece(activePiece, activePiece.color, .7f, new Vector2(.5f, .5f), Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
+
+            if (attackMeter is null) return;
+            var lines = attackSys.BuildAttackLines(grid.rowsToClear.Count, _combo, _streak, currentSpinType, activePiece.offsetX, garbageGenerator);
+            if (garbageMeter is null) return;
+            while (garbageMeter.GetTotalReadyLines() > 0) 
+            {
+                if (lines.Count <= 0) break;
+                garbageMeter.NeutralizeGarbage();
+                lines.RemoveAt(0);
+            }
+            if (lines.Count <= 0) return;
+            attackMeter.ChargeAttack(lines);
         }
 
         private void DropLines() // actually clears the lines
@@ -880,8 +909,8 @@ namespace MonoStacker.Source.GameObj
                     { Kill(); return; }
                     break;
             }
-            
 
+            garbageRow = 0;
             _dasCut.timeLeftover = _dasCut.max;
             _hardDropCut.timeLeftover = _hardDropCut.max;
             _pieceManager.canHold = true;
@@ -986,6 +1015,22 @@ namespace MonoStacker.Source.GameObj
                 item.hasBeenExecuted = !item.hasBeenExecuted;
             }
             _inputManager.ClearBuffer();
+        }
+
+        public void SendAttack(GarbageMeter garbageMeter)   
+        {
+            if (this.garbageMeter.GetTotalReadyLines() > 0) 
+            {
+                while (this.garbageMeter.GetTotalReadyLines() > 0)
+                {
+                    if (attackMeter.GetCount() == 0) break;
+                    this.garbageMeter.NeutralizeGarbage();
+                    attackMeter.RemoveLineFromAttack();
+                }
+            }
+            
+            if (attackMeter.GetCount() > 0)
+                attackMeter.SendAttack(garbageMeter, .8f);
         }
 
         private void ProcessInput(GameTime gameTime) // if button inputs are read, executed associated actions
@@ -1167,6 +1212,7 @@ namespace MonoStacker.Source.GameObj
                 case BoardState.Playing:
                     GravitySoftDrop(gameTime);
                     _lockDelayAmount = MathHelper.Clamp(_softLockDelay.timeLeftover / _softLockDelay.max, 0, 1);
+                    
                     break;
                 case BoardState.LineClearDelay:
                     //if(_bufferType != BufferType.None)
@@ -1190,6 +1236,7 @@ namespace MonoStacker.Source.GameObj
                     break;
                 case BoardState.RecieveDamage:
                     var intervalC = .1f;
+                    /*
                     if (garbageTime >= intervalC && garbageQueued > 0) 
                     {
                         var chance = ExtendedMath.Rng.Next(0, 3);
@@ -1203,13 +1250,30 @@ namespace MonoStacker.Source.GameObj
                     }
                     if (garbageQueued <= 0) 
                     {
-                        GrabNextPiece();
-                        garbageTime = 0;
+                        
                         garbageQueued += overflow;
                         _arrivalDelay.timeLeftover = _arrivalDelay.max;
                         _currentBoardState = BoardState.ArrivalDelay;
                         overflow = 0;
                     }
+                    */
+                    if (garbageTime >= intervalC) 
+                    {
+                        var line = garbageMeter.DishGarbage();
+                        if (line is null || garbageRow > 12)
+                            GrabNextPiece();
+                        else 
+                        {
+                            grid.AddGarbageLine(line);
+                            ShakeY(-4);
+                            GetContent.Load<SoundEffect>("Audio/Sound/old/clear0").Play();
+                            AnimatedEffectManager.AddEffect(new ClearFlash(new Vector2(39 + Offset.X, (int)(39 * 8) + Offset.Y - 155.5f) - new Vector2(fixOffset.X / 2, fixOffset.Y / 4), Color.White, .3f, new Vector2(3, 0)));
+                        }
+                        garbageTime = 0;
+                        garbageRow++;
+                    }
+
+
                     garbageTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                     break;
                 case BoardState.TopOut:
@@ -1220,17 +1284,18 @@ namespace MonoStacker.Source.GameObj
 
                     if (rowTime == 0)
                     {
+                        //ShakeY(-10f);
                         PlayfieldEffects.BoardExplosion(grid, Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
                         ParticleManager.AddEmitter(topOutEffectEmitter);
                         //GameEnd?.Invoke();
                         rotationOffset = ExtendedMath.RandomFloat(-.01f, .01f);
-                        ShakeY(-8f);
+                        
                         GetContent.Load < SoundEffect >("Audio/Sound/old/Puyo-2-SFX 064").Play();
                         grid.ClearGrid();
                     }
                     _fallAnimationVelocity = (_fallAnimationVelocity + _fallAnimationAcceleration);
                     animateOffsetY += _fallAnimationVelocity;
-                    orientation += rotationOffset;
+                    //orientation += rotationOffset;
                     rowTime += (float)gameTime.ElapsedGameTime.TotalSeconds;
                     /*
                     if (_greyRow >= _highestRow && rowTime >= interval)
@@ -1269,7 +1334,12 @@ namespace MonoStacker.Source.GameObj
                     
             }
 
-             _lastInputEvents = _inputDevice switch
+            if (garbageMeter is not null)
+                garbageMeter.Update(gameTime);
+            if (attackMeter is not null)
+                attackMeter.Update(gameTime);
+
+            _lastInputEvents = _inputDevice switch
              {
                  InputDevice.Gamepad => _inputManager.GetButtonInput(PlayerIndex.One),
                  InputDevice.Keyboard => _inputManager.GetKeyInput(),
@@ -1408,11 +1478,13 @@ namespace MonoStacker.Source.GameObj
             spriteBatch.End();
             spriteBatch.Begin();
             grid.Draw(spriteBatch, Offset - new Vector2(fixOffset.X / 2, fixOffset.Y / 4));
-            if (displaySetting is BoardDisplaySetting.BoardOnly)
-                spriteBatch.Draw
+            switch (displaySetting) 
+            {
+                case BoardDisplaySetting.BoardOnly:
+                    spriteBatch.Draw
                 (
                     _border,
-                    new Vector2((int)Offset.X, (int)Offset.Y), 
+                    new Vector2((int)Offset.X, (int)Offset.Y),
                     null,
                     !_isInDanger ? Color.White : Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)),
                     orientation,
@@ -1421,12 +1493,12 @@ namespace MonoStacker.Source.GameObj
                     SpriteEffects.None,
                     1
                  );
-            else
-            {
-                spriteBatch.Draw
+                    break;
+                case BoardDisplaySetting.SingleMeter:
+                    spriteBatch.Draw
                 (
-                    _border1, 
-                    new Vector2((int)Offset.X - 3, (int)Offset.Y), 
+                    _border1,
+                    new Vector2((int)Offset.X - 3, (int)Offset.Y),
                     null,
                     !_isInDanger ? Color.White : Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)),
                     orientation,
@@ -1435,19 +1507,63 @@ namespace MonoStacker.Source.GameObj
                     SpriteEffects.None,
                     1
                 );
-                spriteBatch.Draw
+                    spriteBatch.Draw
+                    (
+                        _borderMeterBg,
+                        new Vector2((int)Offset.X, (int)Offset.Y),
+                        null,
+                        Color.White,
+                        orientation,
+                        new Vector2(_borderMeterBg.Width + 44, _borderMeterBg.Height / 2),
+                        1f,
+                        SpriteEffects.None,
+                        1
+                    );
+                    break;
+                case BoardDisplaySetting.DoubleMeter:
+                    spriteBatch.Draw
                 (
-                    _borderMeterBg, 
-                    new Vector2((int)Offset.X, (int)Offset.Y), 
+                    _border2,
+                    new Vector2((int)Offset.X, (int)Offset.Y),
                     null,
-                    Color.White,
+                    !_isInDanger ? Color.White : Color.Lerp(Color.White, Color.Red, (float)(Math.Sin(time * 2.0f) * .5f + .5f)),
                     orientation,
-                    new Vector2(_borderMeterBg.Width + 44, _borderMeterBg.Height / 2),
+                    new Vector2(_border2.Width / 2, _border2.Height / 2),
                     1f,
                     SpriteEffects.None,
                     1
                 );
+
+                    spriteBatch.Draw
+                    (
+                        _borderMeterBg,
+                        new Vector2((int)Offset.X, (int)Offset.Y),
+                        null,
+                        Color.White,
+                        orientation,
+                        new Vector2(_borderMeterBg.Width + 44, _borderMeterBg.Height / 2),
+                        1f,
+                        SpriteEffects.None,
+                        1
+                    );
+
+                    spriteBatch.Draw
+                    (
+                        _borderMeterBg,
+                        new Vector2((int)Offset.X, (int)Offset.Y),
+                        null,
+                        Color.White,
+                        orientation,
+                        new Vector2(_borderMeterBg.Width - 47, _borderMeterBg.Height / 2),
+                        1f,
+                        SpriteEffects.None,
+                        1
+                    );
+                    break;
             }
+
+            
+            
             spriteBatch.Draw
             (
                 _lockDelayMeter, 
@@ -1489,6 +1605,12 @@ namespace MonoStacker.Source.GameObj
             if(_currentBoardState is not BoardState.TopOut && _spawnAreaObscured)
                 DrawPieceDanger(spriteBatch, _pieceManager.pieceQueue.Peek());
 
+            if (garbageMeter is not null)
+                garbageMeter.Draw(spriteBatch, new Vector2(Offset.X - 47, Offset.Y + 80), Vector2.Zero);
+
+            if (attackMeter is not null)
+                attackMeter.Draw(spriteBatch, new Vector2(Offset.X + 44, Offset.Y + 80), Vector2.Zero);
+
 # if DEBUG
             for (var y = 0; y < _pieceManager.spawnArea.Length; y++) 
             {
@@ -1496,7 +1618,9 @@ namespace MonoStacker.Source.GameObj
                     if(_showDebug) spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Block/spawnPt"), new Vector2(Offset.X + (x * 8) + (_pieceManager.spawnAreaPosition.X * 8), Offset.Y + (y * 8) + (_pieceManager.spawnAreaPosition.Y * 8) - 160), Color.White * .63f);
             }
 #endif
+
             spriteBatch.End();
+            
         }
     }
 }

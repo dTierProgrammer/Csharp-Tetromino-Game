@@ -18,7 +18,7 @@ namespace MonoStacker.Source.Data
     {
         // based off of Puyo Puyo Tetris
         public BufferType bufferType = BufferType.Hold;
-        public BoardDisplaySetting displaySetting = BoardDisplaySetting.ShowMeter;
+        public BoardDisplaySetting displaySetting = BoardDisplaySetting.SingleMeter;
         public ITetrominoFactory factory = new SrsFactory();
         public Point spawnAreaOffset = new Point(3, 18);
         public IRandomizer randomizer = new SevenBagRandomizer();

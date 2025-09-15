@@ -3,6 +3,8 @@ using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.GameObj.Tetromino.Factory;
 using MonoStacker.Source.GameObj.Tetromino.Randomizer;
+using MonoStacker.Source.Generic.GarbageSystem;
+using MonoStacker.Source.Generic.GarbageSystem.Factory;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.Scene;
 using MonoStacker.Source.Scene.GameMode;
@@ -26,8 +28,10 @@ namespace MonoStacker
         private readonly SceneManager _sceneManager;
         private TestScene _testScene;
         public static GameTime uGameTime;
-        private SevenBagRandomizer sBag1;
-        private SevenBagRandomizer sBag2;
+        private static GarbageMeter testSys;
+        AttackMeter attackSys;
+        private static StandardGarbageGenerator testGenerator;
+        private static KeyboardState _prevKbs;
 
         /*
         
@@ -75,9 +79,12 @@ namespace MonoStacker
             //sBag1 = new(100);
             //sBag2 = new(100);
             GetContent.Initialize(this);
+            testSys = new();
+            attackSys = new();
+            testGenerator = new();
             _testScene = new TestScene();
 
-            _sceneManager.EnterScene(new MarathonMode());
+            _sceneManager.EnterScene(new Battle2p());
             // init any custom classes above base method call
             base.Initialize();
         }
@@ -96,13 +103,26 @@ namespace MonoStacker
             
             if (GamePad.GetState(PlayerIndex.One).Buttons.Back == ButtonState.Pressed || Keyboard.GetState().IsKeyDown(Keys.Escape))
                 Exit();
-            
 
+            /*
+            if (Keyboard.GetState().IsKeyDown(Keys.P) && !_prevKbs.IsKeyDown(Keys.P))
+                testSys.AddGarbage(testGenerator.GenerateLines(14, 1, 0), 3);
+
+            if (Keyboard.GetState().IsKeyDown(Keys.O) && !_prevKbs.IsKeyDown(Keys.O))
+                testSys.NeutralizeGarbage();
+            if (Keyboard.GetState().IsKeyDown(Keys.L) && !_prevKbs.IsKeyDown(Keys.L))
+            { attackSys.ChargeAttack(testGenerator.GenerateLines(14, 1, 0)); Debug.WriteLine("fff"); }
+            if (Keyboard.GetState().IsKeyDown(Keys.K) && !_prevKbs.IsKeyDown(Keys.K))
+                attackSys.SendAttack(testSys, 1.5f);
+*/
+            _prevKbs = Keyboard.GetState();
             // TODO: Add your update logic here
             _sceneManager.CurrentScene().Update(gameTime);
             AnimatedEffectManager.Update(gameTime);
             ParticleManager.Update(gameTime);
-
+            //testSys.Update(gameTime);
+            //attackSys.Update(gameTime);
+            //Debug.WriteLine(testSys.GetTotalLines());
             base.Update(gameTime);
         }
 
@@ -116,9 +136,14 @@ namespace MonoStacker
             _spriteBatch.Begin();
             Font.DefaultSmallOutlineGradient.RenderString(_spriteBatch, new Vector2(479, 0), $"{GetFps.fps:F0}", Color.Yellow, OriginSetting.TopRight);
             //_spriteBatch.Draw(GetContent.Load<Texture2D>("Image/Effect/lockFlashEffect"), new Rectangle(10,10, 256, 256), Color.Red);
+             //Font.DefaultSmallOutlineGradient.RenderString(_spriteBatch, new Vector2(0, 8), $"GarbageSysLines: {testSys.GetTotalLines()}\nGarbageSysPackets: {testSys.GetTotalPackets()}\nGarbageSysReadyPackets {testSys.GetReadyPackets() }\nAttackLines: {attackSys.GetCount()}", Color.White, OriginSetting.TopLeft);
+            //_spriteBatch.End();
+            //testSys.Draw(_spriteBatch, new Vector2(80, 180), Vector2.Zero);
+            //_spriteBatch.Begin();
+            //attackSys.Draw(_spriteBatch, new Vector2(100, 180), Vector2.Zero);
             _spriteBatch.End();
             _sceneManager.CurrentScene().DrawText(_spriteBatch);
-
+           
 
             // TODO: Add your drawing code here
             GraphicsDevice.SetRenderTarget(null);

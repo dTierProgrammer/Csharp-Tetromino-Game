@@ -1,24 +1,28 @@
 ﻿using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
+using Microsoft.Xna.Framework.Input;
 using MonoStacker.Source.Data;
 using MonoStacker.Source.GameObj;
 using MonoStacker.Source.GameObj.Tetromino.Randomizer;
+using MonoStacker.Source.Generic;
+using MonoStacker.Source.Generic.GarbageSystem.Factory;
+using MonoStacker.Source.Generic.Rotation;
 using MonoStacker.Source.Global;
 using MonoStacker.Source.Interface.Input;
+using MonoStacker.Source.VisualEffects.ParticleSys.Emitter;
+using MonoStacker.Source.VisualEffects.ParticleSys.Library.Source;
+using MonoStacker.Source.VisualEffects.ParticleSys.Particle;
+using RasterFontLibrary.Source;
 using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.Management;
-using Windows.Gaming.Input;
 using System.Linq;
+using System.Management;
 using System.Text;
 using System.Threading.Tasks;
 using System.Xml.Linq;
-using Microsoft.Xna.Framework.Input;
-using RasterFontLibrary.Source;
+using Windows.Gaming.Input;
 using Windows.Media.Protection.PlayReady;
-using MonoStacker.Source.Generic.Rotation;
-using MonoStacker.Source.Generic;
 
 namespace MonoStacker.Source.Scene.GameMode
 {
@@ -29,6 +33,11 @@ namespace MonoStacker.Source.Scene.GameMode
         private List<PlayField> players = new();
         private List<InputDevice> _inputDevices;
         private List<Vector2> posits;
+        private StandardGarbageGenerator garbageGen = new();
+        protected StaticEmissionSource _streakFireSource;
+        protected EmitterObj _streakFireEmitter;
+        protected EmitterData _streakFire;
+        protected ParticleLayer _particleLayer = new();
 
         private void GetDevices() 
         {
@@ -84,74 +93,12 @@ namespace MonoStacker.Source.Scene.GameMode
 
         private void P1Attack() 
         {
-            var send = 0;
-            if (players[0].currentSpinType == SpinType.None)
-            {
-                send += players[0].grid.rowsToClear.Count switch
-                {
-                    1 => 0,
-                    2 => 1,
-                    3 => 2,
-                    4 => 4
-                } + ComboMultiplier(players[0]._combo);
-            }
-            else if (players[0].currentSpinType == SpinType.MiniSpin)
-            {
-                send += players[0].grid.rowsToClear.Count switch
-                {
-                    1 => 0,
-                    2 => 1,
-                    3 => 2,
-                    4 => 4
-                } + ComboMultiplier(players[0]._combo);
-            }
-            else 
-            {
-                send += players[0].grid.rowsToClear.Count switch
-                {
-                    1 => 2,
-                    2 => 4,
-                    3 => 6,
-                    4 => 10
-                } + ComboMultiplier(players[0]._combo);
-            }
-            players[1].garbageQueued += send;
+            players[0].SendAttack(players[1].garbageMeter);
         }
 
         private void P2Attack()
         {
-            var send = 0;
-            if (players[1].currentSpinType == SpinType.None)
-            {
-                send += players[1].grid.rowsToClear.Count switch
-                {
-                    1 => 0,
-                    2 => 1,
-                    3 => 2,
-                    4 => 4
-                } + ComboMultiplier(players[1]._combo);
-            }
-            else if (players[1].currentSpinType == SpinType.MiniSpin)
-            {
-                send += players[1].grid.rowsToClear.Count switch
-                {
-                    1 => 0,
-                    2 => 1,
-                    3 => 2,
-                    4 => 4
-                } + ComboMultiplier(players[0]._combo);
-            }
-            else
-            {
-                send += players[1].grid.rowsToClear.Count switch
-                {
-                    1 => 2,
-                    2 => 4,
-                    3 => 6,
-                    4 => 10
-                } + ComboMultiplier(players[0]._combo);
-            }
-            players[0].garbageQueued += send;
+            players[1].SendAttack(players[0].garbageMeter);
         }
 
         private void InitPlayers() 
@@ -173,31 +120,62 @@ namespace MonoStacker.Source.Scene.GameMode
                     (
                         posits[p],
                         new SevenBagRandomizer(seed),
-                        PlayFieldPresets.GuidelineSlow2,
+                        PlayFieldPresets.Battle,
                         _inputDevices[p], _inputDevices[p] is not (InputDevice.Keyboard) ? index : null,
                         new InputBinds())
                     );
                     Debug.WriteLine($"Player: {(PlayerIndex)p}");
                 }
             }
+            foreach (var player in players) 
+            {
+                player.ConstructAttackSys();
+                player.ConstructGarbageSys();
+            }
+
             Debug.WriteLine($"{players.Count}");
         }
 
         public void Initialize() 
         {
             posits = new();
-            posits.Add(new(240 - 90, 135));
-            posits.Add(new(240 + 90, 135));
+            posits.Add(new(240 - 93, 135));
+            posits.Add(new(240 + 93, 135));
             _inputDevices = new();
             GetDevices();
             seed = ExtendedMath.Rng.Next();
             players = new();
             InitPlayers();
-            players[0].ClearingLines += P1Attack;
-            players[1].ClearingLines += P2Attack;
+            players[0].EmptyPiecePlacement += P1Attack;
+            players[1].EmptyPiecePlacement += P2Attack;
 
             foreach (var item in players)
                 item.Start();
+
+
+            _streakFireSource = new(new(10, 10));
+            _streakFire = new EmitterData()
+            {
+                particleData = new ParticleData
+                {
+                    texture = GetContent.Load<Texture2D>("Image/Effect/Particle/ball"),
+                    angle = 330,
+                    opacityTimeLine = new(1f, 0f),
+                    scaleTimeLine = new(18, 0),
+                    colorTimeLine = (Color.Cyan, Color.Blue),
+                    rotationSpeed = .05f
+                },
+                angleVarianceMax = 3,
+                particleActiveTime = (1, 3),
+                emissionInterval = .01f,
+                speed = (0, 0),
+                density = 1,
+                //rotationSpeed = (-.03f, .03f)
+            };
+            _streakFireEmitter = new EmitterObj(_streakFireSource, _streakFire, EmissionType.Continuous, true);
+            ParticleManager.AddEmitter(_streakFireEmitter);
+
+
             Debug.WriteLine($"Battle2p | {TimeSpan.FromSeconds(Game1.uGameTime.TotalGameTime.TotalSeconds).ToString(@"mm\:ss\.ff")} | Initialization success, seed: {seed}.");
         }
         public void Load() 
@@ -209,6 +187,8 @@ namespace MonoStacker.Source.Scene.GameMode
         {
             foreach (var item in players)
                 item.Update(gameTime);
+
+            _streakFireSource.Position += Vector2.One * 2;
         }
 
         public void Draw(SpriteBatch spriteBatch) 
@@ -216,7 +196,7 @@ namespace MonoStacker.Source.Scene.GameMode
             spriteBatch.Begin();
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(posits[0].X - 47, posits[0].Y - 85), players[0].garbageQueued.ToString(), Color.Red, OriginSetting.Bottom);
             Font.DefaultSmallOutlineGradient.RenderString(spriteBatch, new Vector2(posits[1].X - 47, posits[1].Y - 85), players[1].garbageQueued.ToString(), Color.Red, OriginSetting.Bottom);
-            //spriteBatch.Draw(bg, new Vector2(0, 0), Color.White);
+            spriteBatch.Draw(bg, new Vector2(0, 0), Color.White);
             //Debug.WriteLine("everything else");
             spriteBatch.End();
             foreach (var item in players)

@@ -11,6 +11,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using MonoStacker.Source.Generic.Rotation;
+using Windows.UI.Xaml.Controls;
 
 namespace MonoStacker.Source.Generic
 {
@@ -53,6 +54,7 @@ namespace MonoStacker.Source.Generic
         protected const int Tilesize = 8;
         protected const int SmallTilesize = 6;
         protected const int Gridsize = 25;
+        protected const int GridsizeB = 34;
         protected const int SmallGridsize = 17;
         public readonly Queue<Piece> pieceQueue;
         public readonly ITetrominoFactory _factory;
@@ -84,6 +86,16 @@ namespace MonoStacker.Source.Generic
             QueueBorderTiles.Add(new Rectangle(0, 101, 24, 21)); // top queue hold (6)
             QueueBorderTiles.Add(new Rectangle(0, 123, 27, 26)); // top queue extra (7)
 
+            QueueBorderTiles.Add(new Rectangle(40, 0, 41, 12)); // top hold (8)
+
+            QueueBorderTiles.Add(new Rectangle(42, 24, 40, 11)); // side queue bottom flat (9)
+            QueueBorderTiles.Add(new Rectangle(42, 0, 41, 11)); // side queue top mirror (10)
+            QueueBorderTiles.Add(new Rectangle(42, 12, 41, 11)); // side queue bottom mirror (11)
+
+            QueueBorderTiles.Add(new Rectangle(71, 36, 28, 4)); // side queue small top / shadow (12)
+            QueueBorderTiles.Add(new Rectangle(42, 36, 28, 15)); // side queue small sides (13)
+            QueueBorderTiles.Add(new Rectangle(71, 41, 29, 9)); // side queue small bottom (14)
+
             QueueBgTiles.Add(new Rectangle(0, 0, 34, 25)); // bg top (0)
             QueueBgTiles.Add(new Rectangle(0, 26, 34, 25)); // bg mid (1)
             QueueBgTiles.Add(new Rectangle(0, 52, 34, 25)); // bg bottom (2)
@@ -93,8 +105,8 @@ namespace MonoStacker.Source.Generic
             QueueBgTiles.Add(new Rectangle(0, 126, 18, 13)); // bg top queue hold (5)
             QueueBgTiles.Add(new Rectangle(0, 140, 23, 13)); // bg top queue extra (6)
 
-
-            QueueBorderTiles.Add(new Rectangle(40, 0, 41, 12)); // top hold
+            QueueBgTiles.Add(new Rectangle(0, 154, 22, 14)); // side queue small static (7)
+            QueueBgTiles.Add(new Rectangle(0, 169, 34, 34)); // side queue big static (8)
         }
 
         private void LoadQueue() 
@@ -215,8 +227,28 @@ namespace MonoStacker.Source.Generic
             }
         }
 
+        private void DrawPieceAlt(SpriteBatch spriteBatch, Piece piece, Vector2 offset, int tilesize, int? overrideId)
+        {
+            for (var y = 0; y < piece.currentRotation.GetLength(0); y++)
+            {
+                for (var x = 0; x < piece.currentRotation.GetLength(1); x++)
+                {
+                    if (piece.currentRotation[y, x] > 0)
+                    {
+                        spriteBatch.Draw(
+                            ImgBank.BlockTexture,
+                            new Rectangle((int)(x * tilesize + offset.X), (int)(y * tilesize + offset.Y), tilesize, tilesize),
+                            overrideId is not null ? QueuePieceTiles[overrideId.Value] : QueuePieceTiles[piece.currentRotation[y, x] - 1],
+                            Color.White
+                        );
+                    }
+                }
+            }
+        }
+
         private void DrawSideNextQueue(SpriteBatch spriteBatch, Vector2 queueOffset) 
         {
+            /*
             for (var i = 0; i < _queueLength; i++) 
             {
                 spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X - 3, (i * Gridsize) + queueOffset.Y), QueueBorderTiles[1], Color.White);
@@ -245,6 +277,51 @@ namespace MonoStacker.Source.Generic
             spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X - 3, queueOffset.Y - 3), QueueBorderTiles[0], Color.White);
             spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X - 3, (_queueLength * Gridsize) + queueOffset.Y - 7), QueueBorderTiles[2], Color.White);
             spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X - 3, queueOffset.Y - 11), QueueBorderTiles[4], Color.White);
+        */
+            
+
+            for (var i = 0; i < pieceQueue.Count - 1; i++) 
+            {
+                spriteBatch.Draw(BgTexture, new Vector2(queueOffset.X + 3, queueOffset.Y + (i * QueueBgTiles[7].Height) + 42), QueueBgTiles[7], Color.White);
+                spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X, queueOffset.Y + (i * QueueBorderTiles[13].Height) + 38), QueueBorderTiles[13], Color.White);
+                var bufferOffset = pieceQueue.ElementAt(i + 1).type switch 
+                {
+                    TetrominoType.I => 0,
+                    TetrominoType.O => 0,
+                    _ => 3
+                };
+                var bufferOffsetY = pieceQueue.ElementAt(i + 1).type switch
+                {
+                    TetrominoType.I => 2,
+   
+                    _ => 0
+                };
+                DrawPiece(spriteBatch, pieceQueue.ElementAt(i + 1), new Vector2(queueOffset.X + 4 + bufferOffset, queueOffset.Y + (i * 14) + 44 + bufferOffsetY), 5, null);
+            }
+            spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X, queueOffset.Y + 42 + ((pieceQueue.Count - 1) * 14) -5), QueueBorderTiles[14], Color.White);
+
+            var offsetBufferX = pieceQueue.Peek().type switch 
+            {
+                TetrominoType.I => 0,
+                TetrominoType.O => 8,
+                _ => 4
+            };
+
+            var bufferOffsetYB = pieceQueue.Peek().type switch
+            {
+                TetrominoType.I => -4,
+
+                _ => 0
+            };
+
+            spriteBatch.Draw(BgTexture, new Vector2(queueOffset.X + 3, queueOffset.Y + 4), QueueBgTiles[8], Color.White);
+            DrawPieceAlt(spriteBatch, pieceQueue.Peek(), new Vector2(queueOffset.X + 4 + offsetBufferX, queueOffset.Y + 13 + bufferOffsetYB), 8, null);
+            spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X, queueOffset.Y + 9), QueueBorderTiles[1], Color.White);
+            spriteBatch.Draw(BorderTexture, new Vector2(queueOffset.X, queueOffset.Y + 31), _queueLength < 2? QueueBorderTiles[2]: QueueBorderTiles[9], Color.White);
+            spriteBatch.Draw(BorderTexture, queueOffset, QueueBorderTiles[0], Color.White);
+
+            
+
         }
 
         private void DrawSideHoldQueue(SpriteBatch spriteBatch, Vector2 offset) // so much duplicated shi for no reason lol
@@ -327,7 +404,7 @@ namespace MonoStacker.Source.Generic
                         DrawTopHoldQueue(spriteBatch, new Vector2(_playfield.offset.X - 5, _playfield.offset.Y - 45) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
                     break;
                 case QueueType.Sides:
-                    DrawSideNextQueue(spriteBatch, new Vector2(_playfield.offset.X + 88, _playfield.offset.Y - 1) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
+                    DrawSideNextQueue(spriteBatch, new Vector2((_playfield.displaySetting is not BoardDisplaySetting.DoubleMeter? _playfield.offset.X + 88: _playfield.offset.X + 94) - 3, _playfield.offset.Y - 4) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
                     if(holdEnabled)
                         DrawSideHoldQueue(spriteBatch, new Vector2(_playfield.displaySetting is BoardDisplaySetting.BoardOnly? _playfield.offset.X - 42 : _playfield.offset.X - 48, _playfield.offset.Y - 1) - new Vector2(_playfield.fixOffset.X / 2, _playfield.fixOffset.Y / 4));
                     break;

@@ -51,6 +51,12 @@ namespace MonoStacker.Source.Global
         public static SoundEffect twist1m = GetContent.Load<SoundEffect>("Audio/Sound/twist1m");
         public static SoundEffect twist1 = GetContent.Load<SoundEffect>("Audio/Sound/twist1");
         public static SoundEffect stackHit = GetContent.Load<SoundEffect>("Audio/Sound/stack_hit");
+        public static SoundEffect garbageHitGeneric = GetContent.Load<SoundEffect>("Audio/Sound/send");
+        public static SoundEffect garbageHitSmall = GetContent.Load<SoundEffect>("Audio/Sound/send_0");
+        public static SoundEffect garbageHitMedium = GetContent.Load<SoundEffect>("Audio/Sound/send_1");
+        public static SoundEffect garbageHitLarge = GetContent.Load<SoundEffect>("Audio/Sound/send_2");
+        public static SoundEffect garbageHitVeryLarge = GetContent.Load<SoundEffect>("Audio/Sound/send_3");
+        public static SoundEffect garbageNeutralize = GetContent.Load<SoundEffect>("Audio/Sound/neutralize");
         //public static SoundEffect combo = GetContent.Load<SoundEffect>("Audio/Sound/combo");
         //public static SoundEffectInstance comboPitch = combo.CreateInstance();
     }

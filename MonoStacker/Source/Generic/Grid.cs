@@ -422,6 +422,22 @@ namespace MonoStacker.Source.Generic
             }
         }
 
+        public void AddGarbageLine(int[] line)
+        {
+            if (GetNonEmptyRows() == ROWS - 1)
+            {
+                overflowRows.Push(_matrix[0]);
+                ClearLine(0);
+            }
+
+            for (var y = 0; y < ROWS; y++)
+                MoveRow(y, -1);
+            for (var x = 0; x < COLUMNS; x++)
+            {
+                _matrix[ROWS - 1][x] = line[x];
+            }
+        }
+
         public void Draw(SpriteBatch spriteBatch)
         {
             Rectangle sourceRect = imageTiles[0];

@@ -18,7 +18,7 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData GuidelineSlow1 = new PlayFieldData()
         {
             bufferType = BufferType.Tap,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new SrsFactory(),
             spawnAreaOffset = new Point(3, 18),
             randomizer = new SevenBagRandomizer(),
@@ -52,7 +52,7 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData GuideLineInf = new PlayFieldData()
         {
             bufferType = BufferType.Tap,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new SrsFactory(),
             spawnAreaOffset = new Point(3, 18),
             randomizer = new SevenBagRandomizer(),
@@ -87,7 +87,42 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData GuidelineSlow2 = new PlayFieldData()
         {
             bufferType = BufferType.Tap,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
+            factory = new SrsFactory(),
+            spawnAreaOffset = new Point(3, 18),
+            randomizer = new SevenBagRandomizer(),
+            rotationSystem = new SuperRotationSys(),
+            parsedSpins = SpinDenotation.AllSpin,
+            temporaryLandingSys = true,
+            lineClearDelay = .5f,
+            arrivalDelay = .11667f,
+            softLockDelay = .5f,
+            horiStepResets = 15,
+            horiStepResetAllowed = true,
+            rotateResets = 6,
+            rotateResetAllowed = true,
+            vertStepResetAllowed = false,
+            allowDas = true,
+            autoshiftDelay = .15f,
+            autoshiftRepeatRate = 1,
+            softDropLocks = false,
+            gravity = 0.0f,
+            softDropFactor = 20,
+            softDropType = SoftDropType.Set,
+            softDropAmount = .5f,
+            queueLength = 5,
+            queueType = QueueType.Sides,
+            holdEnabled = true,
+            comboType = ComboType.Conventional,
+            singlesBreakCombo = false,
+            dasCut = 0.0f,
+            hardDropCut = 0.0f
+        };
+
+        public static PlayFieldData Battle = new PlayFieldData()
+        {
+            bufferType = BufferType.Tap,
+            displaySetting = BoardDisplaySetting.DoubleMeter,
             factory = new SrsFactory(),
             spawnAreaOffset = new Point(3, 18),
             randomizer = new SevenBagRandomizer(),
@@ -122,7 +157,7 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData GuidelineFast1 = new PlayFieldData()
         {
             bufferType = BufferType.Hold,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new SrsFactory(),
             spawnAreaOffset = new Point(3, 18),
             randomizer = new SevenBagRandomizer(),
@@ -143,7 +178,7 @@ namespace MonoStacker.Source.Data
             softDropLocks = false,
             gravity = .03f,
             softDropFactor = 20,
-            queueLength = 5,
+            queueLength = 6,
             queueType = QueueType.Sides,
             holdEnabled = true,
             comboType = ComboType.Conventional,
@@ -157,7 +192,7 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData GuidelineFast2 = new PlayFieldData()
         {
             bufferType = BufferType.Hold,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new SrsFactory(),
             spawnAreaOffset = new Point(3, 18),
             randomizer = new TIRandomizer(),
@@ -193,7 +228,7 @@ namespace MonoStacker.Source.Data
         {
             
             bufferType = BufferType.None,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new ArcadeFactory(),
             spawnAreaOffset = new Point(3, 20),
             randomizer = new UnbiasedRandomizer(),
@@ -223,7 +258,7 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData Arcade1 = new PlayFieldData()
         {
             bufferType = BufferType.Hold,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new ArcadeFactory(),
             spawnAreaOffset = new Point(3, 20),
             randomizer = new MasterRandomizer(),
@@ -253,7 +288,7 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData Arcade2 = new PlayFieldData()
         {
             bufferType = BufferType.Hold,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new ArcadeFactory(),
             spawnAreaOffset = new Point(3, 20),
             randomizer = new TARandomizer(),
@@ -283,7 +318,7 @@ namespace MonoStacker.Source.Data
         public static PlayFieldData Arcade3 = new PlayFieldData()
         {
             bufferType = BufferType.Hold,
-            displaySetting = BoardDisplaySetting.ShowMeter,
+            displaySetting = BoardDisplaySetting.SingleMeter,
             factory = new ArcadeFactory(),
             spawnAreaOffset = new Point(3, 20),
             randomizer = new TIRandomizer(),

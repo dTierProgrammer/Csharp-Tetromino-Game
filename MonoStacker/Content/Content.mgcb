@@ -97,6 +97,18 @@
 /processorParam:Quality=Best
 /build:Audio/Sound/combo.wav
 
+#begin Audio/Sound/firing_large.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/firing_large.wav
+
+#begin Audio/Sound/firing_small.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/firing_small.wav
+
 #begin Audio/Sound/hard_drop.wav
 /importer:WavImporter
 /processor:SoundEffectProcessor
@@ -126,6 +138,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/linefall.wav
+
+#begin Audio/Sound/neutralize.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/neutralize.wav
 
 #begin Audio/Sound/old/b2b_hit.wav
 /importer:WavImporter
@@ -240,6 +258,12 @@
 /processor:SoundEffectProcessor
 /processorParam:Quality=Best
 /build:Audio/Sound/send_3.wav
+
+#begin Audio/Sound/send.wav
+/importer:WavImporter
+/processor:SoundEffectProcessor
+/processorParam:Quality=Best
+/build:Audio/Sound/send.wav
 
 #begin Audio/Sound/soft_lock.wav
 /importer:WavImporter
@@ -553,6 +577,18 @@
 /processorParam:TextureFormat=Color
 /build:Image/Board/border1.png
 
+#begin Image/Board/border2.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/border2.png
+
 #begin Image/Board/bound.png
 /importer:TextureImporter
 /processor:TextureProcessor
@@ -684,6 +720,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Board/levelMeterFill.png
+
+#begin Image/Board/levelMeterFillGrey.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Board/levelMeterFillGrey.png
 
 #begin Image/Board/levelMeterFillMask.png
 /importer:TextureImporter
@@ -840,6 +888,18 @@
 /processorParam:MakeSquare=False
 /processorParam:TextureFormat=Color
 /build:Image/Effect/lockFLashEffect.png
+
+#begin Image/Effect/Particle/ball.png
+/importer:TextureImporter
+/processor:TextureProcessor
+/processorParam:ColorKeyColor=255,0,255,255
+/processorParam:ColorKeyEnabled=True
+/processorParam:GenerateMipmaps=False
+/processorParam:PremultiplyAlpha=True
+/processorParam:ResizeToPowerOfTwo=False
+/processorParam:MakeSquare=False
+/processorParam:TextureFormat=Color
+/build:Image/Effect/Particle/ball.png
 
 #begin Image/Effect/Particle/default.png
 /importer:TextureImporter

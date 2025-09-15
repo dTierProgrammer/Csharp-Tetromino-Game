@@ -181,5 +181,33 @@ namespace MonoStacker.Source.Interface
                 1
             );
         }
+
+        public virtual void Draw(Vector2 position, SpriteBatch spriteBatch, Vector2 DrawOffset, float rotation, Vector2 origin)
+        {
+            spriteBatch.Draw
+            (
+                fillTexture,
+                new Vector2(position.X + DrawOffset.X, position.Y + fillTexture.Height - segment.Height + DrawOffset.Y),
+                segment,
+                Color.DarkGray,
+                rotation,
+                origin,
+                1f,
+                SpriteEffects.None,
+                1
+            );
+            spriteBatch.Draw
+            (
+                animatedTexture,
+                new Vector2(position.X + DrawOffset.X, position.Y + fillTexture.Height - anSegment.Height + DrawOffset.Y),
+                anSegment,
+                Color.White,
+                rotation,
+                origin,
+                1f,
+                SpriteEffects.None,
+                1
+            );
+        }
     }
 }
